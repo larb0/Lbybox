@@ -58,6 +58,7 @@
     --app-inset: rgba(255,255,255,0.06);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden]{ display:none !important; } /* without this, .emptyState{display:flex} (same specificity as the UA [hidden] rule) wins and the Connect screen never actually hides */
   html,body{ margin:0; padding:0; background: var(--frame); color:var(--ink); font-family:'Space Grotesk', sans-serif; transition: background 0.2s; }
   .serif{ font-family:'Instrument Serif', serif; }
   .mono{ font-family:'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
@@ -104,16 +105,6 @@
   .heroMeta{ flex:1; min-width:0; }
   .heroTitle{ display:block; font-size:15px; font-weight:600; }
   .heroSub{ display:block; font-size:12.5px; color:var(--ink-dim); margin-top:2px; }
-  .heroTransport{ display:flex; align-items:center; gap:10px; margin-top:16px; }
-  .transportBtn{
-    width:40px; height:40px; border-radius:50%; border:1px solid var(--hairline-strong);
-    background: var(--surface); display:flex; align-items:center; justify-content:center;
-    cursor:pointer; color:var(--ink); transition: border-color 0.15s, background 0.15s;
-  }
-  .transportBtn:hover{ border-color: var(--ink-dim); }
-  .transportBtn.primary{ width:46px; height:46px; background:var(--ink); color:var(--ink-contrast); border-color:var(--ink); }
-  .transportBtn svg{ width:16px; height:16px; }
-  .transportBtn.primary svg{ width:17px; height:17px; }
 
   /* ---------- Tabs ---------- */
   .tabs{ display:flex; gap:2px; margin: 22px 22px 0; padding:3px; background: var(--pill-bg); border-radius: 11px; }
@@ -125,6 +116,7 @@
   .tab.active{ background:var(--surface); color:var(--ink); box-shadow: 0 1px 3px rgba(20,18,12,0.16); }
 
   .panel{ padding: 22px 22px 8px; }
+  .panelTitle{ display:none; } /* shown only in the desktop dashboard layout, where tabs are gone */
   .panelRow{ margin-bottom:26px; }
   .panelRow:last-child{ margin-bottom:0; }
   .rowHead{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; }
@@ -249,6 +241,46 @@
   .logEntry .m{ color: var(--ink-dim); }
 
   .footnote{ padding: 18px 22px 26px; font-size:10.5px; color: var(--ink-faint); text-align:center; line-height:1.6; }
+
+  /* ---------- Desktop dashboard: everything visible at once, no tabs ---------- */
+  @media (min-width: 900px){
+    .stage{ align-items:flex-start; padding: 48px 24px 96px; }
+    .app{ max-width: 1040px; border-radius: 26px; }
+
+    .hero{ padding: 26px 32px 6px; }
+
+    .tabs{ display:none; }
+
+    .panelsWrap{
+      display:grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      padding: 26px 32px 8px;
+      align-items:start;
+    }
+    /* Sound has the tallest content (EQ rack), give it the wide column and
+       let it span both rows so Light/Power/Settings stack neatly beside it */
+    .panel[data-panel="sound"]{ grid-column: 1; grid-row: 1 / 4; }
+    .panel[data-panel="light"]{ grid-column: 2; grid-row: 1; }
+    .panel[data-panel="power"]{ grid-column: 2; grid-row: 2; }
+    .panel[data-panel="settings"]{ grid-column: 2; grid-row: 3; }
+
+    /* Every panel renders regardless of the [hidden] attribute the mobile
+       tab-switcher sets — on desktop all four are always on screen. */
+    .panel[hidden]{ display:block !important; }
+    .panel{
+      padding: 20px 20px 22px;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-m);
+    }
+    .panelTitle{
+      display:block; font-size:13px; font-weight:600; letter-spacing:0.02em;
+      text-transform:uppercase; color: var(--ink-dim); margin: 0 0 18px;
+    }
+
+    .saveBar{ margin: 4px 32px 0; }
+  }
 </style>
 </head>
 <body>
@@ -293,17 +325,6 @@
         <div class="heroMeta">
           <span class="heroTitle" id="heroTitle">On battery</span>
           <span class="heroSub" id="heroSub">Default</span>
-          <div class="heroTransport">
-            <button class="transportBtn" title="Previous">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 10 6V6z"/></svg>
-            </button>
-            <button class="transportBtn primary" id="playToggle" title="Play/Pause">
-              <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            </button>
-            <button class="transportBtn" title="Next">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l10 6L6 18z"/></svg>
-            </button>
-          </div>
         </div>
       </section>
 
@@ -314,8 +335,10 @@
         <button class="tab" data-tab="settings">Settings</button>
       </nav>
 
+      <div class="panelsWrap" id="panelsWrap">
       <!-- Sound -->
       <section class="panel" data-panel="sound">
+        <h2 class="panelTitle">Sound</h2>
         <div class="panelRow">
           <div class="rowHead"><span class="label">EQ preset</span><span class="aux">applies instantly</span></div>
           <div class="segGroup" id="eqSegGroup">
@@ -332,6 +355,7 @@
 
       <!-- Light -->
       <section class="panel" data-panel="light" hidden>
+        <h2 class="panelTitle">Light</h2>
         <div class="panelRow">
           <div class="toggleRow">
             <div><span class="label" style="display:block;">Lights</span><span class="rowNote" style="margin-top:2px;">Applies instantly — saved to flash with the rest of your settings</span></div>
@@ -353,6 +377,7 @@
 
       <!-- Power -->
       <section class="panel" data-panel="power" hidden>
+        <h2 class="panelTitle">Power</h2>
         <div class="gaugeRow">
           <div class="gaugeBlock">
             <svg id="battGauge" viewBox="0 0 190 112"></svg>
@@ -370,6 +395,7 @@
 
       <!-- Settings -->
       <section class="panel" data-panel="settings" hidden>
+        <h2 class="panelTitle">Settings</h2>
         <div class="panelRow">
           <div class="rowHead"><span class="label">Startup volume</span><span class="aux mono" id="stVolVal">60</span></div>
           <input type="range" id="stVolSlider" min="0" max="115" value="60">
@@ -411,6 +437,7 @@
           </div>
         </div>
       </section>
+      </div>
 
       <div class="saveBar">
         <span class="saveInfo">Flash: <span class="state" id="savedState">unsaved changes</span></span>
@@ -714,7 +741,13 @@
   let activeEq = 0; // which preset (0/1/2) is both playing right now AND shown in the Tune rack
   const EQ_NAMES = ["Default","Bass Boost One","Bass Boost Two"];
 
-  function pctFor(band, v){ return (v - band.min) / (band.max - band.min); }
+  // Bands keep their own real min/max (unchanged) for clamping values, but all
+  // five faders are drawn against one shared visual scale so they line up and
+  // 0 dB sits at the same height everywhere, instead of each fader using its
+  // own range and looking randomly offset.
+  const VIZ_MIN = Math.min(...EQ_BANDS.map(b=>b.min));
+  const VIZ_MAX = Math.max(...EQ_BANDS.map(b=>b.max));
+  function pctFor(band, v){ return (v - VIZ_MIN) / (VIZ_MAX - VIZ_MIN); }
 
   function renderEqRack(){
     const rack = $("eqRack");
@@ -739,10 +772,16 @@
         const rect = track.getBoundingClientRect();
         let p = 1 - (clientY - rect.top) / rect.height;
         p = Math.max(0, Math.min(1, p));
-        const v = Math.round((band.min + p * (band.max - band.min))*2)/2;
+        // Map the drag position against the shared visual scale, then clamp
+        // to this band's own real range — narrower bands simply top out
+        // before the top/bottom of the track, which is expected.
+        let v = VIZ_MIN + p * (VIZ_MAX - VIZ_MIN);
+        v = Math.max(band.min, Math.min(band.max, v));
+        v = Math.round(v*2)/2;
         latestState[stateKey] = v;
-        fill.style.height = (p*100) + "%";
-        thumb.style.bottom = (p*100) + "%";
+        const displayPct = pctFor(band, v);
+        fill.style.height = (displayPct*100) + "%";
+        thumb.style.bottom = (displayPct*100) + "%";
         val.textContent = v.toFixed(1);
         if (immediate) sendCommand(`${stateKey}=${v}`);
         else sendCommandThrottled(stateKey, `${stateKey}=${v}`, 90);
@@ -801,15 +840,6 @@
     if (latestState) latestState.ledBrightness = on ? 1 : 0;
     renderHeroSub();
     sendCommand("ledbright=" + (on ? 1 : 0));
-  });
-
-  // ---------- transport (local UI only - LarbyBox is an A2DP sink, doesn't expose AVRCP over this BLE service) ----------
-  let playing = true;
-  $("playToggle").addEventListener("click", ()=>{
-    playing = !playing;
-    $("playIcon").innerHTML = playing
-      ? '<path d="M8 5v14l11-7z"/>'
-      : '<path d="M7 5h4v14H7zm6 0h4v14h-4z"/>';
   });
 
   // ---------- full render from latestState ----------
