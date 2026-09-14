@@ -1,904 +1,761 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>LarbyBox — Redesign Mock</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0e0f10">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LarbyBox</title>
+<meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg: #e9eae6;
-    --frame: #dcded9;
-    --surface: #ffffff;
-    --ink: #16181b;
-    --ink-dim: #6b6e73;
-    --ink-faint: #a6a9ae;
-    --hairline: #dcdad3;
-    --hairline-strong: #c9c7bd;
-    --brass: #b9822f;
-    --brass-ink: #6e4c1c;
-    --brass-dim: rgba(185,130,47,0.12);
-    --brass-dim-strong: rgba(185,130,47,0.22);
-    --teal: #2f7d78;
-    --teal-dim: rgba(47,125,120,0.12);
-    --red: #b23b30;
-    --red-dim: rgba(178,59,48,0.10);
-    --ink-contrast: #ffffff;
-    --pill-bg: rgba(0,0,0,0.045);
-    --app-inset: rgba(255,255,255,0.6);
-    --radius-s: 6px;
-    --radius-m: 10px;
-  }
-  [data-theme="dark"]{
-    --bg: #1c1d1f;
-    --frame: #0e0f10;
-    --surface: #28292c;
-    --ink: #f1efe9;
-    --ink-dim: #9a9d9f;
-    --ink-faint: #6a6d70;
-    --hairline: #313335;
-    --hairline-strong: #45474a;
-    --brass: #d6a24a;
-    --brass-ink: #f0c98a;
-    --brass-dim: rgba(214,162,74,0.16);
-    --brass-dim-strong: rgba(214,162,74,0.32);
-    --teal: #4fb3ab;
-    --teal-dim: rgba(79,179,171,0.16);
-    --red: #d1665a;
-    --red-dim: rgba(209,102,90,0.14);
-    --ink-contrast: #16181b;
-    --pill-bg: rgba(255,255,255,0.06);
-    --app-inset: rgba(255,255,255,0.06);
-  }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-  [hidden]{ display:none !important; } /* without this, .emptyState{display:flex} (same specificity as the UA [hidden] rule) wins and the Connect screen never actually hides */
-  html,body{ margin:0; padding:0; background: var(--frame); color:var(--ink); font-family:'Space Grotesk', sans-serif; transition: background 0.2s; }
-  .serif{ font-family:'Instrument Serif', serif; }
-  .mono{ font-family:'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+:root{
+  /* Palette taken from the speaker itself: matte black box, gold Kicker
+     tweeter domes. Neutral near-black rather than a tinted one, so the gold
+     is the only warm thing on screen. */
+  --bg:#0b0b0c; --card:#151517; --card2:#1e1f22; --hair:#2a2b2f;
+  --ink:#f4f3f0; --dim:#95938d; --faint:#605e59;
+  --accent:#f0b429;        /* app chrome - the tweeter gold */
+  --onaccent:#1a1204;      /* text on top of the accent */
+  --led:#f0b429;           /* mirrors the speaker's actual LED colour */
+  /* Confirmation states stay distinct from the accent on purpose - with a
+     gold chrome, green now means "confirmed" and nothing else. */
+  --live:#f0b429; --good:#4ec97f; --bad:#e2574c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:Inter,system-ui,sans-serif;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  .stage{ min-height:100vh; display:flex; justify-content:center; padding: 40px 16px 96px; }
-  .app{
-    width:100%; max-width:404px; background: var(--bg); color:var(--ink);
-    border-radius: 22px; overflow:hidden; position:relative; transition: background 0.2s, color 0.2s;
-    box-shadow: 0 1px 0 var(--app-inset) inset, 0 24px 60px -30px rgba(20,18,12,0.45);
-  }
+/* ================= HERO ================= */
+.hero{aspect-ratio:1/0.6;position:relative;overflow:hidden;border-radius:0 0 26px 26px}
+.hero-canvas{position:absolute;inset:0;background:#0f0f10;transition:background 1.2s ease}
+.hero-canvas::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%,transparent 38%,rgba(0,0,0,.58) 100%)}
+.hero-fx{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.hero-fx i{width:42%;aspect-ratio:1;border-radius:50%}
 
-  /* ---------- Topbar ---------- */
-  .topbar{ display:flex; align-items:center; justify-content:space-between; padding: 22px 22px 0; }
-  .wordmark{ font-size:23px; font-weight:400; letter-spacing:0.01em; }
-  .statusCluster{ display:flex; align-items:center; gap:7px; }
-  .statusDot{ width:7px; height:7px; border-radius:50%; background: var(--ink-faint); flex:none; transition: background 0.3s; }
-  .statusDot.live{ background: var(--teal); box-shadow: 0 0 0 3px var(--teal-dim); }
-  .statusText{ font-size:12px; color: var(--ink-dim); }
+/* Each treatment mirrors what presets.ino actually renders, so the hero
+   describes the speaker rather than decorating the screen. */
+.hero-canvas[data-fx=off]{background:#0f0f10}
+.hero-canvas[data-fx=off] .hero-fx i{display:none}
+.hero-canvas[data-fx=breathe]{background:
+  radial-gradient(circle at 40% 30%,color-mix(in srgb,var(--led) 75%,white),transparent 55%),
+  radial-gradient(circle at 70% 75%,color-mix(in srgb,var(--led) 55%,black),transparent 50%),#0f0f10}
+.hero-canvas[data-fx=breathe] .hero-fx i{
+  background:radial-gradient(circle,color-mix(in srgb,var(--led) 60%,white),transparent 70%);
+  animation:hBreathe 2.4s ease-in-out infinite}
+@keyframes hBreathe{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:1;transform:scale(1.04)}}
+.hero-canvas[data-fx=huedrift]{background:linear-gradient(120deg,#ff5c8a,#ffcb3d,#3ddc84,#5aa9e6,#a76ce0,#ff5c8a);
+  background-size:280% 280%;animation:hDrift 6s ease infinite}
+@keyframes hDrift{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+.hero-canvas[data-fx=huedrift] .hero-fx i{display:none}
+.hero-canvas[data-fx=twotone]{background:linear-gradient(115deg,
+  color-mix(in srgb,var(--led) 85%,white),color-mix(in srgb,var(--led) 85%,white) 42%,
+  color-mix(in srgb,var(--led) 45%,#5aa9e6) 58%,color-mix(in srgb,var(--led) 45%,#5aa9e6));
+  background-size:240% 100%;animation:hTwo 5s ease-in-out infinite alternate}
+@keyframes hTwo{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+.hero-canvas[data-fx=twotone] .hero-fx i{display:none}
+.hero-canvas[data-fx=basspulse]{background:
+  radial-gradient(circle at 50% 55%,color-mix(in srgb,var(--led) 30%,#0f0f10),#0f0f10 70%)}
+.hero-canvas[data-fx=basspulse] .hero-fx i{
+  background:radial-gradient(circle,color-mix(in srgb,var(--led) 80%,white),transparent 72%);
+  animation:hPulse .95s cubic-bezier(.2,.8,.3,1) infinite}
+@keyframes hPulse{0%,100%{transform:scale(.7);opacity:.55}50%{transform:scale(1.25);opacity:1}}
+.hero-canvas[data-fx=strobe]{background:#0f0f10}
+.hero-canvas[data-fx=strobe] .hero-fx i{background:#fff;width:100%;height:100%;aspect-ratio:auto;
+  border-radius:0;animation:hStrobe 1.3s steps(1) infinite}
+@keyframes hStrobe{0%,8%{opacity:.95}9%,100%{opacity:0}}
+.hero-canvas[data-fx=sparkle]{background:
+  radial-gradient(circle at 22% 28%,#fff 0 2px,transparent 3px) 0 0/40px 40px,
+  radial-gradient(circle at 68% 62%,#fff 0 1.6px,transparent 2.6px) 0 0/32px 32px,
+  radial-gradient(circle at 45% 80%,color-mix(in srgb,var(--led) 80%,white) 0 2px,transparent 3px) 0 0/50px 50px,
+  radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--led) 22%,#0f0f10),#0f0f10 75%)}
+.hero-canvas[data-fx=sparkle] .hero-fx i{display:none}
+@media (prefers-reduced-motion:reduce){ .hero-canvas,.hero-fx i{animation:none!important} }
 
-  /* ---------- Empty / connect state ---------- */
-  .emptyState{ padding: 64px 32px 48px; text-align:center; display:flex; flex-direction:column; align-items:center; }
-  .emptyArt{ width:150px; height:150px; margin-bottom:8px; }
-  .emptyState h1{ font-family:'Instrument Serif', serif; font-style:italic; font-weight:400; font-size:30px; margin:6px 0 26px; line-height:1.15; }
-  .emptyState p{ font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin:0 0 28px; max-width:280px; }
-  .ctaConnect{
-    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;
-    background: var(--ink); color:var(--ink-contrast); border:none; border-radius: 999px;
-    padding: 15px 30px; cursor:pointer; transition: transform 0.15s, background 0.15s;
-    letter-spacing:0.01em;
-  }
-  .ctaConnect:hover{ filter: brightness(1.15); }
-  .ctaConnect:active{ transform: scale(0.97); }
-  .emptyHint{ font-size:11.5px; color: var(--ink-faint); margin-top:18px; max-width:240px; }
+.hero-top{position:absolute;top:0;left:0;right:0;padding:18px 18px 0;display:flex;align-items:center;gap:10px}
+.hero-top .name{font-weight:800;font-size:16px}
+.hero-top .spacer{flex:1}
+.hero-top .batt{font-weight:700;font-size:15px;color:var(--accent)}
+.hero-bottom{position:absolute;left:0;right:0;bottom:0;padding:0 20px 16px}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:#fff;
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;background:rgba(0,0,0,.32);
+  padding:4px 10px 4px 8px;border-radius:20px;backdrop-filter:blur(4px)}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--led);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-bottom h1{margin:0;font-size:25px;font-weight:800;letter-spacing:-.02em}
+.hero-bottom p{margin:3px 0 0;color:#d7e3dc;font-size:12.5px;font-weight:600}
 
-  /* ---------- Hero (volume dial) ---------- */
-  .hero{ padding: 8px 22px 6px; display:flex; align-items:center; gap:20px; }
-  .dialWrap{ position:relative; width:132px; height:132px; flex:none; cursor:grab; touch-action:none; user-select:none; }
-  .dialWrap:active{ cursor:grabbing; }
-  .dialWrap svg{ width:100%; height:100%; display:block; }
-  .dialCenter{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .dialNum{ font-size:34px; font-weight:600; letter-spacing:-0.01em; }
-  .dialUnit{ font-size:10.5px; color:var(--ink-dim); margin-top:1px; letter-spacing:0.03em; }
+.chips{display:flex;gap:6px;padding:12px 18px 4px;flex-wrap:wrap}
+.chip{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--card);
+  color:var(--faint);display:inline-flex;align-items:center;gap:5px}
+.chip.up{color:var(--ink)} .chip.down{color:var(--bad)}
+.chip i{width:5px;height:5px;border-radius:50%;background:currentColor;display:block}
 
-  .heroMeta{ flex:1; min-width:0; }
-  .heroTitle{ display:block; font-size:15px; font-weight:600; }
-  .heroSub{ display:block; font-size:12.5px; color:var(--ink-dim); margin-top:2px; }
+main{padding:14px 18px 0;max-width:560px;margin:0 auto}
+.view{display:none} .view.on{display:block}
 
-  /* ---------- Tabs ---------- */
-  .tabs{ display:flex; gap:2px; margin: 22px 22px 0; padding:3px; background: var(--pill-bg); border-radius: 11px; }
-  .tab{
-    flex:1; padding:9px 4px; text-align:center; font-size:12.5px; font-weight:500;
-    border:none; background:transparent; color: var(--ink-dim); border-radius:8px; cursor:pointer;
-    font-family:'Space Grotesk',sans-serif; transition: background 0.15s, color 0.15s;
-  }
-  .tab.active{ background:var(--surface); color:var(--ink); box-shadow: 0 1px 3px rgba(20,18,12,0.16); }
+/* ================= SHELF ================= */
+.shelf-hd{margin-bottom:10px}
+.shelf-hd h2{font-size:12.5px;font-weight:700;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.04em;margin:0}
+.shelf{display:flex;gap:12px;overflow-x:auto;padding:0 18px 6px;margin:0 -18px 14px}
+.shelf::-webkit-scrollbar{display:none}
+.shelf button{flex:0 0 78px;text-align:left}
+.shelf .art{width:78px;height:78px;border-radius:13px;position:relative;overflow:hidden;
+  border:2px solid transparent;background:var(--card2)}
+.shelf button.on .art{border-color:var(--accent)}
+.shelf span{display:block;font-size:10.5px;font-weight:700;margin-top:6px;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes sweep{0%{background-position:0 0}100%{background-position:200% 0}}
+.a-off{background:var(--card2)}
+.a-breathe{background:radial-gradient(circle,#a765e0,#1a0f2a 75%);animation:hBreathe 2.6s ease-in-out infinite}
+.a-huedrift{background:linear-gradient(90deg,#ff5c8a,#ffcb3d,#3ddc84,#5aa9e6,#ff5c8a);
+  background-size:220% 100%;animation:sweep 3.6s linear infinite}
+.a-twotone{background:linear-gradient(115deg,#a765e0,#a765e0 45%,#3dd0dc 55%,#3dd0dc);
+  background-size:240% 100%;animation:sweep 5s ease-in-out infinite alternate}
+.a-basspulse::after{content:'';position:absolute;inset:20%;border-radius:50%;
+  background:radial-gradient(circle,#ff4d7d,#3a0a1c 72%);animation:hPulse .95s ease-in-out infinite}
+.a-strobe::after{content:'';position:absolute;inset:0;background:#fff;animation:hStrobe 1.2s steps(1) infinite}
+.a-sparkle{background:radial-gradient(circle at 28% 30%,#fff 0 1.8px,transparent 2.6px) 0 0/26px 26px,
+  radial-gradient(circle at 68% 66%,#c86bff 0 1.6px,transparent 2.4px) 0 0/22px 22px,#0d0a14}
 
-  .panel{ padding: 22px 22px 8px; }
-  .panelTitle{ display:none; } /* shown only in the desktop dashboard layout, where tabs are gone */
-  .panelRow{ margin-bottom:26px; }
-  .panelRow:last-child{ margin-bottom:0; }
-  .rowHead{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; }
-  .rowHead .label{ font-size:13px; font-weight:600; }
-  .rowHead .aux{ font-size:11.5px; color: var(--ink-dim); }
-  .rowNote{ font-size:11.5px; color: var(--ink-faint); line-height:1.55; margin-top:10px; }
+/* ================= CONTROLS ================= */
+.group{margin-bottom:18px;transition:opacity .2s}
+.group.offline{opacity:.35;pointer-events:none}
+.group-hd{display:flex;align-items:baseline;gap:8px;margin:0 0 10px}
+.group-hd h2{font-size:12.5px;font-weight:700;margin:0;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.04em}
+.group-hd em{font-style:normal;font-size:11px;color:var(--faint);margin-left:auto}
+.offline-note{display:none;font-size:10.5px;color:var(--bad);font-weight:700;margin-left:auto}
+.group.offline .offline-note{display:block}
 
-  /* ---------- Segmented pills ---------- */
-  .segGroup{ display:flex; gap:6px; }
-  .seg{
-    flex:1; padding:9px 6px; text-align:center; font-size:12px; font-weight:500;
-    border:1px solid var(--hairline-strong); background:var(--surface); color:var(--ink-dim);
-    border-radius:9px; cursor:pointer; font-family:'Space Grotesk',sans-serif; transition:.15s;
-  }
-  .seg.active{ border-color: var(--brass); color: var(--brass-ink); background: var(--brass-dim); }
+.card{background:var(--card);border-radius:18px;padding:17px 20px;margin-bottom:12px}
+.ctl{margin-bottom:14px}
+.ctl:last-child{margin-bottom:0}
+.ctl.na{opacity:.32;pointer-events:none}
+.ctl-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.ctl-hd label{font-size:12.5px;font-weight:600;color:var(--dim)}
+.ctl-hd .val{margin-left:auto;font-size:16px;font-weight:800}
 
-  /* ---------- Equalizer faders ---------- */
-  .eqRack{ display:flex; justify-content:space-between; align-items:flex-end; height:168px; padding: 6px 4px 0; }
-  .fader{ display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; height:100%; }
-  .faderTrack{ position:relative; width:4px; flex:1; background: var(--hairline-strong); border-radius:2px; }
-  .faderFill{ position:absolute; bottom:0; left:0; width:100%; background: var(--brass); border-radius:2px; }
-  .faderThumb{
-    position:absolute; left:50%; width:20px; height:12px; background:#fff;
-    border:1px solid var(--hairline-strong); border-radius:4px; transform:translate(-50%,50%);
-    box-shadow: 0 1px 2px rgba(20,18,12,0.15); cursor: ns-resize;
-  }
-  .faderVal{ font-size:10px; color:var(--ink-dim); }
-  .faderLabel{ font-size:10.5px; color:var(--ink-faint); }
+/* the confirmation bar - the whole point of the app */
+.state{height:2px;border-radius:2px;background:var(--hair);margin-top:8px;position:relative;overflow:hidden}
+.state::after{content:'';position:absolute;inset:0;width:0;border-radius:2px;
+  transition:width .18s ease,background .18s}
+.ctl[data-s=pending] .state::after{width:60%;background:var(--live);animation:crawl 1.1s ease-in-out infinite}
+.ctl[data-s=ok] .state::after{width:100%;background:var(--good)}
+.ctl[data-s=clamp] .state::after{width:100%;background:var(--live)}
+.ctl[data-s=bad] .state::after,.ctl[data-s=gone] .state::after{width:100%;background:var(--bad)}
+@keyframes crawl{0%{left:-60%}100%{left:100%}}
+@media (prefers-reduced-motion:reduce){
+  .ctl[data-s=pending] .state::after{animation:none;width:100%;opacity:.5}
+}
+.ctl-msg{font-size:11px;margin-top:5px;min-height:13px;color:var(--faint)}
+.ctl[data-s=clamp] .ctl-msg{color:var(--live)}
+.ctl[data-s=bad] .ctl-msg,.ctl[data-s=gone] .ctl-msg{color:var(--bad)}
 
-  /* ---------- Limit sliders ---------- */
-  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:28px; background:transparent; margin:0; }
-  input[type=range]::-webkit-slider-runnable-track{ height:3px; background: var(--hairline-strong); border-radius:2px; }
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none; width:18px; height:18px; margin-top:-7.5px;
-    background:#fff; border:1px solid var(--hairline-strong); border-radius:50%; cursor:pointer;
-    box-shadow: 0 1px 3px rgba(20,18,12,0.2);
-  }
-  input[type=range]::-moz-range-track{ height:3px; background: var(--hairline-strong); border-radius:2px; }
-  input[type=range]::-moz-range-thumb{ width:16px; height:16px; background:#fff; border:1px solid var(--hairline-strong); border-radius:50%; cursor:pointer; }
+input[type=range]{-webkit-appearance:none;width:100%;height:28px;background:none;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:4px;background:var(--card2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+  background:#fff;margin-top:-9px;box-shadow:0 2px 6px rgba(0,0,0,.45)}
+input[type=range]::-moz-range-track{height:6px;border-radius:4px;background:var(--card2)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:none}
 
-  /* ---------- LED preset tiles ---------- */
-  .tileGrid{ display:grid; grid-template-columns: repeat(3,1fr); gap:9px; }
-  .tile{
-    position:relative; aspect-ratio: 1; border-radius:12px; border:1px solid var(--hairline-strong);
-    overflow:hidden; cursor:pointer; background:#0e0f10;
-  }
-  .tile.active{ border-color: var(--brass); box-shadow: 0 0 0 2px var(--brass-dim-strong); }
-  .tileSwatch{ position:absolute; inset:0; }
-  .tileName{
-    position:absolute; left:0; right:0; bottom:0; padding:7px 8px; font-size:10.5px; color:#fff;
-    background: linear-gradient(transparent, rgba(0,0,0,0.55)); font-weight:500;
-  }
-  @keyframes breathe{ 0%,100%{opacity:.35;} 50%{opacity:1;} }
-  @keyframes sparkle{ 0%,100%{ background-position: 0 0, 40% 60%, 70% 20%; } 50%{ background-position: 20% 30%, 60% 10%, 40% 80%; } }
-  @keyframes huerotate{ 0%{ filter:hue-rotate(0deg);} 100%{ filter:hue-rotate(360deg);} }
-  @keyframes rainbow{ 0%{ background-position:0% 50%;} 100%{ background-position:200% 50%;} }
-  @keyframes pulseScale{ 0%,100%{ transform:scale(1); opacity:.7;} 50%{ transform:scale(1.4); opacity:1;} }
-  .sw-breathe{ background: radial-gradient(circle at 50% 55%, #e0a755, #6e4c1c 75%); animation: breathe 2.6s ease-in-out infinite; }
-  .sw-sparkle{ background: radial-gradient(circle at 30% 30%, #fff 0 2px, transparent 3px) 0 0/26px 26px,
-                           radial-gradient(circle at 60% 65%, #fff 0 2px, transparent 3px) 0 0/26px 26px,
-                           radial-gradient(circle at 80% 25%, #fff 0 2px, transparent 3px) 0 0/26px 26px,
-                           linear-gradient(#111318,#111318);
-               animation: sparkle 2.2s steps(4) infinite; }
-  .sw-twotone{ background: linear-gradient(90deg, #b9822f 50%, #2f7d78 50%); }
-  .sw-basspulse{ background: radial-gradient(circle at 50% 50%, #2f7d78, #0c2320 70%); }
-  .sw-basspulse::after{ content:""; position:absolute; inset:30%; border-radius:50%; background:#5fd6c7; opacity:.6; animation: pulseScale 1.1s ease-in-out infinite; }
-  .sw-energyhue{ background: conic-gradient(from 0deg, #e2574c, #f0a63d, #5fd6c7, #4f6bd9, #e2574c); animation: huerotate 5s linear infinite; }
-  .sw-rainbow{ background: linear-gradient(90deg,#e2574c,#f0a63d,#e8d24a,#5fd6c7,#4f6bd9,#a463d9,#e2574c); background-size:220% 100%; animation: rainbow 3.5s linear infinite; }
+.cdots{display:flex;gap:9px;flex-wrap:wrap}
+.cdots button{width:36px;height:36px;border-radius:50%;border:2px solid transparent;
+  transition:transform .08s,border-color .15s}
+.cdots button:active{transform:scale(.9)}
+.cdots button.on{border-color:var(--ink)}
 
-  .toggleRow{ display:flex; align-items:center; justify-content:space-between; padding-top:2px; }
-  .switch{ width:44px; height:26px; border-radius:999px; background: var(--hairline-strong); position:relative; cursor:pointer; transition:.15s; flex:none; }
-  .switch.on{ background: var(--brass); }
-  .switch .knob{ position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:.15s; }
-  .switch.on .knob{ transform: translateX(18px); }
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:12px 6px;border-radius:100px;background:var(--card2);
+  font-size:12.5px;font-weight:700;color:var(--dim);min-height:44px}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
 
-  /* ---------- Power tab ---------- */
-  .gaugeRow{ display:flex; justify-content:center; margin-bottom:10px; }
-  .gaugeBlock{ width:190px; text-align:center; }
-  .gaugeBlock svg{ width:100%; height:auto; display:block; }
-  .gaugeNum{ font-size:24px; font-weight:600; margin-top:2px; }
-  .gaugeLabel{ font-size:10.5px; color:var(--ink-dim); letter-spacing:0.03em; margin-top:1px; }
+.transport{display:flex;align-items:center;justify-content:center;gap:28px;padding:2px 0 10px}
+.transport .skip{font-size:21px;color:var(--dim);font-weight:800;padding:12px 16px}
+.transport .play{width:58px;height:58px;border-radius:50%;background:var(--accent);color:var(--onaccent);
+  display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900}
+.transport button:active{transform:scale(.94)}
+.pair{width:100%;padding:13px;border-radius:100px;background:var(--card2);font-size:12.5px;
+  font-weight:700;color:var(--dim);min-height:46px}
 
-  .infoList{ display:flex; flex-direction:column; }
-  .infoRow{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--hairline); font-size:13px; }
-  .infoRow:last-child{ border-bottom:none; }
-  .infoRow .k{ color: var(--ink-dim); }
-  .infoRow .v{ font-weight:500; }
-  .infoRow.warn .v{ color: var(--red); }
-  .pillOk{ font-size:10.5px; padding:3px 9px; border-radius:999px; background:var(--teal-dim); color:var(--teal); font-weight:500; }
+.hint{font-size:11.5px;color:var(--faint);margin:0 0 12px;line-height:1.45}
+.readout{font-size:12.5px}
+.readout .r{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--hair)}
+.readout .r:last-child{border-bottom:none}
+.readout .r span:first-child{color:var(--dim);font-weight:600}
+.readout .r span:last-child{font-weight:700;font-variant-numeric:tabular-nums}
 
-  /* ---------- Settings tab ---------- */
-  .actionBtn{
-    width:100%; text-align:left; display:flex; align-items:center; justify-content:space-between;
-    padding:14px 4px; background:none; border:none; border-bottom:1px solid var(--hairline);
-    font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:var(--ink); cursor:pointer;
-  }
-  .actionBtn:last-child{ border-bottom:none; }
-  .actionBtn .chev{ color: var(--ink-faint); font-size:15px; }
-  .actionBtn.danger{ color: var(--red); }
-  .actionBtn .sub{ display:block; font-size:11px; color:var(--ink-faint); font-weight:400; margin-top:2px; }
+.log-row{display:flex;gap:8px;padding:9px 0;border-bottom:1px solid var(--hair);align-items:baseline;font-size:11.5px}
+.log-row:last-child{border-bottom:none}
+.log-row .k{flex:1;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.log-row .r{font-weight:800;font-size:10px;padding:2px 7px;border-radius:20px}
+.r.ok{color:var(--good);background:rgba(78,201,127,.12)}
+.r.clamp{color:var(--live);background:rgba(240,180,41,.12)}
+.r.bad,.r.gone{color:var(--bad);background:rgba(226,87,76,.12)}
+.r.pending{color:var(--faint);background:var(--card2)}
+.log-row .ms{color:var(--faint);width:52px;text-align:right;font-variant-numeric:tabular-nums}
+.empty{color:var(--faint);font-size:12px;padding:18px 0;text-align:center}
 
-  .primaryBtn{
-    width:100%; padding:13px; border-radius:10px; border:none; background: var(--ink); color:var(--ink-contrast);
-    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer;
-  }
+/* ================= ISLAND ================= */
+.island{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:rgba(20,26,23,.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.07);
+  border-radius:100px;padding:6px;display:flex;gap:2px;box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:30}
+.island button{padding:11px 15px;border-radius:100px;font-size:12.5px;font-weight:700;color:var(--dim);white-space:nowrap}
+.island button.on{background:var(--accent);color:var(--onaccent)}
 
-  .saveBar{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    margin: 4px 22px 0; padding: 14px 0 0; border-top:1px solid var(--hairline);
-  }
-  .saveBar .saveInfo{ font-size:11.5px; color: var(--ink-faint); }
-  .saveBar .saveInfo .state{ color: var(--ink-dim); font-weight:500; }
-  .saveBar .saveBtn{
-    padding:10px 18px; border-radius:9px; border:none; background: var(--ink); color:var(--ink-contrast);
-    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:12.5px; cursor:pointer; flex:none;
-  }
-
-  .logList{ display:flex; flex-direction:column; gap:2px; }
-  .logEntry{ display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--hairline); font-size:12px; }
-  .logEntry:last-child{ border-bottom:none; }
-  .logEntry .t{ color:var(--ink-faint); flex:none; width:64px; }
-  .logEntry .m{ color: var(--ink-dim); }
-
-  .footnote{ padding: 18px 22px 26px; font-size:10.5px; color: var(--ink-faint); text-align:center; line-height:1.6; }
-
-  /* ---------- Desktop dashboard: everything visible at once, no tabs ---------- */
-  @media (min-width: 900px){
-    .stage{ align-items:flex-start; padding: 48px 24px 96px; }
-    .app{ max-width: 1040px; border-radius: 26px; }
-
-    .hero{ padding: 26px 32px 6px; }
-
-    .tabs{ display:none; }
-
-    .panelsWrap{
-      display:grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 20px;
-      padding: 26px 32px 8px;
-      align-items:start;
-    }
-    /* Sound has the tallest content (EQ rack), give it the wide column and
-       let it span both rows so Light/Power/Settings stack neatly beside it */
-    .panel[data-panel="sound"]{ grid-column: 1; grid-row: 1 / 4; }
-    .panel[data-panel="light"]{ grid-column: 2; grid-row: 1; }
-    .panel[data-panel="power"]{ grid-column: 2; grid-row: 2; }
-    .panel[data-panel="settings"]{ grid-column: 2; grid-row: 3; }
-
-    /* Every panel renders regardless of the [hidden] attribute the mobile
-       tab-switcher sets — on desktop all four are always on screen. */
-    .panel[hidden]{ display:block !important; }
-    .panel{
-      padding: 20px 20px 22px;
-      background: var(--surface);
-      border: 1px solid var(--hairline);
-      border-radius: var(--radius-m);
-    }
-    .panelTitle{
-      display:block; font-size:13px; font-weight:600; letter-spacing:0.02em;
-      text-transform:uppercase; color: var(--ink-dim); margin: 0 0 18px;
-    }
-
-    .saveBar{ margin: 4px 32px 0; }
-  }
+.dock{position:fixed;left:0;right:0;bottom:calc(78px + env(safe-area-inset-bottom));z-index:29;
+  padding:0 18px;pointer-events:none}
+.dock-in{display:flex;gap:8px;max-width:560px;margin:0 auto;pointer-events:auto}
+.dock button{flex:1;padding:13px;border-radius:100px;font-size:13px;font-weight:800;
+  background:var(--ink);color:var(--bg);min-height:48px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.dock button.ghost{flex:0 0 auto;padding:13px 18px;background:var(--card2);color:var(--dim)}
+.err{font-size:11.5px;color:var(--bad);text-align:center;margin-bottom:7px;display:none;pointer-events:auto}
+.err.on{display:block}
 </style>
 </head>
 <body>
 
-<div class="stage">
-  <div class="app">
-
-    <div class="topbar">
-      <span class="wordmark serif">LarbyBox</span>
-      <div class="statusCluster">
-        <span class="statusDot" id="statusDot"></span>
-        <span class="statusText" id="statusText">Not connected</span>
-      </div>
-    </div>
-
-    <!-- Empty / connect state -->
-    <section class="emptyState" id="emptyState">
-      <svg class="emptyArt" viewBox="0 0 150 150" fill="none">
-        <circle cx="75" cy="75" r="70" style="stroke:var(--hairline-strong)" stroke-width="1"/>
-        <circle cx="75" cy="75" r="52" style="stroke:var(--hairline-strong)" stroke-width="1"/>
-        <circle cx="75" cy="75" r="34" style="stroke:var(--brass)" stroke-width="1.5"/>
-        <circle cx="75" cy="75" r="4" style="fill:var(--brass)"/>
-      </svg>
-      <h1 class="serif">Connect to the LarbyBox</h1>
-      <p>Once it's in range, your browser will show it in the device picker.</p>
-      <button class="ctaConnect" id="ctaConnect">Connect</button>
-      <p class="emptyHint" id="emptyHint">Works in Chrome or Edge, on desktop or Android.</p>
-      <p class="emptyHint" id="connectError" style="color:var(--red); display:none;"></p>
-    </section>
-
-    <!-- Connected app -->
-    <main id="deviceApp" hidden>
-
-      <section class="hero">
-        <div class="dialWrap">
-          <svg viewBox="0 0 132 132" id="volDial"></svg>
-          <div class="dialCenter">
-            <span class="dialNum mono" id="volNum">62</span>
-            <span class="dialUnit">of 115</span>
-          </div>
-        </div>
-        <div class="heroMeta">
-          <span class="heroTitle" id="heroTitle">On battery</span>
-          <span class="heroSub" id="heroSub">Default</span>
-        </div>
-      </section>
-
-      <nav class="tabs" id="tabs">
-        <button class="tab active" data-tab="sound">Sound</button>
-        <button class="tab" data-tab="light">Light</button>
-        <button class="tab" data-tab="power">Power</button>
-        <button class="tab" data-tab="settings">Settings</button>
-      </nav>
-
-      <div class="panelsWrap" id="panelsWrap">
-      <!-- Sound -->
-      <section class="panel" data-panel="sound">
-        <h2 class="panelTitle">Sound</h2>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">EQ preset</span><span class="aux">applies instantly</span></div>
-          <div class="segGroup" id="eqSegGroup">
-            <button class="seg active" data-lvl="0">Default</button>
-            <button class="seg" data-lvl="1">Boost 1</button>
-            <button class="seg" data-lvl="2">Boost 2</button>
-          </div>
-        </div>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">Tune "<span id="eqTuningName">Default</span>"</span><span class="aux">200 · 400 · 900 · 2k · 4kHz</span></div>
-          <div class="eqRack" id="eqRack"></div>
-        </div>
-      </section>
-
-      <!-- Light -->
-      <section class="panel" data-panel="light" hidden>
-        <h2 class="panelTitle">Light</h2>
-        <div class="panelRow">
-          <div class="toggleRow">
-            <div><span class="label" style="display:block;">Lights</span><span class="rowNote" style="margin-top:2px;">Applies instantly — saved to flash with the rest of your settings</span></div>
-            <div class="switch on" id="briSwitch"><div class="knob"></div></div>
-          </div>
-        </div>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">Preset</span><span class="aux">mirrors Encoder 2</span></div>
-          <div class="tileGrid" id="tileGrid">
-            <div class="tile active" data-pre="0"><div class="tileSwatch sw-breathe"></div><span class="tileName">Breathe</span></div>
-            <div class="tile" data-pre="1"><div class="tileSwatch sw-sparkle"></div><span class="tileName">Sparkle</span></div>
-            <div class="tile" data-pre="2"><div class="tileSwatch sw-twotone"></div><span class="tileName">Two-Tone</span></div>
-            <div class="tile" data-pre="3"><div class="tileSwatch sw-basspulse"></div><span class="tileName">Bass Pulse</span></div>
-            <div class="tile" data-pre="4"><div class="tileSwatch sw-energyhue"></div><span class="tileName">Energy Hue</span></div>
-            <div class="tile" data-pre="5"><div class="tileSwatch sw-rainbow"></div><span class="tileName">Rainbow</span></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Power -->
-      <section class="panel" data-panel="power" hidden>
-        <h2 class="panelTitle">Power</h2>
-        <div class="gaugeRow">
-          <div class="gaugeBlock">
-            <svg id="battGauge" viewBox="0 0 190 112"></svg>
-            <div class="gaugeNum mono" id="gaugeNum">—<span style="font-size:13px;color:var(--ink-dim);"> V</span></div>
-            <div class="gaugeLabel">BATTERY</div>
-          </div>
-        </div>
-        <div class="infoList">
-          <div class="infoRow"><span class="k">Power source</span><span class="v" id="powerSourceRow">On battery</span></div>
-          <div class="infoRow"><span class="k">PSU rail</span><span class="v mono" id="psuRailRow">off</span></div>
-          <div class="infoRow"><span class="k">Load rail</span><span class="v mono" id="loadRailRow">—</span></div>
-          <div class="infoRow"><span class="k">Mute status</span><span class="v" id="muteRow"><span class="pillOk">Not muted</span></span></div>
-        </div>
-      </section>
-
-      <!-- Settings -->
-      <section class="panel" data-panel="settings" hidden>
-        <h2 class="panelTitle">Settings</h2>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">Startup volume</span><span class="aux mono" id="stVolVal">60</span></div>
-          <input type="range" id="stVolSlider" min="0" max="115" value="60">
-        </div>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">Startup EQ</span></div>
-          <div class="segGroup" id="stBassGroup">
-            <button class="seg" data-lvl="0">Default</button>
-            <button class="seg active" data-lvl="1">Boost 1</button>
-            <button class="seg" data-lvl="2">Boost 2</button>
-          </div>
-          <div class="rowNote">Applies now and becomes what LarbyBox boots into next time.</div>
-        </div>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">12V ceiling</span><span class="aux mono" id="vol12Val">90</span></div>
-          <input type="range" id="vol12Slider" min="0" max="115" value="90">
-        </div>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">24V ceiling</span><span class="aux mono" id="vol24Val">115</span></div>
-          <input type="range" id="vol24Slider" min="0" max="115" value="115">
-          <div class="rowNote">Hardware safety limit for each power rail — kept even through a factory reset.</div>
-        </div>
-        <div class="panelRow" style="margin-bottom:6px;">
-          <button class="actionBtn" id="repairBtn">Re-pair Bluetooth<span class="chev">›</span></button>
-          <button class="actionBtn danger" id="factoryResetBtn">Factory reset EQ &amp; startup<span class="chev">›</span></button>
-          <button class="actionBtn" id="disconnectBtn">Disconnect<span class="chev">›</span></button>
-        </div>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">Appearance</span></div>
-          <div class="segGroup" id="themeGroup">
-            <button class="seg" data-theme="light">Light</button>
-            <button class="seg active" data-theme="dark">Dark</button>
-          </div>
-        </div>
-        <div class="panelRow">
-          <div class="rowHead"><span class="label">Event log</span><span class="aux" id="logRefresh" style="cursor:pointer; text-decoration:underline;">Refresh</span></div>
-          <div class="logList" id="logList">
-            <div class="logEntry"><span class="m" style="color:var(--ink-faint);">No entries yet — tap Refresh once connected.</span></div>
-          </div>
-        </div>
-      </section>
-      </div>
-
-      <div class="saveBar">
-        <span class="saveInfo">Flash: <span class="state" id="savedState">unsaved changes</span></span>
-        <button class="saveBtn" id="saveBtn">Save to flash</button>
-      </div>
-
-      <div class="footnote" id="footnote">Firmware LarbyBox 1.1 · service 6e400001…</div>
-    </main>
-
+<div class="hero">
+  <div class="hero-canvas" id="heroCanvas" data-fx="off"><div class="hero-fx"><i></i></div></div>
+  <div class="hero-top">
+    <span class="name">LarbyBox</span><span class="spacer"></span>
+    <span class="batt" id="battPct">--%</span>
+  </div>
+  <div class="hero-bottom">
+    <div class="live"><i></i><span id="heroBadge">Offline</span></div>
+    <h1 id="heroTitle">Not connected</h1>
+    <p id="heroSub">Connect to your speaker to begin</p>
   </div>
 </div>
 
+<div class="chips">
+  <span class="chip" id="chipLink"><i></i>offline</span>
+  <span class="chip" id="chipBt"><i></i>bluetooth</span>
+  <span class="chip" id="chipS3"><i></i>dsp</span>
+  <span class="chip" id="chipLed"><i></i>lights</span>
+  <span class="chip" id="chipV">--V</span>
+</div>
+
+<main>
+<section class="view on" id="v-panel">
+  <div class="shelf-hd"><h2>Effects</h2></div>
+  <div class="shelf" id="fxShelf"></div>
+  <div class="ctl" id="ctl-ledpreset" style="margin:-6px 0 16px"><div class="state"></div>
+    <div class="ctl-msg" id="msg-ledpreset"></div></div>
+
+  <div class="group">
+    <div class="group-hd"><h2>Colour</h2><em id="colorState">—</em></div>
+    <div class="ctl" id="ctl-ledcolor">
+      <div class="cdots" id="colGrid"></div>
+      <div class="state"></div><div class="ctl-msg" id="msg-ledcolor"></div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Levels</h2><span class="offline-note">DSP offline</span></div>
+    <div class="card">
+      <div class="ctl" id="ctl-vol">
+        <div class="ctl-hd"><label for="vol">Volume</label><span class="val" id="volVal">0</span></div>
+        <input type="range" id="vol" min="0" max="100" value="0">
+        <div class="state"></div><div class="ctl-msg" id="msg-vol"></div>
+      </div>
+      <div class="ctl" id="ctl-ledbright">
+        <div class="ctl-hd"><label for="bright">Brightness</label><span class="val" id="brightVal">128</span></div>
+        <input type="range" id="bright" min="0" max="255" value="128">
+        <div class="state"></div><div class="ctl-msg" id="msg-ledbright"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="bt">
+    <div class="group-hd"><h2>Playback</h2><span class="offline-note">Bluetooth offline</span></div>
+    <div class="transport">
+      <button class="skip" data-cmd="prev">&#10216;&#10216;</button>
+      <button class="play" data-cmd="play">&#9654;</button>
+      <button class="skip" data-cmd="next">&#10217;&#10217;</button>
+    </div>
+    <div class="ctl" id="ctl-transport"><div class="state"></div>
+      <div class="ctl-msg" id="msg-transport"></div></div>
+    <button class="pair" data-cmd="btpair" style="margin-top:10px">Disconnect for new pairing</button>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Bass</h2><span class="offline-note">DSP offline</span></div>
+    <div class="ctl" id="ctl-stbass">
+      <div class="seg" id="bassSeg">
+        <button data-v="0" class="on">Standard</button>
+        <button data-v="1">Bass 1</button>
+        <button data-v="2">Bass 2</button>
+      </div>
+      <div class="state"></div>
+      <div class="ctl-msg" id="msg-stbass">A light V. Bass 1 digs deeper; Bass 2 adds more bass again at the same treble.</div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-sound">
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Microphones</h2><span class="offline-note">DSP offline</span></div>
+    <div class="card">
+      <div class="ctl" id="ctl-mic1">
+        <div class="ctl-hd"><label for="mic1">Mic 1</label><span class="val" id="mic1Val">0</span></div>
+        <input type="range" id="mic1" min="0" max="100" value="0">
+        <div class="state"></div><div class="ctl-msg" id="msg-mic1"></div>
+      </div>
+      <div class="ctl" id="ctl-mic2">
+        <div class="ctl-hd"><label for="mic2">Mic 2</label><span class="val" id="mic2Val">0</span></div>
+        <input type="range" id="mic2" min="0" max="100" value="0">
+        <div class="state"></div><div class="ctl-msg" id="msg-mic2"></div>
+      </div>
+      <div class="ctl" id="ctl-echo">
+        <div class="ctl-hd"><label for="echo">Echo</label><span class="val" id="echoVal">0</span></div>
+        <input type="range" id="echo" min="0" max="100" value="0">
+        <div class="state"></div><div class="ctl-msg" id="msg-echo"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Tone</h2><em>one profile at a time</em>
+      <span class="offline-note">DSP offline</span></div>
+    <div class="seg" id="eqTabs" style="margin-bottom:8px">
+      <button data-v="0" class="on">Standard</button>
+      <button data-v="1">Bass 1</button>
+      <button data-v="2">Bass 2</button>
+    </div>
+    <p class="hint" id="eqHint">A light V &mdash; gentle lift at both ends.</p>
+    <div class="card">
+      <div class="ctl" id="ctl-eqb">
+        <div class="ctl-hd"><label for="eqBass">Bass</label><span class="val" id="eqBassVal">0.0 dB</span></div>
+        <input type="range" id="eqBass" min="-20" max="24" step="0.5" value="0">
+        <div class="state"></div><div class="ctl-msg" id="msg-eqb"></div>
+      </div>
+      <div class="ctl" id="ctl-eqt">
+        <div class="ctl-hd"><label for="eqTreb">Treble</label><span class="val" id="eqTrebVal">0.0 dB</span></div>
+        <input type="range" id="eqTreb" min="-20" max="20" step="0.5" value="0">
+        <div class="state"></div><div class="ctl-msg" id="msg-eqt"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Driver protection</h2><span class="offline-note">DSP offline</span></div>
+    <div class="card">
+      <div class="ctl" id="ctl-hpf">
+        <div class="ctl-hd"><label for="hpf">High-pass</label><span class="val" id="hpfVal">60 Hz</span></div>
+        <input type="range" id="hpf" min="40" max="90" value="60">
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-hpf">Below port tuning the cone unloads. Don't go under 55.</div>
+      </div>
+      <div class="ctl" id="ctl-lim">
+        <div class="ctl-hd"><label for="lim">Limiter</label><span class="val" id="limVal">-6.0 dB</span></div>
+        <input type="range" id="lim" min="-24" max="0" step="0.5" value="-6">
+        <div class="state"></div><div class="ctl-msg" id="msg-lim"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Volume ceilings</h2><em>by power source</em>
+      <span class="offline-note">DSP offline</span></div>
+    <div class="card">
+      <div class="ctl" id="ctl-vol12">
+        <div class="ctl-hd"><label for="vol12">On battery</label><span class="val" id="vol12Val">90</span></div>
+        <input type="range" id="vol12" min="0" max="115" value="90">
+        <div class="state"></div><div class="ctl-msg" id="msg-vol12"></div>
+      </div>
+      <div class="ctl" id="ctl-vol24">
+        <div class="ctl-hd"><label for="vol24">On wall power</label><span class="val" id="vol24Val">115</span></div>
+        <input type="range" id="vol24" min="0" max="115" value="115">
+        <div class="state"></div><div class="ctl-msg" id="msg-vol24"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Saving</h2><span class="offline-note">DSP offline</span></div>
+    <div class="ctl" id="ctl-save">
+      <button class="pair" data-cmd="save">Save as startup defaults</button>
+      <div class="state"></div>
+      <div class="ctl-msg" id="msg-save">Changes apply live. Saving makes them survive a reboot.</div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-power">
+  <div class="group" data-board="bt">
+    <div class="group-hd"><h2>Rails</h2><span class="offline-note">Bluetooth offline</span></div>
+    <div class="card readout">
+      <div class="r"><span>Battery</span><span id="pBatt">&mdash;</span></div>
+      <div class="r"><span>PSU</span><span id="pPsu">&mdash;</span></div>
+      <div class="r"><span>Load</span><span id="pLoad">&mdash;</span></div>
+      <div class="r"><span>Source</span><span id="pSrc">&mdash;</span></div>
+      <div class="r"><span>Protection mute</span><span id="pMute">&mdash;</span></div>
+    </div>
+  </div>
+  <div class="group">
+    <div class="group-hd"><h2>System</h2></div>
+    <div class="card readout">
+      <div class="r"><span>Firmware</span><span id="pFw">&mdash;</span></div>
+      <div class="r"><span>Protocol</span><span id="pPv">&mdash;</span></div>
+      <div class="r"><span>Uptime</span><span id="pUp">&mdash;</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-log">
+  <div class="group">
+    <div class="group-hd"><h2>Commands</h2><em>newest first</em></div>
+    <div class="card" id="logList"><div class="empty">Nothing sent yet.</div></div>
+  </div>
+</section>
+</main>
+
+<div class="dock">
+  <div class="err" id="err"></div>
+  <div class="dock-in">
+    <button id="connectBtn">Connect</button>
+    <button class="ghost" id="demoBtn">Demo</button>
+  </div>
+</div>
+
+<div class="island">
+  <button class="on" data-v="panel">Panel</button>
+  <button data-v="sound">Sound</button>
+  <button data-v="power">Power</button>
+  <button data-v="log">Activity</button>
+</div>
+
 <script>
-(function(){
-  "use strict";
-  const $ = id => document.getElementById(id);
+'use strict';
+const SVC  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const CTRL = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const STAT = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const ACK_TIMEOUT = 1200;   // past this we call it lost rather than pending
 
-  // ==================================================================
-  // REAL Web Bluetooth wiring against the actual LarbyBox 1.1 protocol
-  // ==================================================================
-  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-  const CONTROL_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"; // write / write-no-response
-  const STATE_UUID   = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"; // read / notify
-  const LOG_UUID     = "6e400004-b5a3-f393-e0a9-e50e24dcca9e"; // read / notify
+const $ = id => document.getElementById(id);
+const enc = new TextEncoder(), dec = new TextDecoder();
 
-  let bleDevice = null, controlChar = null, stateChar = null, logChar = null;
-  let latestState = null;
-  const textEncoder = new TextEncoder();
-  const textDecoder = new TextDecoder();
+let device=null, ctrlChar=null, statChar=null;
+let demo=false, seq=0, demoTick=null;
+const pending = new Map();
+let state = {};
 
-  async function sendCommand(cmd){
-    if (!controlChar) return;
-    try {
-      const bytes = textEncoder.encode(cmd);
-      if (controlChar.writeValueWithoutResponse) await controlChar.writeValueWithoutResponse(bytes);
-      else await controlChar.writeValue(bytes);
-    } catch(err){
-      console.error("BLE write failed:", cmd, err);
-    }
+/* ---------- sending ---------- */
+function send(key, value, ctlId, requested){
+  seq = (seq % 65000) + 1;
+  const cmd = seq + ':' + key + '=' + value;
+  if (ctlId){
+    pending.set(seq, {ctl:ctlId, key, ms:performance.now(), requested});
+    setCtl(ctlId, 'pending', '');
+    logAdd(seq, key, value, 'pending', null);
+    const mine = seq;
+    setTimeout(()=>{
+      if (!pending.has(mine)) return;
+      pending.delete(mine);
+      setCtl(ctlId, 'bad', 'No reply. The speaker may have dropped out.');
+      logUpdate(mine, 'bad', null);
+    }, ACK_TIMEOUT);
   }
-  // Throttle continuous-drag writes (dial/faders/sliders) so we're not
-  // flooding the control characteristic on every pointermove - the final
-  // value is always sent immediately on release via sendCommand() directly.
-  const throttleTimers = {};
-  function sendCommandThrottled(key, cmd, delay){
-    clearTimeout(throttleTimers[key]);
-    throttleTimers[key] = setTimeout(()=> sendCommand(cmd), delay || 90);
-  }
+  if (demo) return demoHandle(seq, key, value);
+  if (!ctrlChar) return;
+  ctrlChar.writeValueWithoutResponse(enc.encode(cmd))
+    .catch(e => showErr('Write failed: ' + e.message));
+}
 
-  async function connectToDevice(){
-    const btn = $("ctaConnect");
-    const errEl = $("connectError");
-    errEl.style.display = "none";
-    if (!navigator.bluetooth){
-      errEl.textContent = "This browser doesn't support Web Bluetooth. Try Chrome or Edge.";
-      errEl.style.display = "block";
-      return;
-    }
-    btn.textContent = "Connecting…";
-    btn.disabled = true;
-    try {
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [SERVICE_UUID] }],
-        optionalServices: [SERVICE_UUID]
-      });
-      bleDevice.addEventListener("gattserverdisconnected", onDisconnected);
-      const server = await bleDevice.gatt.connect();
-      const service = await server.getPrimaryService(SERVICE_UUID);
-      controlChar = await service.getCharacteristic(CONTROL_UUID);
-      stateChar = await service.getCharacteristic(STATE_UUID);
-      logChar = await service.getCharacteristic(LOG_UUID);
+function setCtl(id, s, msg){
+  const el = $('ctl-'+id); if(!el) return;
+  el.dataset.s = s;
+  const m = $('msg-'+id);
+  if (m && msg !== undefined) m.textContent = msg;
+  if (s === 'ok') setTimeout(()=>{ if(el.dataset.s==='ok') el.dataset.s=''; }, 1400);
+}
 
-      await stateChar.startNotifications();
-      stateChar.addEventListener("characteristicvaluechanged", onStateNotify);
-      await logChar.startNotifications();
-      logChar.addEventListener("characteristicvaluechanged", onLogNotify);
+/* ---------- receiving ---------- */
+function onState(json){
+  let s; try{ s = JSON.parse(json); } catch(e){ return; }
+  state = Object.assign(state, s);
+  if (s.ack) resolveAck(s.ack);
+  render();
+}
+function resolveAck(a){
+  const p = pending.get(a.seq);
+  if (!p) return;
+  pending.delete(a.seq);
+  logUpdate(a.seq, a.r, Math.round(performance.now() - p.ms));
+  if (a.r === 'ok')         setCtl(p.ctl, 'ok', '');
+  else if (a.r === 'clamp') { setCtl(p.ctl, 'clamp', 'Limited to ' + a.v + '.'); snapTo(p.key, a.v); }
+  else if (a.r === 'gone')  setCtl(p.ctl, 'gone', 'That board is not responding.');
+  else                      setCtl(p.ctl, 'bad', 'Rejected.');
+}
+// A control that stays where you dragged it after the firmware clamped the
+// value is lying. Snap it to whatever actually took effect.
+function snapTo(key, v){
+  const map = {mic1:'mic1', mic2:'mic2', echo:'echo', ledbright:'bright', vol:'vol',
+               vol12:'vol12', vol24:'vol24', hpf:'hpf', lim:'lim'};
+  const el = map[key] && $(map[key]);
+  if (el){ el.value = v; el.dispatchEvent(new Event('render')); }
+  render();
+}
 
-      // Read the current state once up front rather than waiting for the
-      // next notify (which only fires after a subsequent control write).
-      const initial = await stateChar.readValue();
-      onStateNotify({ target: { value: initial } });
+/* ---------- hero ---------- */
+const HEX = {red:'#e2574c',orange:'#f0a63d',gold:'#f0b429',green:'#3ddc84',
+             cyan:'#3dd0dc',blue:'#4a8ef0',purple:'#a765e0',magenta:'#e05ca7'};
+const NICE = {huedrift:'Hue Drift', twotone:'Two-Tone', basspulse:'Bass Pulse'};
+const label = n => NICE[n] || (n ? n.charAt(0).toUpperCase()+n.slice(1) : '\u2014');
+// Mirrors presetUsesColor() in presets.ino. The firmware is authoritative via
+// ledusescolor; this list is only the fallback before state first arrives.
+const NO_COLOR = ['off','huedrift','strobe'];
+const SUBTITLE = {
+  off:       () => 'Lights are off',
+  huedrift:  () => 'Cycling through every colour',
+  strobe:    () => 'Full white, on the beat',
+  basspulse: c  => 'Reacting to bass \u00b7 ' + label(c),
+  sparkle:   c  => 'White glints over ' + label(c),
+  twotone:   c  => label(c) + ' against its opposite',
+  breathe:   c  => 'Slow swell \u00b7 ' + label(c)
+};
 
-      onConnected();
-      requestLog();
-    } catch(err){
-      console.error("BLE connect failed:", err);
-      if (err && err.name !== "NotFoundError"){ // user cancelling the picker isn't an error worth showing
-        errEl.textContent = "Couldn't connect — " + (err.message || err.name || "unknown error") + ".";
-        errEl.style.display = "block";
-      }
-    } finally {
-      btn.textContent = "Connect";
-      btn.disabled = false;
-    }
+function updateHero(){
+  const conn = demo || !!device;
+  const fx = state.ledpname;
+  if (!conn || !fx){
+    $('heroCanvas').dataset.fx = 'off';
+    $('heroBadge').textContent = 'Offline';
+    $('heroTitle').textContent = 'Not connected';
+    $('heroSub').textContent = 'Connect to your speaker to begin';
+    return;
   }
+  const cname = (state.ledcolors && state.ledcolors[state.ledcolor]) || 'green';
+  document.documentElement.style.setProperty('--led', HEX[cname] || '#f0b429');
+  $('heroCanvas').dataset.fx = fx;
+  $('heroBadge').textContent = 'Live';
+  $('heroTitle').textContent = label(fx);
+  $('heroSub').textContent = (SUBTITLE[fx] || (c => label(c)))(cname);
+}
 
-  function onStateNotify(event){
-    const text = textDecoder.decode(event.target.value);
-    try {
-      latestState = JSON.parse(text);
-      renderState();
-    } catch(err){
-      // A truncated/partial notify (BLE MTU limits) would land here - if
-      // this fires in practice, the state JSON needs chunking on the
-      // firmware side, since the negotiated MTU wasn't large enough for
-      // one full ~450-byte payload in a single notification.
-      console.error("STATE JSON parse failed:", text, err);
-    }
-  }
+/* ---------- rendering ---------- */
+function render(){
+  const btUp = !!state.linkBt, s3Up = !!state.linkS3, conn = demo || !!device;
 
-  let logBuffer = [];
-  function onLogNotify(event){
-    const text = textDecoder.decode(event.target.value);
-    let entry;
-    try { entry = JSON.parse(text); } catch(err){ console.error("LOG JSON parse failed:", text, err); return; }
-    if (entry.seq === 0) logBuffer = []; // start of a fresh batch
-    logBuffer.unshift(entry); // stream arrives oldest-first; keep newest on top
-    renderLog();
-  }
-  function requestLog(){
-    $("logList").innerHTML = '<div class="logEntry"><span class="m" style="color:var(--ink-faint);">Loading…</span></div>';
-    sendCommand("logreq=10");
-  }
-  function formatUptime(ms){
-    const s = Math.floor(ms/1000);
-    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-    return h > 0 ? `${h}h${m}m` : `${m}m${String(sec).padStart(2,"0")}s`;
-  }
-  function renderLog(){
-    const list = $("logList");
-    if (!logBuffer.length){ list.innerHTML = '<div class="logEntry"><span class="m" style="color:var(--ink-faint);">No entries.</span></div>'; return; }
-    list.innerHTML = logBuffer.map(e =>
-      `<div class="logEntry"><span class="t mono">b${e.boot} · ${formatUptime(e.t)}</span><span class="m">${escapeHtml(e.msg)}</span></div>`
-    ).join("");
-  }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
-  }
+  chip('chipLink', conn, conn ? (demo?'demo':'connected') : 'offline');
+  chip('chipBt', conn && btUp, 'bluetooth');
+  chip('chipS3', conn && s3Up, 'dsp');
+  chip('chipLed', conn, 'lights');
 
-  function onConnected(){
-    $("emptyState").hidden = true;
-    $("deviceApp").hidden = false;
-    $("statusDot").classList.add("live");
-  }
-  function onDisconnected(){
-    controlChar = null; stateChar = null; logChar = null; latestState = null; logBuffer = [];
-    $("emptyState").hidden = false;
-    $("deviceApp").hidden = true;
-    $("statusDot").classList.remove("live");
-    $("statusText").textContent = "Not connected";
-  }
+  document.querySelectorAll('[data-board=bt]').forEach(g => g.classList.toggle('offline', conn && !btUp));
+  document.querySelectorAll('[data-board=s3]').forEach(g => g.classList.toggle('offline', conn && !s3Up));
 
-  $("ctaConnect").addEventListener("click", connectToDevice);
-  $("disconnectBtn").addEventListener("click", ()=>{
-    if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+  $('battPct').textContent = (state.batt === undefined || state.batt < 0) ? '--%' : state.batt+'%';
+  $('chipV').textContent = fmtV(state.vBatt);
+  $('pBatt').textContent = fmtV(state.vBatt);
+  $('pPsu').textContent  = fmtV(state.vPsu);
+  $('pLoad').textContent = fmtV(state.vLoad);
+  $('pSrc').textContent  = conn ? (state.onPsu ? 'wall power' : 'battery') : '\u2014';
+  $('pMute').textContent = conn ? (state.muted ? 'active \u2014 low battery' : 'off') : '\u2014';
+  $('pFw').textContent   = state.fw || '\u2014';
+  $('pPv').textContent   = state.pv !== undefined ? 'v'+state.pv : '\u2014';
+  $('pUp').textContent   = state.uptime !== undefined ? fmtUp(state.uptime) : '\u2014';
+
+  if (state.ledlist)   buildFxShelf(state.ledlist);
+  if (state.ledcolors) buildColGrid(state.ledcolors);
+  if (state.ledpreset !== undefined)
+    document.querySelectorAll('#fxShelf button').forEach(b =>
+      b.classList.toggle('on', +b.dataset.i === state.ledpreset));
+  if (state.ledcolor !== undefined && state.ledcolors){
+    document.querySelectorAll('#colGrid button').forEach(b =>
+      b.classList.toggle('on', +b.dataset.i === state.ledcolor));
+    $('colorState').textContent = label(state.ledcolors[state.ledcolor]);
+  }
+  // Firmware reports whether the active preset reads gColor at all. Dim the
+  // row rather than offering a control that would silently do nothing.
+  const uses = state.ledusescolor !== undefined
+    ? state.ledusescolor : !NO_COLOR.includes(state.ledpname);
+  $('ctl-ledcolor').classList.toggle('na', conn && !uses);
+
+  if (state.ledbright !== undefined && document.activeElement !== $('bright')){
+    $('bright').value = state.ledbright; $('brightVal').textContent = state.ledbright;
+  }
+  updateHero();
+}
+function chip(id, up, text){
+  const e = $(id); e.className = 'chip ' + (up ? 'up' : 'down');
+  e.innerHTML = '<i></i>' + text;
+}
+const fmtV = v => (v === undefined || v === -1) ? '\u2014' : v.toFixed(2)+'V';
+function fmtUp(s){ s|=0; const h=s/3600|0, m=(s%3600)/60|0;
+  return h ? (h+'h '+m+'m') : (m ? (m+'m '+(s%60)+'s') : (s+'s')); }
+
+/* ---------- effect shelf ----------
+   Names come from the board, never hardcoded. Anything without designed art
+   gets a stable colour derived from its own name, so a preset added in
+   presets.ino appears here looking deliberate rather than broken. */
+const ART = {off:'a-off',breathe:'a-breathe',huedrift:'a-huedrift',twotone:'a-twotone',
+             basspulse:'a-basspulse',strobe:'a-strobe',sparkle:'a-sparkle'};
+function fallbackArt(name){
+  let h = 0; for (const c of name) h = (h*31 + c.charCodeAt(0)) % 360;
+  return 'background:radial-gradient(circle at 50% 55%,hsl('+h+',72%,52%),hsl('+h+',70%,14%) 76%)';
+}
+let fxNames = [];
+function buildFxShelf(names){
+  if (JSON.stringify(names) === JSON.stringify(fxNames)) return;
+  fxNames = names;
+  const g = $('fxShelf'); g.innerHTML = '';
+  names.forEach((n,i) => {
+    const cls = ART[n];
+    const art = cls ? '<div class="art '+cls+'"></div>'
+                    : '<div class="art" style="'+fallbackArt(n)+'"></div>';
+    const b = document.createElement('button');
+    b.dataset.i = i;
+    b.setAttribute('aria-label', label(n));
+    b.innerHTML = art + '<span>'+label(n)+'</span>';
+    b.addEventListener('click', () => send('ledpreset', i, 'ledpreset', i));
+    g.appendChild(b);
   });
-  $("logRefresh").addEventListener("click", requestLog);
-  $("saveBtn").addEventListener("click", ()=>{
-    $("savedState").textContent = "saving…";
-    sendCommand("save=1");
+}
+let colNames = [];
+function buildColGrid(names){
+  if (JSON.stringify(names) === JSON.stringify(colNames)) return;
+  colNames = names;
+  const g = $('colGrid'); g.innerHTML = '';
+  names.forEach((n,i) => {
+    const b = document.createElement('button');
+    b.dataset.i = i;
+    b.setAttribute('aria-label', label(n));
+    b.style.background = HEX[n] || '#666';
+    b.addEventListener('click', () => send('ledcolor', i, 'ledcolor', i));
+    g.appendChild(b);
   });
-  $("factoryResetBtn").addEventListener("click", ()=>{
-    if (confirm("Reset EQ and startup settings to factory defaults? Volume ceilings are kept.")) sendCommand("reset=1");
-  });
-  document.querySelector("#repairBtn").addEventListener("click", ()=> sendCommand("btpair=1"));
+}
 
-  // ---------- tabs ----------
-  document.getElementById("tabs").addEventListener("click", e=>{
-    const btn = e.target.closest(".tab"); if(!btn) return;
-    document.querySelectorAll(".tab").forEach(t=> t.classList.toggle("active", t===btn));
-    document.querySelectorAll(".panel").forEach(p=> p.hidden = p.dataset.panel !== btn.dataset.tab);
-  });
+/* ---------- activity log ---------- */
+const logRows = [];
+function logAdd(s,k,v,r,ms){ logRows.unshift({seq:s,key:k,value:v,result:r,ms:ms});
+  if (logRows.length>60) logRows.pop(); drawLog(); }
+function logUpdate(s,r,ms){ const x = logRows.find(y=>y.seq===s);
+  if(x){ x.result=r; x.ms=ms; drawLog(); } }
+function drawLog(){
+  const el = $('logList');
+  if (!logRows.length){ el.innerHTML = '<div class="empty">Nothing sent yet.</div>'; return; }
+  el.innerHTML = logRows.map(r =>
+    '<div class="log-row"><span class="k">'+r.key+'='+r.value+'</span>'+
+    '<span class="r '+r.result+'">'+r.result+'</span>'+
+    '<span class="ms">'+(r.ms==null?'':r.ms+'ms')+'</span></div>').join('');
+}
 
-  // ---------- theme ----------
-  $("themeGroup").addEventListener("click", e=>{
-    const btn = e.target.closest(".seg"); if(!btn) return;
-    document.documentElement.dataset.theme = btn.dataset.theme;
-    document.querySelectorAll("#themeGroup .seg").forEach(b=> b.classList.toggle("active", b===btn));
-    buildVolDial();
-    buildBattGauge();
-  });
-  document.documentElement.dataset.theme = "dark";
+/* ---------- controls ---------- */
+function bindSlider(id, ctlId, key, fmt){
+  const el = $(id), out = $(id+'Val');
+  const paint = () => { if (out) out.textContent = fmt ? fmt(el.value) : el.value; };
+  el.addEventListener('input', paint);
+  el.addEventListener('render', paint);
+  el.addEventListener('change', () =>
+    send(typeof key==='function' ? key() : key, el.value, ctlId, el.value));
+  paint();
+}
+bindSlider('vol','vol','vol');
+bindSlider('mic1','mic1','mic1'); bindSlider('mic2','mic2','mic2');
+bindSlider('echo','echo','echo'); bindSlider('bright','ledbright','ledbright');
+bindSlider('vol12','vol12','vol12'); bindSlider('vol24','vol24','vol24');
+bindSlider('eqBass','eqb', () => ['b0b','b1b','b2b'][eqTab], v => (+v).toFixed(1)+' dB');
+bindSlider('eqTreb','eqt', () => ['b0t','b1t','b2t'][eqTab], v => (+v).toFixed(1)+' dB');
+bindSlider('hpf','hpf','hpf', v => v+' Hz');
+bindSlider('lim','lim','lim', v => (+v).toFixed(1)+' dB');
 
-  // ---------- polar helpers ----------
-  function polar(cx,cy,r,angleDeg){
-    const a = (angleDeg-90) * Math.PI/180;
-    return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a) };
+document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () =>
+  send(b.dataset.cmd, '1', b.dataset.cmd==='save' ? 'save' : 'transport', '1')));
+document.querySelectorAll('#bassSeg button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#bassSeg button').forEach(x => x.classList.toggle('on', x===b));
+  send('stbass', b.dataset.v, 'stbass', b.dataset.v);
+}));
+const EQ_HINTS = ['A light V \u2014 gentle lift at both ends.',
+                  'A heavier V \u2014 the same shape, dug in further.',
+                  'Bass 1 with more bass again. Treble unchanged.'];
+let eqTab = 0;
+document.querySelectorAll('#eqTabs button').forEach(b => b.addEventListener('click', () => {
+  eqTab = +b.dataset.v;
+  $('eqHint').textContent = EQ_HINTS[eqTab];
+  document.querySelectorAll('#eqTabs button').forEach(x => x.classList.toggle('on', x===b));
+}));
+document.querySelectorAll('.island button').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.island button').forEach(x => x.classList.toggle('on', x===t));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id==='v-'+t.dataset.v));
+  window.scrollTo({top:0, behavior:'smooth'});
+}));
+
+/* ---------- connection ---------- */
+function showErr(m){ const e=$('err'); e.textContent=m; e.classList.add('on');
+  setTimeout(()=>e.classList.remove('on'), 4000); }
+
+$('connectBtn').addEventListener('click', async () => {
+  if (device && device.gatt.connected){ device.gatt.disconnect(); return; }
+  if (!navigator.bluetooth) return showErr('This browser has no Web Bluetooth. Use Chrome or Edge.');
+  try{
+    device = await navigator.bluetooth.requestDevice({ filters:[{ services:[SVC] }] });
+    device.addEventListener('gattserverdisconnected', onDrop);
+    const srv = await device.gatt.connect();
+    const s = await srv.getPrimaryService(SVC);
+    ctrlChar = await s.getCharacteristic(CTRL);
+    statChar = await s.getCharacteristic(STAT);
+    await statChar.startNotifications();
+    statChar.addEventListener('characteristicvaluechanged',
+      e => onState(dec.decode(e.target.value)));
+    onState(dec.decode(await statChar.readValue()));
+    demo = false; clearInterval(demoTick); $('demoBtn').textContent = 'Demo';
+    $('connectBtn').textContent = 'Disconnect';
+    render();
+  } catch(e){
+    if (e.name !== 'NotFoundError') showErr('Could not connect: ' + e.message);
+    device = null; render();
   }
-  function arcPath(cx,cy,r,a0,a1){
-    const p0 = polar(cx,cy,r,a0), p1 = polar(cx,cy,r,a1);
-    const large = (a1-a0) % 360 > 180 ? 1 : 0;
-    return `M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+});
+function onDrop(){ device=null; ctrlChar=null; statChar=null; state={};
+  $('connectBtn').textContent='Connect'; render(); }
+
+/* ---------- demo mode ----------
+   Runs the whole interface with no hardware, faking realistic latency and
+   clamping exactly the way the firmware does, so the confirmation behaviour
+   can be judged before anything is flashed. */
+$('demoBtn').addEventListener('click', () => {
+  demo = !demo;
+  $('demoBtn').textContent = demo ? 'Stop' : 'Demo';
+  if (demo){
+    state = {fw:'LarbyBox LED 2.0', pv:1, uptime:437, batt:78, vBatt:13.1,
+             vPsu:-1, vLoad:12.9, onPsu:false, muted:false,
+             linkBt:true, linkS3:true, ledbright:128,
+             ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
+             ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
+             ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta']};
+    demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
+  } else { clearInterval(demoTick); state = {}; }
+  render();
+});
+
+const CLAMPS = {ledbright:[0,255], ledcolor:[0,7], ledpreset:[0,6], vol:[0,100],
+                mic1:[0,100], mic2:[0,100], echo:[0,100], vol12:[0,115], vol24:[0,115],
+                hpf:[55,90], lim:[-24,0], b0b:[-20,24], b0t:[-20,20]};
+function demoHandle(sq, key, value){
+  let r = 'ok', v = value;
+  const c = CLAMPS[key];
+  if (c){
+    const n = Math.max(c[0], Math.min(c[1], parseFloat(value)));
+    if (n !== parseFloat(value)){ r = 'clamp'; v = String(n); }
   }
-  function svgEl(tag, attrs){
-    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    for (const k in attrs) el.setAttribute(k, attrs[k]);
-    return el;
+  if (key === 'ledpreset'){
+    state.ledpreset = +v; state.ledpname = state.ledlist[+v] || '?';
+    state.ledusescolor = NO_COLOR.indexOf(state.ledpname) === -1;
   }
+  if (key === 'ledcolor')  state.ledcolor = +v;
+  if (key === 'ledbright') state.ledbright = +v;
+  setTimeout(()=>onState(JSON.stringify({ack:{seq:sq, r:r, k:key, v:v}})), 60 + Math.random()*140);
+}
 
-  // ---------- theme-aware palette ----------
-  const PALETTE = {
-    light: { track:"#dcdad3", brass:"#b9822f", red:"#b23b30", teal:"#2f7d78", needle:"#16181b" },
-    dark:  { track:"#3a3d40", brass:"#d6a24a", red:"#d1665a", teal:"#4fb3ab", needle:"#f1efe9" }
-  };
-  function currentTheme(){ return document.documentElement.dataset.theme === "dark" ? "dark" : "light"; }
-
-  // ---------- volume dial (270° sweep, 0-115 = VOLUME_MAX), draggable, writes "stvol=" ----------
-  // Note: the firmware has no separate "live volume" write - "stvol=" sets
-  // both the current session's volume AND what's restored on next boot in
-  // one shot. That's why this dial and the Settings "Startup volume" slider
-  // below both read/write the exact same state field (stVol).
-  const VOL_CX=66, VOL_CY=66, VOL_R=56, VOL_A0=-135, VOL_A1=135, VOL_MAX=115;
-  let volFillPath = null;
-
-  function buildVolDial(){
-    const svg = $("volDial");
-    svg.innerHTML = "";
-    const c = PALETTE[currentTheme()];
-    svg.appendChild(svgEl("path", { d: arcPath(VOL_CX,VOL_CY,VOL_R,VOL_A0,VOL_A1), stroke:c.track, "stroke-width":8, fill:"none", "stroke-linecap":"round" }));
-    volFillPath = svgEl("path", { stroke:c.brass, "stroke-width":8, fill:"none", "stroke-linecap":"round" });
-    svg.appendChild(volFillPath);
-    updateVolDialVisual(latestState ? latestState.stVol : 0);
-  }
-  function updateVolDialVisual(val){
-    const clamped = Math.max(0, Math.min(VOL_MAX, Math.round(val)));
-    const frac = clamped/VOL_MAX, sweep = VOL_A0 + (VOL_A1-VOL_A0)*frac;
-    volFillPath.setAttribute("d", frac > 0 ? arcPath(VOL_CX,VOL_CY,VOL_R,VOL_A0,sweep) : "");
-    $("volNum").textContent = clamped;
-  }
-  function setStVol(val, opts){
-    const clamped = Math.max(0, Math.min(VOL_MAX, Math.round(val)));
-    if (latestState) latestState.stVol = clamped;
-    updateVolDialVisual(clamped);
-    $("stVolSlider").value = clamped;
-    $("stVolVal").textContent = clamped;
-    renderHeroSub();
-    if (opts && opts.immediate) sendCommand("stvol=" + clamped);
-    else sendCommandThrottled("stvol", "stvol=" + clamped, 90);
-  }
-
-  // Drag the ring itself to set volume — angle 0 = top, 90 = right, 180 = bottom, -90 = left.
-  (function wireDialDrag(){
-    const wrap = $("volDial").parentElement;
-    let dragging = false;
-    function angleFromEvent(e){
-      const rect = wrap.getBoundingClientRect();
-      const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
-      const dx = e.clientX - cx, dy = e.clientY - cy;
-      let angle = Math.atan2(dy,dx) * 180/Math.PI + 90;
-      if (angle > 180) angle -= 360;
-      return angle;
-    }
-    function setFromEvent(e, immediate){
-      let angle = angleFromEvent(e);
-      if (angle > VOL_A1) angle = VOL_A1;
-      else if (angle < VOL_A0) angle = VOL_A0;
-      const frac = (angle - VOL_A0) / (VOL_A1 - VOL_A0);
-      setStVol(frac * VOL_MAX, { immediate });
-    }
-    wrap.addEventListener("pointerdown", e=>{ dragging=true; wrap.setPointerCapture(e.pointerId); setFromEvent(e,false); });
-    wrap.addEventListener("pointermove", e=>{ if(dragging) setFromEvent(e,false); });
-    wrap.addEventListener("pointerup", e=>{ if(dragging){ dragging=false; setFromEvent(e,true); } });
-    wrap.addEventListener("pointercancel", ()=> dragging=false);
-  })();
-  $("stVolSlider").addEventListener("input", ()=> setStVol(Number($("stVolSlider").value), { immediate:false }));
-  $("stVolSlider").addEventListener("change", ()=> setStVol(Number($("stVolSlider").value), { immediate:true }));
-
-  // ---------- battery gauge (semi-circle, 9.5-14.6V zones - generic 12V pack guess, adjust to taste) ----------
-  function buildBattGauge(){
-    const svg = $("battGauge");
-    svg.innerHTML = "";
-    const c = PALETTE[currentTheme()];
-    const cx=95, cy=100, r=78, min=9.5, max=14.6;
-    const val = latestState && latestState.vBatt >= 0 ? latestState.vBatt : min;
-    const a0=-90, a1=90;
-    const toAngle = v => a0 + (a1-a0) * ((Math.max(min,Math.min(max,v))-min)/(max-min));
-    const zones = [
-      {from:9.5, to:11.0, color:c.red},
-      {from:11.0, to:11.7, color:c.brass},
-      {from:11.7, to:14.6, color:c.teal}
-    ];
-    zones.forEach(z=>{
-      svg.appendChild(svgEl("path", { d: arcPath(cx,cy,r,toAngle(z.from),toAngle(z.to)), stroke:z.color, "stroke-width":9, fill:"none", "stroke-linecap":"butt", opacity:"0.85" }));
-    });
-    const tip = polar(cx,cy,r-16,toAngle(val));
-    svg.appendChild(svgEl("line", { x1:cx, y1:cy, x2:tip.x.toFixed(2), y2:tip.y.toFixed(2), stroke:c.needle, "stroke-width":2.5, "stroke-linecap":"round" }));
-    svg.appendChild(svgEl("circle", { cx, cy, r:4, fill:c.needle }));
-  }
-
-  buildVolDial();
-  buildBattGauge();
-
-  // ---------- EQ vertical faders — reads/writes b{preset}b / b{preset}m1-3 / b{preset}t ----------
-  const EQ_BANDS = [
-    { label:"Bass",     min:-20, max:24, key:n=>`b${n}b`  },
-    { label:"Low mid",  min:-12, max:12, key:n=>`b${n}m1` },
-    { label:"Mid",      min:-12, max:12, key:n=>`b${n}m2` },
-    { label:"High mid", min:-12, max:12, key:n=>`b${n}m3` },
-    { label:"Treble",   min:-20, max:20, key:n=>`b${n}t`  },
-  ];
-  let activeEq = 0; // which preset (0/1/2) is both playing right now AND shown in the Tune rack
-  const EQ_NAMES = ["Default","Bass Boost One","Bass Boost Two"];
-
-  // Bands keep their own real min/max (unchanged) for clamping values, but all
-  // five faders are drawn against one shared visual scale so they line up and
-  // 0 dB sits at the same height everywhere, instead of each fader using its
-  // own range and looking randomly offset.
-  const VIZ_MIN = Math.min(...EQ_BANDS.map(b=>b.min));
-  const VIZ_MAX = Math.max(...EQ_BANDS.map(b=>b.max));
-  function pctFor(band, v){ return (v - VIZ_MIN) / (VIZ_MAX - VIZ_MIN); }
-
-  function renderEqRack(){
-    const rack = $("eqRack");
-    rack.innerHTML = "";
-    if (!latestState) return;
-    EQ_BANDS.forEach(band=>{
-      const stateKey = band.key(activeEq);
-      const wrap = document.createElement("div"); wrap.className = "fader";
-      const val = document.createElement("span"); val.className = "faderVal mono";
-      val.textContent = Number(latestState[stateKey]).toFixed(1);
-      const track = document.createElement("div"); track.className = "faderTrack";
-      const fill = document.createElement("div"); fill.className = "faderFill";
-      const pct = pctFor(band, latestState[stateKey]);
-      fill.style.height = (pct*100) + "%";
-      const thumb = document.createElement("div"); thumb.className = "faderThumb";
-      thumb.style.bottom = (pct*100) + "%";
-      track.appendChild(fill); track.appendChild(thumb);
-      const label = document.createElement("span"); label.className = "faderLabel"; label.textContent = band.label;
-      wrap.appendChild(val); wrap.appendChild(track); wrap.appendChild(label);
-
-      function setFromClientY(clientY, immediate){
-        const rect = track.getBoundingClientRect();
-        let p = 1 - (clientY - rect.top) / rect.height;
-        p = Math.max(0, Math.min(1, p));
-        // Map the drag position against the shared visual scale, then clamp
-        // to this band's own real range — narrower bands simply top out
-        // before the top/bottom of the track, which is expected.
-        let v = VIZ_MIN + p * (VIZ_MAX - VIZ_MIN);
-        v = Math.max(band.min, Math.min(band.max, v));
-        v = Math.round(v*2)/2;
-        latestState[stateKey] = v;
-        const displayPct = pctFor(band, v);
-        fill.style.height = (displayPct*100) + "%";
-        thumb.style.bottom = (displayPct*100) + "%";
-        val.textContent = v.toFixed(1);
-        if (immediate) sendCommand(`${stateKey}=${v}`);
-        else sendCommandThrottled(stateKey, `${stateKey}=${v}`, 90);
-      }
-      let dragging = false;
-      track.addEventListener("pointerdown", e=>{ dragging=true; track.setPointerCapture(e.pointerId); setFromClientY(e.clientY,false); });
-      track.addEventListener("pointermove", e=>{ if(dragging) setFromClientY(e.clientY,false); });
-      track.addEventListener("pointerup", e=>{ if(dragging){ dragging=false; setFromClientY(e.clientY,true); } });
-      rack.appendChild(wrap);
-    });
-  }
-
-  function setActiveEq(n){
-    activeEq = n;
-    [ document.querySelectorAll("#eqSegGroup .seg"), document.querySelectorAll("#stBassGroup .seg") ].forEach(group=>{
-      group.forEach(b=> b.classList.toggle("active", Number(b.dataset.lvl)===n));
-    });
-    $("eqTuningName").textContent = EQ_NAMES[n];
-    if (latestState) latestState.stBass = n;
-    renderEqRack();
-    renderHeroSub();
-    sendCommand("stbass=" + n);
-  }
-  $("eqSegGroup").addEventListener("click", e=>{ const btn=e.target.closest(".seg"); if(btn) setActiveEq(Number(btn.dataset.lvl)); });
-  $("stBassGroup").addEventListener("click", e=>{ const btn=e.target.closest(".seg"); if(btn) setActiveEq(Number(btn.dataset.lvl)); });
-
-  // ---------- volume ceiling sliders ----------
-  function wireCeilingSlider(sliderId, valId, key){
-    const slider = $(sliderId), out = $(valId);
-    function commit(immediate){
-      const v = Number(slider.value);
-      out.textContent = v;
-      if (latestState) latestState[key] = v;
-      if (immediate) sendCommand(`${key}=${v}`);
-      else sendCommandThrottled(key, `${key}=${v}`, 90);
-    }
-    slider.addEventListener("input", ()=> commit(false));
-    slider.addEventListener("change", ()=> commit(true));
-  }
-  wireCeilingSlider("vol12Slider","vol12Val","vol12");
-  wireCeilingSlider("vol24Slider","vol24Val","vol24");
-
-  // ---------- LED preset tiles + Lights switch ----------
-  const LED_PRESET_NAMES = ["Breathe","Sparkle","Two-Tone","Bass Pulse","Energy Hue","Rainbow"];
-  $("tileGrid").addEventListener("click", e=>{
-    const tile = e.target.closest(".tile"); if(!tile) return;
-    const n = Number(tile.dataset.pre);
-    document.querySelectorAll(".tile").forEach(t=> t.classList.toggle("active", t===tile));
-    if (latestState) latestState.ledPreset = n;
-    renderHeroSub();
-    sendCommand("ledpreset=" + n);
-  });
-  $("briSwitch").addEventListener("click", ()=>{
-    const on = !$("briSwitch").classList.contains("on");
-    $("briSwitch").classList.toggle("on", on);
-    if (latestState) latestState.ledBrightness = on ? 1 : 0;
-    renderHeroSub();
-    sendCommand("ledbright=" + (on ? 1 : 0));
-  });
-
-  // ---------- full render from latestState ----------
-  function renderHeroSub(){
-    if (!latestState) return;
-    const s = latestState;
-    const lightsOn = !!s.ledBrightness;
-    const ledLabel = lightsOn ? LED_PRESET_NAMES[s.ledPreset] : "Lights off";
-    const voltage = s.vBatt >= 0 ? s.vBatt.toFixed(1) + " V" : "—";
-    $("heroSub").textContent = ledLabel + " · " + voltage;
-  }
-  function renderState(){
-    if (!latestState) return;
-    const s = latestState;
-
-    // Hero
-    updateVolDialVisual(s.stVol);
-    $("heroTitle").textContent = s.onPsu ? "On PSU power" : "On battery";
-    $("statusText").textContent = s.vBatt >= 0 ? s.vBatt.toFixed(1) + " V" : "connected";
-    renderHeroSub();
-
-    // Sound tab + Settings startup EQ (same underlying value, see setActiveEq)
-    activeEq = s.stBass;
-    document.querySelectorAll("#eqSegGroup .seg").forEach(b=> b.classList.toggle("active", Number(b.dataset.lvl)===activeEq));
-    document.querySelectorAll("#stBassGroup .seg").forEach(b=> b.classList.toggle("active", Number(b.dataset.lvl)===activeEq));
-    $("eqTuningName").textContent = EQ_NAMES[activeEq];
-    renderEqRack();
-
-    // Settings: startup volume + ceilings
-    $("stVolSlider").value = s.stVol; $("stVolVal").textContent = s.stVol;
-    $("vol12Slider").value = s.vol12; $("vol12Val").textContent = s.vol12;
-    $("vol24Slider").value = s.vol24; $("vol24Val").textContent = s.vol24;
-
-    // Light tab
-    document.querySelectorAll(".tile").forEach(t=> t.classList.toggle("active", Number(t.dataset.pre)===s.ledPreset));
-    $("briSwitch").classList.toggle("on", !!s.ledBrightness);
-
-    // Power tab
-    buildBattGauge();
-    $("gaugeNum").innerHTML = (s.vBatt >= 0 ? s.vBatt.toFixed(1) : "—") + '<span style="font-size:13px;color:var(--ink-dim);"> V</span>';
-    $("powerSourceRow").textContent = s.onPsu ? "On PSU" : "On battery";
-    $("psuRailRow").textContent = s.onPsu ? (s.vPsu >= 0 ? s.vPsu.toFixed(2) + " V" : "—") : "off";
-    $("loadRailRow").textContent = s.vLoad >= 0 ? s.vLoad.toFixed(2) + " V" : "—";
-    $("muteRow").innerHTML = s.muted
-      ? '<span class="pillOk" style="background:var(--red-dim); color:var(--red);">Muted</span>'
-      : '<span class="pillOk">Not muted</span>';
-
-    // Save state + firmware footnote
-    $("savedState").textContent = s.saved ? "saved" : "unsaved changes";
-    $("footnote").textContent = "Firmware " + s.fw + " · uptime " + formatUptime(s.uptime * 1000);
-  }
-
-  // ---------- PWA install support ----------
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch((err) => console.error("SW registration failed:", err));
-    });
-  }
-})();
+render();
 </script>
 </body>
 </html>
