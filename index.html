@@ -262,18 +262,18 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   .hero-bottom h1{font-size:30px}
   .chips{max-width:1180px;margin:0 auto;padding:14px 0 4px}
 
-  /* The tab sections become layout-transparent and each GROUP inside them
-     becomes its own card in the grid. Tabs are a phone pattern - on a wide
-     screen there's room to show everything, and the previous approach of
-     one grid item per tab meant Panel and Sound were enormous blocks while
-     Power and Activity were tiny, which is what made it look lopsided.
-     Twelve similar-sized cards balance far better than four wildly
-     different ones. */
-  main{max-width:1180px;padding:22px 24px 0;display:grid;
-       grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
-       gap:20px;align-items:start}
+  /* Multi-column, not grid. Grid aligns items into rows, so every row is as
+     tall as its tallest card and everything shorter leaves dead space under
+     it - CSS grid has no masonry. Columns pack tightly with no gaps.
+     The usual objection to columns is that content flows top-to-bottom then
+     wraps, so reading order stops matching visual order. That mattered when
+     this was four huge tab-sized blocks; with a dozen small self-contained
+     cards, each with its own heading, it reads fine. */
+  main{max-width:1180px;padding:22px 24px 0;
+       column-count:3;column-gap:20px}
   .view{display:contents!important}
-  .group{background:var(--card);border-radius:20px;padding:20px 22px;margin:0}
+  .group{background:var(--card);border-radius:20px;padding:20px 22px;
+    margin:0 0 20px;break-inside:avoid;-webkit-column-break-inside:avoid}
 
   /* Nested cards inside an already-carded group is one border too many. */
   .card{background:transparent;padding:0;margin:0}
@@ -286,16 +286,34 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   .shelf .art{width:100%;height:auto;aspect-ratio:1}
 
   .island{display:none}
-  .dock{position:static;padding:0;margin:0 auto 28px;max-width:1180px}
-  .dock-in{max-width:none;justify-content:flex-end}
-  .dock button{flex:0 0 auto;min-width:180px}
-  .dock button.ghost{min-width:0}
-  .err{text-align:right}
+  /* Floating top-right rather than pinned to the bottom of the page. On a
+     phone the bottom is where your thumb is; on a laptop it's the furthest
+     point from where you're reading, and with the page scrolling it was
+     only reachable at the very end. Connect state is something you want
+     visible and clickable the whole time. */
+  .dock{position:fixed;top:24px;right:28px;left:auto;bottom:auto;
+    padding:0;z-index:40;width:auto}
+  .dock-in{max-width:none;flex-direction:column;align-items:stretch;gap:8px}
+  .dock button{flex:0 0 auto;min-width:150px;padding:11px 18px;font-size:12.5px;
+    box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .dock button.ghost{min-width:0;
+    background:rgba(30,31,34,.92);backdrop-filter:blur(10px)}
+  .err{text-align:right;max-width:260px;margin-left:auto}
+
+  /* The hero is capped at 1180px and centred, so above roughly 1240px the
+     floating buttons sit in the empty margin beside it rather than on top
+     of it. Below that they overlap the hero's top-right corner, which is
+     empty space anyway - the title and badge are bottom-left. */
+}
+
+/* Narrower laptops - three columns gets cramped below about 1200px. */
+@media (min-width:880px) and (max-width:1199px){
+  main{column-count:2}
 }
 
 @media (min-width:1500px){
-  main{max-width:1560px}
-  .hero,.chips,.dock{max-width:1560px}
+  main{max-width:1560px;column-count:4}
+  .hero,.chips{max-width:1560px}
 }
 </style>
 </head>
