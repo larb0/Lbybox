@@ -198,6 +198,21 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .pair{width:100%;padding:13px;border-radius:100px;background:var(--card2);font-size:12.5px;
   font-weight:700;color:var(--dim);min-height:46px}
 
+.with-toggle{display:flex;gap:10px;align-items:center}
+.with-toggle input[type=range]{flex:1}
+.mute{padding:0 14px;height:38px;border-radius:100px;background:var(--card2);
+  font-size:11.5px;font-weight:700;color:var(--dim);min-width:62px}
+.mute.on{background:var(--bad);color:#fff}
+.toggle{margin-left:auto;padding:5px 14px;border-radius:100px;background:var(--card2);
+  font-size:11.5px;font-weight:700;color:var(--dim)}
+.toggle.on{background:var(--accent);color:var(--onaccent)}
+/* A card whose hardware isn't present. Distinct from .offline (a board that
+   should be there and isn't) - this one is honestly "not built yet". */
+.group.missing{opacity:.4;pointer-events:none}
+.missing-note{display:none;font-size:10.5px;color:var(--dim);font-weight:700;margin-left:auto}
+.group.missing .missing-note{display:block}
+.group.missing .offline-note{display:none}
+
 .hint{font-size:11.5px;color:var(--faint);margin:0 0 12px;line-height:1.45}
 .readout{font-size:12.5px}
 .readout .r{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--hair)}
@@ -247,41 +262,28 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   .hero-bottom h1{font-size:30px}
   .chips{max-width:1180px;margin:0 auto;padding:14px 0 4px}
 
-  /* Grid, not column-count. Multi-column flows content top-to-bottom then
-     wraps, so a tall section pushes unrelated things into the next column
-     and reading order stops matching visual order. Explicit grid placement
-     keeps each section whole and where you'd expect it. */
+  /* The tab sections become layout-transparent and each GROUP inside them
+     becomes its own card in the grid. Tabs are a phone pattern - on a wide
+     screen there's room to show everything, and the previous approach of
+     one grid item per tab meant Panel and Sound were enormous blocks while
+     Power and Activity were tiny, which is what made it look lopsided.
+     Twelve similar-sized cards balance far better than four wildly
+     different ones. */
   main{max-width:1180px;padding:22px 24px 0;display:grid;
-       grid-template-columns:1fr 1fr;gap:22px;align-items:start}
-  .view{display:block!important;background:var(--card);
-    border-radius:20px;padding:22px 24px;margin:0}
-  .view::before{content:attr(data-title);display:block;font-size:12.5px;font-weight:800;
-    letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 16px}
+       grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+       gap:20px;align-items:start}
+  .view{display:contents!important}
+  .group{background:var(--card);border-radius:20px;padding:20px 22px;margin:0}
 
-  /* Panel and Sound are the two tall ones, so they get a column each and sit
-     side by side. Power and Activity are short and fill the row beneath. */
-  #v-panel{grid-column:1;grid-row:1}
-  #v-sound{grid-column:2;grid-row:1}
-  #v-power{grid-column:1;grid-row:2}
-  #v-log{grid-column:2;grid-row:2}
+  /* Nested cards inside an already-carded group is one border too many. */
+  .card{background:transparent;padding:0;margin:0}
 
   /* No horizontal scrolling on a desktop - there's room to just show them
      all. The shelf pattern only makes sense on a phone. */
-  .shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));
-    gap:14px;overflow:visible;margin:0 0 18px;padding:0}
+  .shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));
+    gap:12px;overflow:visible;margin:0 0 4px;padding:0}
   .shelf button{flex:none;width:100%}
   .shelf .art{width:100%;height:auto;aspect-ratio:1}
-
-  /* Nested cards inside an already-carded section is one border too many. */
-  .card{background:var(--card2)}
-  .group{margin-bottom:20px}
-  .group:last-child{margin-bottom:0}
-
-  /* Readouts have plenty of width spare - two columns reads faster than one
-     long list of label/value pairs. */
-  .readout{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
-  .readout .r:nth-last-child(2):nth-child(odd){border-bottom:none}
-  .readout .r:last-child{border-bottom:none}
 
   .island{display:none}
   .dock{position:static;padding:0;margin:0 auto 28px;max-width:1180px}
@@ -291,15 +293,9 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   .err{text-align:right}
 }
 
-/* Wider still - three columns, since two leaves a lot of empty space on a
-   large monitor and these sections are all narrow by nature. */
-@media (min-width:1400px){
-  main{max-width:1560px;grid-template-columns:repeat(3,1fr)}
+@media (min-width:1500px){
+  main{max-width:1560px}
   .hero,.chips,.dock{max-width:1560px}
-  #v-panel{grid-column:1;grid-row:1/span 2}
-  #v-sound{grid-column:2;grid-row:1/span 2}
-  #v-power{grid-column:3;grid-row:1}
-  #v-log{grid-column:3;grid-row:2}
 }
 </style>
 </head>
@@ -328,10 +324,12 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
 <main>
 <section class="view on" id="v-panel" data-title="Panel">
-  <div class="shelf-hd"><h2>Effects</h2></div>
-  <div class="shelf" id="fxShelf"></div>
-  <div class="ctl" id="ctl-ledpreset" style="margin:-6px 0 16px"><div class="state"></div>
-    <div class="ctl-msg" id="msg-ledpreset"></div></div>
+  <div class="group">
+    <div class="group-hd"><h2>Effects</h2></div>
+    <div class="shelf" id="fxShelf"></div>
+    <div class="ctl" id="ctl-ledpreset"><div class="state"></div>
+      <div class="ctl-msg" id="msg-ledpreset"></div></div>
+  </div>
 
   <!-- Colour and brightness both belong to the LED board, same as the
        effect shelf above them. Neither touches the S3, so neither carries
@@ -390,23 +388,49 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 </section>
 
 <section class="view" id="v-sound" data-title="Sound & DSP">
-  <div class="group" data-board="s3">
-    <div class="group-hd"><h2>Microphones</h2><span class="offline-note">DSP offline</span></div>
+  <!-- Karaoke. Gated on data-requires="mics", which the S3 asserts in its
+       heartbeat - the firmware is the only thing that knows whether the
+       preamps and second ADC actually exist, so it's the only thing that
+       should be claiming it. Until then this whole card is visibly
+       unavailable rather than showing controls that get refused. -->
+  <div class="group" data-board="s3" data-requires="mics">
+    <div class="group-hd"><h2>Karaoke</h2>
+      <span class="offline-note">DSP offline</span>
+      <span class="missing-note">No mic hardware</span></div>
     <div class="card">
       <div class="ctl" id="ctl-mic1">
         <div class="ctl-hd"><label for="mic1">Mic 1</label><span class="val" id="mic1Val">0</span></div>
-        <input type="range" id="mic1" min="0" max="100" value="0">
+        <div class="with-toggle">
+          <input type="range" id="mic1" min="0" max="100" value="0">
+          <button class="mute" data-mute="mic1">Mute</button>
+        </div>
         <div class="state"></div><div class="ctl-msg" id="msg-mic1"></div>
       </div>
       <div class="ctl" id="ctl-mic2">
         <div class="ctl-hd"><label for="mic2">Mic 2</label><span class="val" id="mic2Val">0</span></div>
-        <input type="range" id="mic2" min="0" max="100" value="0">
+        <div class="with-toggle">
+          <input type="range" id="mic2" min="0" max="100" value="0">
+          <button class="mute" data-mute="mic2">Mute</button>
+        </div>
         <div class="state"></div><div class="ctl-msg" id="msg-mic2"></div>
       </div>
       <div class="ctl" id="ctl-echo">
         <div class="ctl-hd"><label for="echo">Echo</label><span class="val" id="echoVal">0</span></div>
         <input type="range" id="echo" min="0" max="100" value="0">
-        <div class="state"></div><div class="ctl-msg" id="msg-echo"></div>
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-echo">Also on the panel encoder.</div>
+      </div>
+      <div class="ctl" id="ctl-reverb">
+        <div class="ctl-hd"><label for="reverb">Reverb</label><span class="val" id="reverbVal">25</span></div>
+        <input type="range" id="reverb" min="0" max="100" value="25">
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-reverb">App only &mdash; set once per room rather than ridden mid-song.</div>
+      </div>
+      <div class="ctl" id="ctl-fbsup">
+        <div class="ctl-hd"><label>Feedback suppression</label>
+          <button class="toggle on" id="fbsupBtn" data-toggle="fbsup">On</button></div>
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-fbsup">Watches for a frequency ringing up and notches it automatically.</div>
       </div>
     </div>
   </div>
@@ -768,6 +792,17 @@ function drawLog(){
 }
 
 /* ---------- controls ---------- */
+// Reflect a firmware value into a slider, unless the user is currently
+// holding it - nothing is more annoying than a control that fights back
+// while you're dragging it.
+function syncSlider(id, v){
+  if (v === undefined) return;
+  const el = $(id);
+  if (!el || document.activeElement === el) return;
+  el.value = v;
+  el.dispatchEvent(new Event('render'));
+}
+
 function bindSlider(id, ctlId, key, fmt){
   const el = $(id), out = $(id+'Val');
   const paint = () => { if (out) out.textContent = fmt ? fmt(el.value) : el.value; };
@@ -779,7 +814,8 @@ function bindSlider(id, ctlId, key, fmt){
 }
 bindSlider('vol','vol','vol');
 bindSlider('mic1','mic1','mic1'); bindSlider('mic2','mic2','mic2');
-bindSlider('echo','echo','echo'); bindSlider('bright','ledbright','ledbright');
+bindSlider('echo','echo','echo');
+bindSlider('reverb','reverb','reverb'); bindSlider('bright','ledbright','ledbright');
 bindSlider('vol12','vol12','vol12'); bindSlider('vol24','vol24','vol24');
 bindSlider('eqBass','eqb', () => ['b0b','b1b','b2b'][eqTab], v => (+v).toFixed(1)+' dB');
 bindSlider('eqTreb','eqt', () => ['b0t','b1t','b2t'][eqTab], v => (+v).toFixed(1)+' dB');
@@ -872,7 +908,9 @@ $('demoBtn').addEventListener('click', () => {
              linkBt:true, linkS3:true, ledbright:128,
              ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
              ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
-             ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta']};
+             ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
+             mics:false, mic1:50, mic2:50, mic1mute:true, mic2mute:true,
+             echo:20, reverb:25, fbsup:true};
     demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
   } else { clearInterval(demoTick); state = {}; fxNames = []; colNames = []; lastUptime = null; }
   render();
