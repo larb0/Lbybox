@@ -213,6 +213,16 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .group.missing .missing-note{display:block}
 .group.missing .offline-note{display:none}
 
+.saved-pill{margin-left:auto;font-size:10px;font-weight:800;padding:3px 9px;
+  border-radius:20px;letter-spacing:.03em;text-transform:uppercase}
+.saved-pill.clean{color:var(--good);background:rgba(78,201,127,.14)}
+.saved-pill.dirty{color:var(--live);background:rgba(240,180,41,.14)}
+/* An unsaved-changes marker on the nav itself, so you don't have to be
+   looking at the Saving card to know something is pending. */
+.island button.pending::after{content:'';width:5px;height:5px;
+  border-radius:50%;background:var(--live);display:inline-block;margin-left:6px;
+  vertical-align:middle}
+
 .hint{font-size:11.5px;color:var(--faint);margin:0 0 12px;line-height:1.45}
 .readout{font-size:12.5px}
 .readout .r{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--hair)}
@@ -507,15 +517,27 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <input type="range" id="vol24" min="0" max="115" value="115">
         <div class="state"></div><div class="ctl-msg" id="msg-vol24"></div>
       </div>
+      <div class="ctl" id="ctl-startvol">
+        <div class="ctl-hd"><label for="startvol">Startup volume</label><span class="val" id="startvolVal">50</span></div>
+        <input type="range" id="startvol" min="0" max="115" value="50">
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-startvol">Always comes back at this, not wherever you left it.</div>
+      </div>
     </div>
   </div>
 
   <div class="group" data-board="s3">
-    <div class="group-hd"><h2>Saving</h2><span class="offline-note">DSP offline</span></div>
+    <div class="group-hd"><h2>Saving</h2>
+      <span class="saved-pill" id="savedPill">&mdash;</span>
+      <span class="offline-note">DSP offline</span></div>
     <div class="ctl" id="ctl-save">
       <button class="pair" data-cmd="save">Save as startup defaults</button>
       <div class="state"></div>
-      <div class="ctl-msg" id="msg-save">Changes apply live. Saving makes them survive a reboot.</div>
+      <div class="ctl-msg" id="msg-save">Saves sound <em>and</em> lighting. Changes apply live; this makes them survive a reboot.</div>
+    </div>
+    <div class="ctl" id="ctl-reset" style="margin-top:12px">
+      <button class="pair" data-cmd="reset">Reset to factory defaults</button>
+      <div class="state"></div><div class="ctl-msg" id="msg-reset"></div>
     </div>
   </div>
 </section>
@@ -529,6 +551,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="r"><span>Load</span><span id="pLoad">&mdash;</span></div>
       <div class="r"><span>Source</span><span id="pSrc">&mdash;</span></div>
       <div class="r"><span>Protection mute</span><span id="pMute">&mdash;</span></div>
+      <div class="r"><span>Amp current</span><span id="pAmpA">&mdash;</span></div>
+      <div class="r"><span>Amp power</span><span id="pAmpW">&mdash;</span></div>
     </div>
   </div>
   <div class="group">
@@ -539,12 +563,189 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="r"><span>Uptime</span><span id="pUp">&mdash;</span></div>
     </div>
   </div>
+
+  <!-- Everything here was previously visible only on a serial cable. A box
+       that lives in a cupboard and gets carried to parties is exactly the
+       thing you can't plug a laptop into when it misbehaves. -->
+  <div class="group">
+    <div class="group-hd"><h2>Diagnostics</h2></div>
+    <div class="card readout">
+      <div class="r"><span>DSP load</span><span id="pCpu">&mdash;</span></div>
+      <div class="r"><span>Audio dropouts</span><span id="pUnder">&mdash;</span></div>
+      <div class="r"><span>BT board restarts</span><span id="pBtReb">&mdash;</span></div>
+      <div class="r"><span>DSP restarts</span><span id="pS3Reb">&mdash;</span></div>
+    </div>
+    <p class="hint" id="cpuHint" style="margin:12px 0 0"></p>
+  </div>
 </section>
 
 <section class="view" id="v-log" data-title="Activity">
   <div class="group">
     <div class="group-hd"><h2>Commands</h2><em>newest first</em></div>
     <div class="card" id="logList"><div class="empty">Nothing sent yet.</div></div>
+  </div>
+</section>
+
+<!-- ================== ADVANCED ================== -->
+<section class="view" id="v-adv" data-title="Advanced">
+  <div class="group">
+    <div class="group-hd"><h2>Tuning</h2><em>live</em></div>
+    <p class="hint">Every value here was set by reasoning, not by listening &mdash;
+      none of it had ever run when it was written. Changes apply instantly so
+      you can hear them; nothing persists until you save.</p>
+    <div class="row" style="margin-bottom:4px">
+      <button data-cmd="tGet">Load current</button>
+      <button data-cmd="tSave">Save tuning</button>
+    </div>
+    <div class="ctl" id="ctl-tSave"><div class="state"></div>
+      <div class="ctl-msg" id="msg-tSave"></div></div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Light response</h2><span class="offline-note">DSP offline</span></div>
+    <p class="hint">How hot each band reads before it pins at full. Lower if the
+      lights sit maxed out.</p>
+    <div class="card">
+      <div class="ctl" id="ctl-tSpecBass">
+        <div class="ctl-hd"><label for="tSpecBass">Bass scale</label><span class="val" id="tSpecBassVal">0.55</span></div>
+        <input type="range" id="tSpecBass" min="0.05" max="4" step="0.05" value="0.55">
+        <div class="state"></div><div class="ctl-msg" id="msg-tSpecBass"></div>
+      </div>
+      <div class="ctl" id="ctl-tSpecMid">
+        <div class="ctl-hd"><label for="tSpecMid">Mid scale</label><span class="val" id="tSpecMidVal">0.75</span></div>
+        <input type="range" id="tSpecMid" min="0.05" max="4" step="0.05" value="0.75">
+        <div class="state"></div><div class="ctl-msg" id="msg-tSpecMid"></div>
+      </div>
+      <div class="ctl" id="ctl-tSpecTreb">
+        <div class="ctl-hd"><label for="tSpecTreb">Treble scale</label><span class="val" id="tSpecTrebVal">0.90</span></div>
+        <input type="range" id="tSpecTreb" min="0.05" max="4" step="0.05" value="0.90">
+        <div class="state"></div><div class="ctl-msg" id="msg-tSpecTreb"></div>
+      </div>
+      <div class="ctl" id="ctl-tSpecFloor">
+        <div class="ctl-hd"><label for="tSpecFloor">Silence floor</label><span class="val" id="tSpecFloorVal">0.0060</span></div>
+        <input type="range" id="tSpecFloor" min="0.0005" max="0.05" step="0.0005" value="0.006">
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-tSpecFloor">Below this, lights go dark rather than amplifying hiss.</div>
+      </div>
+      <div class="ctl" id="ctl-tSpecRel">
+        <div class="ctl-hd"><label for="tSpecRel">Level memory</label><span class="val" id="tSpecRelVal">6000 ms</span></div>
+        <input type="range" id="tSpecRel" min="500" max="20000" step="250" value="6000">
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-tSpecRel">Longer = slower to follow volume changes, but less breathing.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-hd"><h2>Light behaviour</h2></div>
+    <p class="hint">Attack and release do more for how the speaker looks than
+      any of the effect maths.</p>
+    <div class="card">
+      <div class="ctl" id="ctl-lEnvAtk">
+        <div class="ctl-hd"><label for="lEnvAtk">Attack</label><span class="val" id="lEnvAtkVal">0.55</span></div>
+        <input type="range" id="lEnvAtk" min="0.02" max="1" step="0.01" value="0.55">
+        <div class="state"></div><div class="ctl-msg" id="msg-lEnvAtk">Higher = punchier on the kick.</div>
+      </div>
+      <div class="ctl" id="ctl-lEnvRel">
+        <div class="ctl-hd"><label for="lEnvRel">Release</label><span class="val" id="lEnvRelVal">0.07</span></div>
+        <input type="range" id="lEnvRel" min="0.005" max="0.5" step="0.005" value="0.07">
+        <div class="state"></div><div class="ctl-msg" id="msg-lEnvRel">Lower = smoother, less flicker between hits.</div>
+      </div>
+      <div class="ctl" id="ctl-lSparkle">
+        <div class="ctl-hd"><label for="lSparkle">Sparkle rate</label><span class="val" id="lSparkleVal">1.00</span></div>
+        <input type="range" id="lSparkle" min="0.2" max="4" step="0.05" value="1">
+        <div class="state"></div><div class="ctl-msg" id="msg-lSparkle">Lower = busier.</div>
+      </div>
+      <div class="ctl" id="ctl-lFade">
+        <div class="ctl-hd"><label for="lFade">Sparkle decay</label><span class="val" id="lFadeVal">22</span></div>
+        <input type="range" id="lFade" min="4" max="90" step="1" value="22">
+        <div class="state"></div><div class="ctl-msg" id="msg-lFade">Higher = glints die faster.</div>
+      </div>
+      <div class="ctl" id="ctl-lStrobeLo">
+        <div class="ctl-hd"><label for="lStrobeLo">Strobe gap min</label><span class="val" id="lStrobeLoVal">70 ms</span></div>
+        <input type="range" id="lStrobeLo" min="30" max="600" step="10" value="70">
+        <div class="state"></div><div class="ctl-msg" id="msg-lStrobeLo"></div>
+      </div>
+      <div class="ctl" id="ctl-lStrobeHi">
+        <div class="ctl-hd"><label for="lStrobeHi">Strobe gap max</label><span class="val" id="lStrobeHiVal">420 ms</span></div>
+        <input type="range" id="lStrobeHi" min="60" max="2000" step="20" value="420">
+        <div class="state"></div><div class="ctl-msg" id="msg-lStrobeHi"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button data-cmd="ltGet">Load current</button>
+      <button data-cmd="ltSave">Save lights</button>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Compressor</h2><span class="offline-note">DSP offline</span></div>
+    <div class="card">
+      <div class="ctl" id="ctl-tCompThL">
+        <div class="ctl-hd"><label for="tCompThL">Bass threshold</label><span class="val" id="tCompThLVal">-18.0 dB</span></div>
+        <input type="range" id="tCompThL" min="-40" max="0" step="0.5" value="-18">
+        <div class="state"></div><div class="ctl-msg" id="msg-tCompThL"></div>
+      </div>
+      <div class="ctl" id="ctl-tCompRaL">
+        <div class="ctl-hd"><label for="tCompRaL">Bass ratio</label><span class="val" id="tCompRaLVal">3.0</span></div>
+        <input type="range" id="tCompRaL" min="1" max="12" step="0.1" value="3">
+        <div class="state"></div><div class="ctl-msg" id="msg-tCompRaL"></div>
+      </div>
+      <div class="ctl" id="ctl-tCompThM">
+        <div class="ctl-hd"><label for="tCompThM">Mid threshold</label><span class="val" id="tCompThMVal">-15.0 dB</span></div>
+        <input type="range" id="tCompThM" min="-40" max="0" step="0.5" value="-15">
+        <div class="state"></div><div class="ctl-msg" id="msg-tCompThM"></div>
+      </div>
+      <div class="ctl" id="ctl-tCompRaM">
+        <div class="ctl-hd"><label for="tCompRaM">Mid ratio</label><span class="val" id="tCompRaMVal">2.5</span></div>
+        <input type="range" id="tCompRaM" min="1" max="12" step="0.1" value="2.5">
+        <div class="state"></div><div class="ctl-msg" id="msg-tCompRaM"></div>
+      </div>
+      <div class="ctl" id="ctl-tCompThH">
+        <div class="ctl-hd"><label for="tCompThH">Treble threshold</label><span class="val" id="tCompThHVal">-12.0 dB</span></div>
+        <input type="range" id="tCompThH" min="-40" max="0" step="0.5" value="-12">
+        <div class="state"></div><div class="ctl-msg" id="msg-tCompThH"></div>
+      </div>
+      <div class="ctl" id="ctl-tCompRaH">
+        <div class="ctl-hd"><label for="tCompRaH">Treble ratio</label><span class="val" id="tCompRaHVal">2.0</span></div>
+        <input type="range" id="tCompRaH" min="1" max="12" step="0.1" value="2">
+        <div class="state"></div><div class="ctl-msg" id="msg-tCompRaH"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Thermal &amp; limiter</h2><span class="offline-note">DSP offline</span></div>
+    <div class="card">
+      <div class="ctl" id="ctl-tRmsHi">
+        <div class="ctl-hd"><label for="tRmsHi">Backoff threshold</label><span class="val" id="tRmsHiVal">0.45</span></div>
+        <input type="range" id="tRmsHi" min="0.1" max="0.9" step="0.01" value="0.45">
+        <div class="state"></div><div class="ctl-msg" id="msg-tRmsHi">Sustained level that counts as working hard.</div>
+      </div>
+      <div class="ctl" id="ctl-tRmsLo">
+        <div class="ctl-hd"><label for="tRmsLo">Recovery threshold</label><span class="val" id="tRmsLoVal">0.30</span></div>
+        <input type="range" id="tRmsLo" min="0.05" max="0.85" step="0.01" value="0.30">
+        <div class="state"></div><div class="ctl-msg" id="msg-tRmsLo"></div>
+      </div>
+      <div class="ctl" id="ctl-tRmsMin">
+        <div class="ctl-hd"><label for="tRmsMin">Max backoff</label><span class="val" id="tRmsMinVal">0.75</span></div>
+        <input type="range" id="tRmsMin" min="0.3" max="1" step="0.01" value="0.75">
+        <div class="state"></div><div class="ctl-msg" id="msg-tRmsMin">How far it's allowed to pull back.</div>
+      </div>
+      <div class="ctl" id="ctl-tLimAtk">
+        <div class="ctl-hd"><label for="tLimAtk">Limiter attack</label><span class="val" id="tLimAtkVal">0.5 ms</span></div>
+        <input type="range" id="tLimAtk" min="0.05" max="20" step="0.05" value="0.5">
+        <div class="state"></div><div class="ctl-msg" id="msg-tLimAtk"></div>
+      </div>
+      <div class="ctl" id="ctl-tLimRel">
+        <div class="ctl-hd"><label for="tLimRel">Limiter release</label><span class="val" id="tLimRelVal">120 ms</span></div>
+        <input type="range" id="tLimRel" min="10" max="1000" step="5" value="120">
+        <div class="state"></div><div class="ctl-msg" id="msg-tLimRel"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button data-cmd="tReset">Reset all DSP tuning</button>
+    </div>
   </div>
 </section>
 </main>
@@ -562,6 +763,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   <button data-v="sound">Sound</button>
   <button data-v="power">Power</button>
   <button data-v="log">Activity</button>
+  <button data-v="adv">Advanced</button>
 </div>
 
 <script>
@@ -630,6 +832,7 @@ function onState(chunk){
   }
   rxBuf = '';
   checkForReboot(s);
+  applyTuning(s);
   state = Object.assign(state, s);
   if (s.ack) resolveAck(s.ack);
   render();
@@ -712,9 +915,54 @@ function render(){
   $('pLoad').textContent = fmtV(state.vLoad);
   $('pSrc').textContent  = conn ? (state.onPsu ? 'wall power' : 'battery') : '\u2014';
   $('pMute').textContent = conn ? (state.muted ? 'active \u2014 low battery' : 'off') : '\u2014';
+  // -1 means the INA226 isn't answering, same sentinel the INA219s use.
+  $('pAmpA').textContent = (state.ampA === undefined || state.ampA < 0)
+    ? '\u2014' : state.ampA.toFixed(2) + ' A';
+  $('pAmpW').textContent = (state.ampW === undefined || state.ampW < 0)
+    ? '\u2014' : state.ampW.toFixed(1) + ' W';
   $('pFw').textContent   = state.fw || '\u2014';
   $('pPv').textContent   = state.pv !== undefined ? 'v'+state.pv : '\u2014';
   $('pUp').textContent   = state.uptime !== undefined ? fmtUp(state.uptime) : '\u2014';
+
+  // Saved state, combined across boards. The LED board and the S3 each track
+  // their own dirty flag, but the user pressed one Save button and thinks of
+  // it as one speaker - so unsaved on either means unsaved, full stop.
+  // Undefined (board absent) doesn't count as dirty; only an explicit false.
+  const dirtyBits = [state.saved, state.ledsaved];
+  const anyKnown = dirtyBits.some(v => v !== undefined);
+  const anyDirty = dirtyBits.some(v => v === false);
+  const pill = $('savedPill');
+  if (!anyKnown){ pill.className = 'saved-pill'; pill.textContent = '\u2014'; }
+  else if (anyDirty){ pill.className = 'saved-pill dirty'; pill.textContent = 'Unsaved'; }
+  else { pill.className = 'saved-pill clean'; pill.textContent = 'Saved'; }
+  document.querySelector('.island button[data-v=sound]')
+    ?.classList.toggle('pending', anyDirty);
+  // Lights live on the Panel tab, so mark that one when they're what changed.
+  document.querySelector('.island button[data-v=panel]')
+    ?.classList.toggle('pending', state.ledsaved === false);
+
+  syncSlider('startvol', state.startvol);
+
+  // Diagnostics. cpu is worst-case block time as a percentage of the budget
+  // - the max, not the average, because one late block is an audible
+  // dropout rather than a gentle slowdown.
+  $('pCpu').textContent   = state.cpu !== undefined ? state.cpu + '%' : '\u2014';
+  $('pUnder').textContent = state.underruns !== undefined ? state.underruns : '\u2014';
+  $('pBtReb').textContent = state.btReboots !== undefined ? state.btReboots : '\u2014';
+  $('pS3Reb').textContent = state.s3Reboots !== undefined ? state.s3Reboots : '\u2014';
+
+  const hint = $('cpuHint');
+  if (state.cpu === undefined) hint.textContent = '';
+  else if (state.cpu < 35) hint.textContent = 'Comfortable. Room for the mic path.';
+  else if (state.cpu < 60) hint.textContent = 'Fine today, but karaoke roughly doubles this.';
+  else if (state.cpu < 85) hint.textContent = 'Tight. Optimise before adding anything.';
+  else hint.textContent = 'Over budget \u2014 dropouts likely.';
+
+  // Colour the restart counts only when non-zero, so they read as normal
+  // rather than alarming when nothing has gone wrong.
+  $('pBtReb').style.color = state.btReboots ? 'var(--bad)' : '';
+  $('pS3Reb').style.color = state.s3Reboots ? 'var(--bad)' : '';
+  $('pUnder').style.color = state.underruns ? 'var(--bad)' : '';
 
   if (!conn){ $('fxShelf').innerHTML = ''; $('colGrid').innerHTML = ''; }
   if (state.ledlist)   buildFxShelf(state.ledlist);
@@ -835,6 +1083,48 @@ bindSlider('mic1','mic1','mic1'); bindSlider('mic2','mic2','mic2');
 bindSlider('echo','echo','echo');
 bindSlider('reverb','reverb','reverb'); bindSlider('bright','ledbright','ledbright');
 bindSlider('vol12','vol12','vol12'); bindSlider('vol24','vol24','vol24');
+bindSlider('startvol','startvol','startvol');
+
+// --- advanced tuning ---
+// Bound the same way as everything else, so they inherit the confirmation
+// states, clamping feedback and activity logging for free.
+const f2 = v => (+v).toFixed(2);
+const f4 = v => (+v).toFixed(4);
+const ms = v => Math.round(+v) + ' ms';
+const db = v => (+v).toFixed(1) + ' dB';
+bindSlider('tSpecBass','tSpecBass','tSpecBass', f2);
+bindSlider('tSpecMid','tSpecMid','tSpecMid', f2);
+bindSlider('tSpecTreb','tSpecTreb','tSpecTreb', f2);
+bindSlider('tSpecFloor','tSpecFloor','tSpecFloor', f4);
+bindSlider('tSpecRel','tSpecRel','tSpecRel', ms);
+bindSlider('tCompThL','tCompThL','tCompThL', db);
+bindSlider('tCompThM','tCompThM','tCompThM', db);
+bindSlider('tCompThH','tCompThH','tCompThH', db);
+bindSlider('tCompRaL','tCompRaL','tCompRaL', f2);
+bindSlider('tCompRaM','tCompRaM','tCompRaM', f2);
+bindSlider('tCompRaH','tCompRaH','tCompRaH', f2);
+bindSlider('tRmsHi','tRmsHi','tRmsHi', f2);
+bindSlider('tRmsLo','tRmsLo','tRmsLo', f2);
+bindSlider('tRmsMin','tRmsMin','tRmsMin', f2);
+bindSlider('tLimAtk','tLimAtk','tLimAtk', v => (+v).toFixed(2) + ' ms');
+bindSlider('tLimRel','tLimRel','tLimRel', ms);
+bindSlider('lEnvAtk','lEnvAtk','lEnvAtk', f2);
+bindSlider('lEnvRel','lEnvRel','lEnvRel', v => (+v).toFixed(3));
+bindSlider('lSparkle','lSparkle','lSparkle', f2);
+bindSlider('lFade','lFade','lFade', v => Math.round(+v));
+bindSlider('lStrobeLo','lStrobeLo','lStrobeLo', ms);
+bindSlider('lStrobeHi','lStrobeHi','lStrobeHi', ms);
+
+// Tuning arrives as its own message rather than in the heartbeat - sixteen
+// values that only change while someone is actively tuning don't belong in
+// a once-a-second broadcast.
+const TUNE_KEYS = ['tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel',
+  'tCompThL','tCompThM','tCompThH','tCompRaL','tCompRaM','tCompRaH',
+  'tRmsHi','tRmsLo','tRmsMin','tLimAtk','tLimRel',
+  'lEnvAtk','lEnvRel','lSparkle','lFade','lStrobeLo','lStrobeHi'];
+function applyTuning(s){
+  TUNE_KEYS.forEach(k => { if (s[k] !== undefined) syncSlider(k, s[k]); });
+}
 bindSlider('eqBass','eqb', () => ['b0b','b1b','b2b'][eqTab], v => (+v).toFixed(1)+' dB');
 bindSlider('eqTreb','eqt', () => ['b0t','b1t','b2t'][eqTab], v => (+v).toFixed(1)+' dB');
 bindSlider('hpf','hpf','hpf', v => v+' Hz');
@@ -894,6 +1184,10 @@ $('connectBtn').addEventListener('click', async () => {
     statChar.addEventListener('characteristicvaluechanged',
       e => onState(dec.decode(e.target.value)));
     onState(dec.decode(await statChar.readValue()));
+    // Pull both tuning sets immediately - sliders showing compiled-in
+    // defaults while the hardware runs something else would be worse than
+    // showing nothing.
+    setTimeout(() => { send('ltGet','1'); send('tGet','1'); }, 300);
     demo = false; clearInterval(demoTick); $('demoBtn').textContent = 'Demo';
     $('connectBtn').textContent = 'Disconnect';
     render();
@@ -922,11 +1216,12 @@ $('demoBtn').addEventListener('click', () => {
   $('demoBtn').textContent = demo ? 'Stop' : 'Demo';
   if (demo){
     state = {fw:'LarbyBox LED 2.0', pv:1, uptime:437, batt:78, vBatt:13.1,
-             vPsu:-1, vLoad:12.9, onPsu:false, muted:false,
+             vPsu:-1, vLoad:12.9, onPsu:false, muted:false, ampA:2.4, ampW:31.4,
              linkBt:true, linkS3:true, ledbright:128,
              ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
              ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
              ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
+             saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0,
              mics:false, mic1:50, mic2:50, mic1mute:true, mic2mute:true,
              echo:20, reverb:25, fbsup:true};
     demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
@@ -949,6 +1244,11 @@ function demoHandle(sq, key, value){
     state.ledusescolor = NO_COLOR.indexOf(state.ledpname) === -1;
   }
   if (key === 'ledcolor')  state.ledcolor = +v;
+  const persisted = ['stbass','hpf','lim','benh','vol12','vol24','startvol',
+                     'mic1','mic2','echo','reverb','fbsup'];
+  if (persisted.includes(key) || /^b[0-2][bt]$/.test(key)) state.saved = false;
+  if (['ledpreset','ledcolor','ledbright'].includes(key)) state.ledsaved = false;
+  if (key === 'save' || key === 'reset'){ state.saved = true; state.ledsaved = true; }
   if (key === 'ledbright') state.ledbright = +v;
   setTimeout(()=>onState(JSON.stringify({ack:{seq:sq, r:r, k:key, v:v}})), 60 + Math.random()*140);
 }
