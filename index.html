@@ -553,6 +553,10 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="r"><span>Protection mute</span><span id="pMute">&mdash;</span></div>
       <div class="r"><span>Amp current</span><span id="pAmpA">&mdash;</span></div>
       <div class="r"><span>Amp power</span><span id="pAmpW">&mdash;</span></div>
+      <div class="r"><span>Battery sensor</span><span id="pBattSt">&mdash;</span></div>
+    </div>
+    <p class="hint" id="battHint" style="margin:10px 0 0;color:var(--bad)"></p>
+    <div style="display:none">
     </div>
   </div>
   <div class="group">
@@ -574,6 +578,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="r"><span>Audio dropouts</span><span id="pUnder">&mdash;</span></div>
       <div class="r"><span>BT board restarts</span><span id="pBtReb">&mdash;</span></div>
       <div class="r"><span>DSP restarts</span><span id="pS3Reb">&mdash;</span></div>
+      <div class="r"><span>BLE notify rejected</span><span id="pBleFail">&mdash;</span></div>
+      <div class="r"><span>BLE messages dropped</span><span id="pBleDrop">&mdash;</span></div>
     </div>
     <p class="hint" id="cpuHint" style="margin:12px 0 0"></p>
   </div>
@@ -771,7 +777,14 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 const SVC  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CTRL = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const STAT = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-const ACK_TIMEOUT = 1200;   // past this we call it lost rather than pending
+// Ordinary commands answer in tens of milliseconds. Save and reset are
+// different: the LED board holds its ack until the S3 confirms its own
+// flash write, and gives up at 1500ms. This timeout MUST be longer than
+// that plus transmission, or every successful save reports "no reply"
+// moments before the real answer lands.
+const ACK_TIMEOUT = 1200;
+const ACK_TIMEOUT_SLOW = 3000;
+const SLOW_CMDS = ['save','reset','tSave','tReset','ltSave','ltReset'];
 
 const $ = id => document.getElementById(id);
 const enc = new TextEncoder(), dec = new TextDecoder();
@@ -782,25 +795,85 @@ const pending = new Map();
 let state = {};
 
 /* ---------- sending ---------- */
-function send(key, value, ctlId, requested){
+// ---------------------------------------------------------------------------
+//  Outgoing command queue
+// ---------------------------------------------------------------------------
+//  Writes used to be fired the moment they were generated. Dragging a slider
+//  produces a burst of them, and overlapping GATT writes on the same
+//  characteristic are not reliably ordered - some stacks reject the second
+//  one outright. Serialising through a queue makes ordering deterministic
+//  and gives each write a definite success or failure.
+//
+//  Slider coalescing: only the LATEST value for a given key needs to reach
+//  the speaker. If three updates for the same slider are waiting, the older
+//  two are stale by definition - dropping them keeps the queue short and the
+//  control responsive instead of replaying a drag that already finished.
+const txQueue = [];
+let txBusy = false;
+
+function enqueue(item){
+  if (item.coalesce) {
+    for (let i = txQueue.length - 1; i >= 0; i--) {
+      if (txQueue[i].coalesce && txQueue[i].key === item.key) {
+        // Supersede the older value - and resolve its control state now, so
+        // it doesn't sit "pending" forever waiting for an ack that will
+        // never come because the write was never sent.
+        const old = txQueue.splice(i, 1)[0];
+        pending.delete(old.seq);
+        logUpdate(old.seq, 'ok', 0);
+      }
+    }
+  }
+  txQueue.push(item);
+  drainQueue();
+}
+
+async function drainQueue(){
+  if (txBusy || !txQueue.length) return;
+  txBusy = true;
+  while (txQueue.length) {
+    const item = txQueue.shift();
+    if (!ctrlChar) { failPending(item, 'Not connected.'); continue; }
+    try {
+      // writeValueWithResponse, not ...WithoutResponse: it's acknowledged at
+      // the ATT layer, so a rejected write surfaces here instead of silently
+      // vanishing, and it uses the long-write procedure for anything over
+      // the negotiated payload limit rather than truncating it.
+      await ctrlChar.writeValueWithResponse(enc.encode(item.cmd));
+    } catch(e) {
+      failPending(item, 'Write failed: ' + e.message);
+      showErr('Write failed: ' + e.message);
+    }
+  }
+  txBusy = false;
+}
+
+function failPending(item, msg){
+  if (!item.ctl) return;
+  if (!pending.has(item.seq)) return;
+  pending.delete(item.seq);
+  setCtl(item.ctl, 'bad', msg);
+  logUpdate(item.seq, 'bad', null);
+}
+
+function send(key, value, ctlId, requested, coalesce){
   seq = (seq % 65000) + 1;
-  const cmd = seq + ':' + key + '=' + value;
+  const mine = seq;
+  const cmd = mine + ':' + key + '=' + value;
   if (ctlId){
-    pending.set(seq, {ctl:ctlId, key, ms:performance.now(), requested});
+    pending.set(mine, {ctl:ctlId, key, ms:performance.now(), requested});
     setCtl(ctlId, 'pending', '');
-    logAdd(seq, key, value, 'pending', null);
-    const mine = seq;
+    logAdd(mine, key, value, 'pending', null);
+    const timeout = SLOW_CMDS.includes(key) ? ACK_TIMEOUT_SLOW : ACK_TIMEOUT;
     setTimeout(()=>{
       if (!pending.has(mine)) return;
       pending.delete(mine);
       setCtl(ctlId, 'bad', 'No reply. The speaker may have dropped out.');
       logUpdate(mine, 'bad', null);
-    }, ACK_TIMEOUT);
+    }, timeout);
   }
-  if (demo) return demoHandle(seq, key, value);
-  if (!ctrlChar) return;
-  ctrlChar.writeValueWithoutResponse(enc.encode(cmd))
-    .catch(e => showErr('Write failed: ' + e.message));
+  if (demo) return demoHandle(mine, key, value);
+  enqueue({cmd, seq:mine, ctl:ctlId, key, coalesce:!!coalesce});
 }
 
 function setCtl(id, s, msg){
@@ -824,19 +897,66 @@ function setCtl(id, s, msg){
 let rxBuf = '';
 function onState(chunk){
   rxBuf += chunk;
-  let s;
-  try{ s = JSON.parse(rxBuf); }
-  catch(e){
-    if (rxBuf.length > 8000) rxBuf = ''; // corrupted/abandoned message, don't wedge forever
-    return;
+
+  // Messages are newline-framed by the firmware. A logical message can span
+  // several BLE notifications, and notifications aren't acknowledged - one
+  // can simply vanish. Framing means a dropped chunk costs exactly one
+  // message rather than wedging the buffer until a size cap trips, which
+  // previously swallowed everything in between.
+  let nl;
+  while ((nl = rxBuf.indexOf('\n')) >= 0) {
+    const frame = rxBuf.slice(0, nl).trim();
+    rxBuf = rxBuf.slice(nl + 1);
+    if (!frame) continue;
+    let s;
+    try { s = JSON.parse(frame); }
+    catch(e){ console.warn('[ble] dropped malformed frame', frame.slice(0,80)); continue; }
+    handleState(s);
+    // Confirm receipt so the board stops re-sending. It keeps retrying until
+    // it hears this, because the lists are sent from the GATT connect
+    // callback - before this app has subscribed to notifications - so the
+    // first attempt reliably goes nowhere.
+    if (s.ledlist && s.ledcolors) send('listGot', '1');
   }
-  rxBuf = '';
+
+  // Runaway guard for the case framing can't cover: firmware old enough not
+  // to send delimiters, or a notification stream with no newline in it at
+  // all. Resync to the most recent '{' rather than discarding wholesale, so
+  // a partial message doesn't take the next complete one with it.
+  if (rxBuf.length > 2000) {
+    const lastOpen = rxBuf.lastIndexOf('{');
+    rxBuf = lastOpen > 0 ? rxBuf.slice(lastOpen) : '';
+  }
+}
+
+// Each board reports its own protocol version. They're updated
+// independently - BT and lights over OTA, the S3 over USB - so it's entirely
+// possible to flash one and forget the others. A mismatch produces confusing
+// partial behaviour rather than a clean failure, so say so plainly.
+let warnedProtoMismatch = false;
+function checkProtoVersions(s){
+  // 0 means the board has never reported - offline, not mismatched. Warning
+  // about a board that simply isn't connected would train you to ignore the
+  // warning that matters.
+  const vs = [s.pv, s.btPv, s.s3Pv].filter(v => v !== undefined && v !== 0);
+  if (vs.length < 2) return;
+  if (vs.every(v => v === vs[0])) { warnedProtoMismatch = false; return; }
+  if (!warnedProtoMismatch) {
+    warnedProtoMismatch = true;
+    showErr('Boards are running different protocol versions (' + vs.join(', ') +
+            ') - reflash the ones that are behind');
+  }
+}
+
+function handleState(s){
+  checkProtoVersions(s);
   checkForReboot(s);
   applyTuning(s);
   state = Object.assign(state, s);
   if (s.ack) resolveAck(s.ack);
   render();
 }
+
 function resolveAck(a){
   const p = pending.get(a.seq);
   if (!p) return;
@@ -845,7 +965,15 @@ function resolveAck(a){
   if (a.r === 'ok')         setCtl(p.ctl, 'ok', '');
   else if (a.r === 'clamp') { setCtl(p.ctl, 'clamp', 'Limited to ' + a.v + '.'); snapTo(p.key, a.v); }
   else if (a.r === 'gone')  setCtl(p.ctl, 'gone', 'That board is not responding.');
-  else                      setCtl(p.ctl, 'bad', 'Rejected.');
+  else {
+    // The firmware now returns detail on partial failures - a save where the
+    // lights persisted but the DSP was offline says so rather than claiming
+    // success or a blank rejection.
+    const detail = (a.v && /led:|s3:/.test(a.v))
+      ? a.v.replace('led:', 'lights ').replace(',s3:', ', DSP ')
+      : 'Rejected.';
+    setCtl(p.ctl, 'bad', detail);
+  }
 }
 // A control that stays where you dragged it after the firmware clamped the
 // value is lying. Snap it to whatever actually took effect.
@@ -920,6 +1048,28 @@ function render(){
     ? '\u2014' : state.ampA.toFixed(2) + ' A';
   $('pAmpW').textContent = (state.ampW === undefined || state.ampW < 0)
     ? '\u2014' : state.ampW.toFixed(1) + ' W';
+
+  // 0 healthy, 1 low, 2 unknown. "Unknown" is shown as a warning rather than
+  // a blank, because a battery that can't be measured isn't a battery that's
+  // fine - the speaker is running with a conservative volume cap and no
+  // undervoltage protection, and that should be visible.
+  const BS = ['healthy', 'low', 'not readable'];
+  const bs = state.battStatus;
+  $('pBattSt').textContent = bs === undefined ? '\u2014' : (BS[bs] || '?');
+  $('pBattSt').style.color = (bs === 2) ? 'var(--bad)' : (bs === 1 ? 'var(--live)' : '');
+  const bsHint = $('battHint');
+  if (bsHint) bsHint.textContent = (bs === 2)
+    ? 'No valid battery reading \u2014 volume is capped and undervoltage protection is blind. The pack\u2019s own BMS is the only thing protecting it.'
+    : '';
+
+  // Two distinct failure modes, deliberately separate. "Rejected" is the
+  // stack refusing a notification; "dropped" is this board giving up before
+  // it could send at all. Neither proves the app RECEIVED anything - a
+  // successful notify only means it left here.
+  $('pBleFail').textContent = state.bleFails === undefined ? '\u2014' : state.bleFails;
+  $('pBleFail').style.color = state.bleFails ? 'var(--live)' : '';
+  $('pBleDrop').textContent = state.bleDrops === undefined ? '\u2014' : state.bleDrops;
+  $('pBleDrop').style.color = state.bleDrops ? 'var(--live)' : '';
   $('pFw').textContent   = state.fw || '\u2014';
   $('pPv').textContent   = state.pv !== undefined ? 'v'+state.pv : '\u2014';
   $('pUp').textContent   = state.uptime !== undefined ? fmtUp(state.uptime) : '\u2014';
@@ -1075,7 +1225,7 @@ function bindSlider(id, ctlId, key, fmt){
   el.addEventListener('input', paint);
   el.addEventListener('render', paint);
   el.addEventListener('change', () =>
-    send(typeof key==='function' ? key() : key, el.value, ctlId, el.value));
+    send(typeof key==='function' ? key() : key, el.value, ctlId, el.value, true));
   paint();
 }
 bindSlider('vol','vol','vol');
@@ -1130,8 +1280,11 @@ bindSlider('eqTreb','eqt', () => ['b0t','b1t','b2t'][eqTab], v => (+v).toFixed(1
 bindSlider('hpf','hpf','hpf', v => v+' Hz');
 bindSlider('lim','lim','lim', v => (+v).toFixed(1)+' dB');
 
-document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () =>
-  send(b.dataset.cmd, '1', b.dataset.cmd==='save' ? 'save' : 'transport', '1')));
+document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => {
+  const c = b.dataset.cmd;
+  const ctl = ['save','reset','tSave','tReset','ltSave','ltGet','tGet'].includes(c) ? c : 'transport';
+  send(c, '1', ctl, '1');
+}));
 document.querySelectorAll('#bassSeg button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('#bassSeg button').forEach(x => x.classList.toggle('on', x===b));
   send('stbass', b.dataset.v, 'stbass', b.dataset.v);
@@ -1183,11 +1336,18 @@ $('connectBtn').addEventListener('click', async () => {
     await statChar.startNotifications();
     statChar.addEventListener('characteristicvaluechanged',
       e => onState(dec.decode(e.target.value)));
-    onState(dec.decode(await statChar.readValue()));
+    // An explicit read returns whatever the characteristic currently holds,
+    // which may predate framing. Terminate it so it parses as one frame
+    // rather than waiting to be joined to the next notification.
+    onState(dec.decode(await statChar.readValue()) + '\n');
     // Pull both tuning sets immediately - sliders showing compiled-in
     // defaults while the hardware runs something else would be worse than
     // showing nothing.
-    setTimeout(() => { send('ltGet','1'); send('tGet','1'); }, 300);
+    // Subscribed by this point, so asking now actually works. The board
+    // also re-sends on its own until listGot arrives, which covers the case
+    // where this request is the thing that gets lost.
+    setTimeout(() => { send('listGet','1'); }, 200);
+    setTimeout(() => { send('ltGet','1'); send('tGet','1'); }, 500);
     demo = false; clearInterval(demoTick); $('demoBtn').textContent = 'Demo';
     $('connectBtn').textContent = 'Disconnect';
     render();
@@ -1204,6 +1364,7 @@ function onDrop(){
   // connection it came from and look like live data.
   fxNames = []; colNames = [];
   lastUptime = null;
+  txQueue.length = 0;   // nothing queued survives a disconnect
   $('connectBtn').textContent='Connect'; render();
 }
 
@@ -1221,7 +1382,7 @@ $('demoBtn').addEventListener('click', () => {
              ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
              ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
              ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
-             saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0,
+             saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0, battStatus:0, bleFails:0, bleDrops:0, btPv:2, s3Pv:2,
              mics:false, mic1:50, mic2:50, mic1mute:true, mic2mute:true,
              echo:20, reverb:25, fbsup:true};
     demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
@@ -1250,7 +1411,7 @@ function demoHandle(sq, key, value){
   if (['ledpreset','ledcolor','ledbright'].includes(key)) state.ledsaved = false;
   if (key === 'save' || key === 'reset'){ state.saved = true; state.ledsaved = true; }
   if (key === 'ledbright') state.ledbright = +v;
-  setTimeout(()=>onState(JSON.stringify({ack:{seq:sq, r:r, k:key, v:v}})), 60 + Math.random()*140);
+  setTimeout(()=>onState(JSON.stringify({ack:{seq:sq, r:r, k:key, v:v}}) + '\n'), 60 + Math.random()*140);
 }
 
 /* ---------- PWA ----------
