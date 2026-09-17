@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>LarbyBox</title>
-<meta name="theme-color" content="#0b0b0c">
+<meta name="theme-color" content="#111214">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -326,6 +326,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   .hero,.chips{max-width:1560px}
 }
 </style>
+<link rel="stylesheet" href="gold.css">
 </head>
 <body>
 
@@ -721,6 +722,27 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   </div>
 
   <div class="group" data-board="s3">
+    <div class="group-hd"><h2>Loudness contour</h2><span class="offline-note">DSP offline</span></div>
+    <p class="hint">The ear hears less bass at low levels, so quiet music sounds
+      thin. This lifts bass as volume comes down and removes it as volume rises
+      &mdash; which is also where excursion matters most. Set the boost to 0 to
+      turn it off entirely.</p>
+    <div class="card">
+      <div class="ctl" id="ctl-tLoudMax">
+        <div class="ctl-hd"><label for="tLoudMax">Boost when quiet</label><span class="val" id="tLoudMaxVal">7.0 dB</span></div>
+        <input type="range" id="tLoudMax" min="0" max="12" step="0.5" value="7">
+        <div class="state"></div><div class="ctl-msg" id="msg-tLoudMax"></div>
+      </div>
+      <div class="ctl" id="ctl-tLoudKnee">
+        <div class="ctl-hd"><label for="tLoudKnee">Fades out by</label><span class="val" id="tLoudKneeVal">75%</span></div>
+        <input type="range" id="tLoudKnee" min="0.2" max="1" step="0.05" value="0.75">
+        <div class="state"></div>
+        <div class="ctl-msg" id="msg-tLoudKnee">Volume above which no bass is added at all.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
     <div class="group-hd"><h2>Thermal &amp; limiter</h2><span class="offline-note">DSP offline</span></div>
     <div class="card">
       <div class="ctl" id="ctl-tRmsHi">
@@ -946,6 +968,19 @@ function checkProtoVersions(s){
     showErr('Boards are running different protocol versions (' + vs.join(', ') +
             ') - reflash the ones that are behind');
   }
+}
+
+// Reset stale state if the connected controller restarts between notifications.
+let lastUptime = null;
+function checkForReboot(s){
+  if (!Number.isFinite(s.uptime)) return;
+  if (lastUptime !== null && s.uptime < lastUptime){
+    state = {}; fxNames = []; colNames = [];
+    for (const p of pending.values()) setCtl(p.ctl, 'gone', 'Speaker restarted. Try again.');
+    pending.clear(); txQueue.length = 0;
+    if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); }
+  }
+  lastUptime = s.uptime;
 }
 
 function handleState(s){
@@ -1256,6 +1291,8 @@ bindSlider('tCompRaH','tCompRaH','tCompRaH', f2);
 bindSlider('tRmsHi','tRmsHi','tRmsHi', f2);
 bindSlider('tRmsLo','tRmsLo','tRmsLo', f2);
 bindSlider('tRmsMin','tRmsMin','tRmsMin', f2);
+bindSlider('tLoudMax','tLoudMax','tLoudMax', v => (+v).toFixed(1) + ' dB');
+bindSlider('tLoudKnee','tLoudKnee','tLoudKnee', v => Math.round(+v * 100) + '%');
 bindSlider('tLimAtk','tLimAtk','tLimAtk', v => (+v).toFixed(2) + ' ms');
 bindSlider('tLimRel','tLimRel','tLimRel', ms);
 bindSlider('lEnvAtk','lEnvAtk','lEnvAtk', f2);
@@ -1270,7 +1307,7 @@ bindSlider('lStrobeHi','lStrobeHi','lStrobeHi', ms);
 // a once-a-second broadcast.
 const TUNE_KEYS = ['tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel',
   'tCompThL','tCompThM','tCompThH','tCompRaL','tCompRaM','tCompRaH',
-  'tRmsHi','tRmsLo','tRmsMin','tLimAtk','tLimRel',
+  'tRmsHi','tRmsLo','tRmsMin','tLoudMax','tLoudKnee','tLimAtk','tLimRel',
   'lEnvAtk','lEnvRel','lSparkle','lFade','lStrobeLo','lStrobeHi'];
 function applyTuning(s){
   TUNE_KEYS.forEach(k => { if (s[k] !== undefined) syncSlider(k, s[k]); });
@@ -1308,7 +1345,7 @@ document.querySelectorAll('.island button').forEach(t => t.addEventListener('cli
    Desktop gets a real keyboard; not using it would be a waste. Space for
    play/pause and arrows for volume are what every media app does. */
 document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;   // don't hijack slider arrows
+  if (e.target.closest('input,button,select,textarea,[role=slider],dialog') || !(demo || device?.gatt?.connected)) return;   // don't hijack slider arrows
   if (e.code === 'Space'){ e.preventDefault(); send('play','1','transport','1'); }
   else if (e.code === 'ArrowUp' || e.code === 'ArrowDown'){
     e.preventDefault();
@@ -1376,7 +1413,7 @@ $('demoBtn').addEventListener('click', () => {
   demo = !demo;
   $('demoBtn').textContent = demo ? 'Stop' : 'Demo';
   if (demo){
-    state = {fw:'LarbyBox LED 2.0', pv:1, uptime:437, batt:78, vBatt:13.1,
+    state = {fw:'LarbyBox LED 2.0', pv:2, vol:42, stbass:0, playing:true, uptime:437, batt:82, vBatt:13.1,
              vPsu:-1, vLoad:12.9, onPsu:false, muted:false, ampA:2.4, ampW:31.4,
              linkBt:true, linkS3:true, ledbright:128,
              ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
@@ -1404,6 +1441,8 @@ function demoHandle(sq, key, value){
     state.ledpreset = +v; state.ledpname = state.ledlist[+v] || '?';
     state.ledusescolor = NO_COLOR.indexOf(state.ledpname) === -1;
   }
+  if (key === 'vol' || key === 'stbass') state[key] = +v;
+  if (key === 'play') state.playing = !state.playing;
   if (key === 'ledcolor')  state.ledcolor = +v;
   const persisted = ['stbass','hpf','lim','benh','vol12','vol24','startvol',
                      'mic1','mic2','echo','reverb','fbsup'];
@@ -1429,5 +1468,6 @@ if ('serviceWorker' in navigator) {
 
 render();
 </script>
+<script src="gold.js"></script>
 </body>
 </html>
