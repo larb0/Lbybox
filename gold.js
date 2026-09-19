@@ -5,13 +5,13 @@ const home=$('v-panel'), originalGroups=[...home.children].filter(e=>e.classList
 const [effects,lighting,volume,playback,bass]=originalGroups;
 const audio=document.createElement('div');audio.className='gold-audio gold-card';
 volume.classList.add('volume-group');playback.classList.add('transport-group');bass.classList.add('bass-group');lighting.classList.add('gold-light');
-audio.append(volume,playback,bass);home.replaceChildren(audio,lighting);
+audio.append(volume,playback);bass.classList.add('gold-eq');effects.classList.add('gold-effects');effects.querySelector('h2').textContent='LED presets';bass.querySelector('h2').textContent='EQ profile';home.replaceChildren(audio,effects,lighting,bass);
 const lightsView=document.createElement('section');lightsView.id='v-lights';lightsView.className='view';
-const hero=document.querySelector('.hero');lightsView.append(hero,effects);document.querySelector('main').append(lightsView);
+const hero=document.querySelector('.hero');lightsView.append(hero);document.querySelector('main').append(lightsView);
 const nav=document.querySelector('.island');nav.setAttribute('aria-label','Main navigation');
 nav.innerHTML=[['panel','Home','home'],['sound','Sound','sound'],['lights','Lights','lights'],['power','Settings','settings']].map(([v,t,i])=>'<button data-v="'+v+'"><span class="nav-icon">'+icon(i)+'</span>'+t+'</button>').join('');
 const header=document.createElement('header');header.className='gold-header';header.innerHTML='<span class="gold-brand">LarbyBox</span>';
-const statusBar=document.createElement('div');statusBar.className='gold-status';statusBar.append($('chipLink'),$('chipBt'),$('battPct'));header.append(nav,statusBar);document.body.prepend(header);
+const statusBar=document.createElement('div');statusBar.className='gold-status';const battery=document.createElement('span');battery.className='battery-status';battery.append($('battPct'),document.createTextNode(' · '),$('chipV'));statusBar.append($('chipLink'),$('chipBt'),battery);header.append(nav,statusBar);document.body.prepend(header);
 const oldChips=document.querySelector('.chips');oldChips.hidden=true;
 const settingsTabs=document.createElement('div');settingsTabs.className='settings-tabs';settingsTabs.innerHTML='<button data-page="power">Power & system</button><button data-page="log">Activity</button><button data-page="adv">Advanced</button>';
 document.querySelector('main').prepend(settingsTabs);
@@ -20,7 +20,7 @@ function goldNavigate(page){
  const inSettings=['power','log','adv'].includes(page);
  nav.querySelectorAll('button').forEach(b=>{const on=b.dataset.v===(inSettings?'power':page);b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  settingsTabs.classList.toggle('on',inSettings);settingsTabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.page===page));
- if(page==='lights')lightsView.append(lighting);else home.insertBefore(lighting,home.querySelector('.scenes-card'));
+ if(page==='lights')lightsView.append(effects,lighting);else {home.insertBefore(effects,bass);home.insertBefore(lighting,bass);}
  window.scrollTo(0,0);
 }
 nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>goldNavigate(b.dataset.v)));
@@ -29,10 +29,10 @@ settingsTabs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()
 $('v-power').lastElementChild.append(playback.querySelector('[data-cmd=btpair]'));
 playback.querySelectorAll('[data-cmd]').forEach(b=>{const c=b.dataset.cmd;b.innerHTML=icon(c);b.setAttribute('aria-label',c==='play'?'Play or pause':c==='prev'?'Previous track':'Next track');});
 const dialShell=document.createElement('div');dialShell.className='dial-shell';
-dialShell.innerHTML='<div class="dial" id="volumeDial" role="slider" tabindex="0" aria-label="Speaker volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><svg viewBox="0 0 300 300"><path class="dial-track" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><path id="dialFill" class="dial-fill" pathLength="100" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><circle id="dialThumb" class="dial-thumb" r="9"/></svg><div class="dial-readout"><small>Volume</small><div class="dial-value"><b id="dialValue" style="font-weight:500">0</b><span>%</span></div></div></div><button id="dialMute" class="dial-mute" aria-label="Mute volume" title="Mute volume">'+icon('mute')+'</button>';
+dialShell.innerHTML='<div class="dial" id="volumeDial" role="slider" tabindex="0" aria-label="Speaker volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><svg viewBox="0 0 300 300"><path class="dial-track" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><path id="dialFill" class="dial-fill" pathLength="100" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><circle id="dialThumb" class="dial-thumb" r="9"/></svg><div class="dial-readout"><small>Volume</small><div class="dial-value"><b id="dialValue" style="font-weight:500">0</b><span>%</span></div></div></div>';
 $('ctl-vol').prepend(dialShell);$('vol').tabIndex=-1;$('vol').setAttribute('aria-hidden','true');
-const dial=$('volumeDial');let dialDragging=false,restoreVolume=42,selectedScene='';
-function drawDial(){const v=+$('vol').value,a=(135+v*2.7)*Math.PI/180;$('dialFill').style.strokeDasharray=v+' 100';$('dialThumb').setAttribute('cx',150+127*Math.cos(a));$('dialThumb').setAttribute('cy',150+127*Math.sin(a));$('dialValue').textContent=v;dial.setAttribute('aria-valuenow',v);dial.setAttribute('aria-valuetext',v+' percent');$('dialMute').classList.toggle('on',v===0);$('dialMute').setAttribute('aria-label',v===0?'Restore volume':'Mute volume');}
+const dial=$('volumeDial');let dialDragging=false;
+function drawDial(){const v=+$('vol').value,a=(135+v*2.7)*Math.PI/180;$('dialFill').style.strokeDasharray=v+' 100';$('dialThumb').setAttribute('cx',150+127*Math.cos(a));$('dialThumb').setAttribute('cy',150+127*Math.sin(a));$('dialValue').textContent=v;dial.setAttribute('aria-valuenow',v);dial.setAttribute('aria-valuetext',v+' percent');}
 function setDial(v,commit){if(dial.getAttribute('aria-disabled')==='true')return;$('vol').value=Math.max(0,Math.min(100,Math.round(v)));$('vol').dispatchEvent(new Event('input'));drawDial();if(commit)$('vol').dispatchEvent(new Event('change'));}
 function pointerVolume(e){const r=dial.getBoundingClientRect();let deg=Math.atan2(e.clientY-r.top-r.height/2,e.clientX-r.left-r.width/2)*180/Math.PI;deg=(deg-135+360)%360;if(deg>270)deg=deg>315?0:270;return deg/2.7;}
 dial.addEventListener('pointerdown',e=>{if(e.button!==0||dial.getAttribute('aria-disabled')==='true')return;dialDragging=true;dial.focus();dial.setPointerCapture(e.pointerId);setDial(pointerVolume(e),false);});
@@ -41,28 +41,18 @@ dial.addEventListener('pointerup',e=>{if(!dialDragging)return;setDial(pointerVol
 dial.addEventListener('pointercancel',()=>{dialDragging=false;render();});
 dial.addEventListener('keydown',e=>{let v=+$('vol').value;if(['ArrowUp','ArrowRight'].includes(e.key))v++;else if(['ArrowDown','ArrowLeft'].includes(e.key))v--;else if(e.key==='Home')v=0;else if(e.key==='End')v=100;else if(e.key==='PageUp')v+=10;else if(e.key==='PageDown')v-=10;else return;e.preventDefault();e.stopPropagation();setDial(v,true);});
 $('vol').addEventListener('input',drawDial);$('vol').addEventListener('render',drawDial);
-$('dialMute').addEventListener('click',()=>{const v=+$('vol').value;if(v>0){restoreVolume=v;setDial(0,true);}else setDial(restoreVolume,true);});
+
 const effectSelect=document.createElement('select');effectSelect.id='homeEffect';effectSelect.className='effect-select';effectSelect.setAttribute('aria-label','Lighting effect');lighting.querySelector('.group-hd').append(effectSelect);lighting.querySelector('h2').textContent='Lighting';
 effectSelect.addEventListener('change',()=>send('ledpreset',effectSelect.value,'ledpreset',effectSelect.value));
 // Keep effect acknowledgements visible next to the Home effect selector.
 lighting.append($('ctl-ledpreset'));
-const sceneCard=document.createElement('div');sceneCard.className='scenes-card gold-card';sceneCard.innerHTML='<div class="group-hd"><h2>Favourite scenes</h2></div><div class="scene-grid" id="sceneGrid"></div><div class="scene-manage"><span>Sound & lights · volume stays yours</span><button class="text-button" id="saveScene">Save current</button></div><p class="scene-note" id="sceneNote" role="status"></p>';home.append(sceneCard);
-const sceneDefaults=[{name:'Everyday',icon:'sun',bass:0,effect:'basspulse',colour:'gold',brightness:178},{name:'Outdoor',icon:'outdoor',bass:1,effect:'huedrift',colour:'gold',brightness:210},{name:'Evening',icon:'moon',bass:0,effect:'breathe',colour:'gold',brightness:55}];
-let scenes=sceneDefaults.map(x=>({...x}));
-try{const saved=JSON.parse(localStorage.getItem('larbybox.gold.scenes'));if(Array.isArray(saved)&&saved.length===3&&saved.every(s=>s&&typeof s.name==='string'&&s.name.length<=24&&[0,1,2].includes(s.bass)&&typeof s.effect==='string'&&typeof s.colour==='string'&&Number.isFinite(s.brightness)&&s.brightness>=0&&s.brightness<=255))scenes=saved;}catch{}
-function drawScenes(){const grid=$('sceneGrid');grid.replaceChildren();scenes.forEach((s,i)=>{const b=document.createElement('button');b.className='scene-button';b.dataset.index=i;b.innerHTML=icon(['sun','outdoor','moon'][i]);const text=document.createElement('span');text.textContent=s.name;b.append(text);b.addEventListener('click',()=>applyScene(i));grid.append(b);});}
-function applyScene(i){if(!goldReady('s3')||!goldReady('led'))return;const s=scenes[i],fx=state.ledlist?.indexOf(s.effect),col=state.ledcolors?.indexOf(s.colour);if(!(fx>=0&&col>=0)){$('sceneNote').textContent='Waiting for the speaker’s effects and colours.';return;}
- selectedScene=s.name;send('stbass',s.bass,'stbass',s.bass);send('ledpreset',fx,'ledpreset',fx);send('ledcolor',col,'ledcolor',col);send('ledbright',s.brightness,'ledbright',s.brightness);$('sceneNote').textContent='Applying '+s.name+'…';}
-const dialog=document.createElement('dialog');dialog.id='sceneDialog';dialog.innerHTML='<form method="dialog" id="sceneForm"><h2>Save a scene</h2><p class="hint">Save the current bass profile, lighting effect, colour and brightness on this device. Volume is not included.</p><label for="sceneSlot">Replace scene</label><select id="sceneSlot"></select><label for="sceneName">Scene name</label><input id="sceneName" required maxlength="24" autocomplete="off"><div class="dialog-actions"><button type="button" id="cancelScene">Cancel</button><button type="submit">Save scene</button></div></form>';document.body.append(dialog);
-$('saveScene').addEventListener('click',()=>{$('sceneSlot').replaceChildren(...scenes.map((s,i)=>new Option(s.name,i)));$('sceneName').value=scenes[0].name;dialog.showModal();});$('sceneSlot').addEventListener('change',()=>{$('sceneName').value=scenes[+$('sceneSlot').value].name;});$('cancelScene').addEventListener('click',()=>dialog.close());
-$('sceneForm').addEventListener('submit',e=>{e.preventDefault();const name=$('sceneName').value.trim();if(!name)return;const s={name,bass:state.stbass,effect:state.ledpname,colour:state.ledcolors?.[state.ledcolor],brightness:state.ledbright};if(!goldReady('s3')||!goldReady('led')||!Number.isFinite(s.bass)||!s.effect||!s.colour||!Number.isFinite(s.brightness)){dialog.close();$('sceneNote').textContent='Connect and wait for the current settings first.';return;}const updated=scenes.map((x,i)=>i===+$('sceneSlot').value?s:x);try{localStorage.setItem('larbybox.gold.scenes',JSON.stringify(updated));scenes=updated;drawScenes();dialog.close();$('sceneNote').textContent='Saved on this device.';render();}catch{dialog.close();$('sceneNote').textContent='Could not save: browser storage is unavailable.';}});
 function goldReady(board){return (demo||!!device?.gatt?.connected)&&(board==='s3'?!!state.linkS3:board==='bt'?!!state.linkBt:true);}
 const legacyRender=render;
 render=function(){legacyRender();const conn=demo||!!device?.gatt?.connected,ready=goldReady('s3');
  // No disconnected or absent-board actions; native disabled state also covers keyboard users.
  document.querySelectorAll('main button,main input,main select').forEach(el=>{const g=el.closest('[data-board]');el.disabled=!conn||(g&&!goldReady(g.dataset.board))||!!el.closest('.missing');});
  document.querySelectorAll('.settings-tabs button').forEach(b=>b.disabled=false);
- dial.setAttribute('aria-disabled',!ready);dial.tabIndex=ready?0:-1;$('dialMute').disabled=!ready;
+ dial.setAttribute('aria-disabled',!ready);dial.tabIndex=ready?0:-1;
  const volPending=[...pending.values()].some(p=>p.key==='vol');
  if(!dialDragging&&!volPending&&Number.isFinite(state.vol)){$('vol').value=state.vol;drawDial();}
  else if(!conn){$('vol').value=0;drawDial();}
@@ -71,13 +61,11 @@ render=function(){legacyRender();const conn=demo||!!device?.gatt?.connected,read
  if(state.ledpreset!==undefined)effectSelect.value=state.ledpreset;
  $('brightVal').textContent=Math.round(+$('bright').value/255*100)+'%';
  document.querySelectorAll('input[type=range]').forEach(el=>el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%'));
- $('saveScene').disabled=!ready||!conn;document.querySelectorAll('.scene-button').forEach((b,i)=>{const s=scenes[i];b.disabled=!ready||!conn;const match=ready&&state.stbass===s.bass&&state.ledpname===s.effect&&state.ledcolors?.[state.ledcolor]===s.colour&&state.ledbright===s.brightness;b.classList.toggle('on',match);b.setAttribute('aria-pressed',match);if(match&&selectedScene===s.name){$('sceneNote').textContent=s.name+' applied.';selectedScene='';}});
- const failed=['stbass','ledpreset','ledcolor','ledbright'].some(id=>['bad','gone'].includes($('ctl-'+id)?.dataset.s));if(selectedScene&&failed){$('sceneNote').textContent='Some scene settings were not confirmed. Check the connection and try again.';selectedScene='';}
  $('demoBtn').disabled=!!device?.gatt?.connected;
- playback.querySelector('.play').innerHTML=state.playing!==undefined?icon(state.playing?'pause':'play'):icon('play');
+ const playButton=playback.querySelector('.play');playButton.innerHTML=icon(state.playing?'pause':'play');playButton.setAttribute('aria-label',state.playing?'Pause':'Play');const transportPending=[...pending.values()].some(p=>['play','next','prev'].includes(p.key));playback.querySelectorAll('[data-cmd]').forEach(b=>b.disabled=!goldReady('bt')||state.bt===false||state.avrc===false||transportPending);
 };
 document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%');if(el.id==='bright')$('brightVal').textContent=Math.round(+el.value/255*100)+'%';}));
-drawScenes();goldNavigate('panel');render();
+goldNavigate('panel');render();
 // Confirmed command values should be shown immediately, before the next heartbeat.
 const legacyResolveAck=resolveAck;
 resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(a.r)){const n=Number(a.v),k=p.key;if(Number.isFinite(n)&&['vol','stbass','ledbright','ledcolor','ledpreset'].includes(k)){state[k]=n;if(k==='ledpreset'){state.ledpname=state.ledlist?.[n];state.ledusescolor=!NO_COLOR.includes(state.ledpname);}}}legacyResolveAck(a);};
@@ -85,5 +73,22 @@ resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(
 const goldRender=render;
 render=function(){document.querySelectorAll('[data-requires=mics]').forEach(g=>g.classList.toggle('missing',!state.mics));goldRender();};
 render();
-const legacySetCtl=setCtl;
-setCtl=function(id,status,message){legacySetCtl(id,status,message);if(selectedScene&&['stbass','ledpreset','ledcolor','ledbright'].includes(id)&&['bad','gone'].includes(status)){$('sceneNote').textContent='Some scene settings were not confirmed. Check the connection and try again.';selectedScene='';}};
+
+// One command per click. Await the board reply instead of pretending the phone changed state.
+function sendTransport(command){
+ if(!goldReady('bt')){setCtl('transport','gone','The Bluetooth board is offline.');return;}
+ if(state.bt===false){setCtl('transport','gone','Connect your music device to LarbyBox first.');return;}
+ if(state.avrc===false){setCtl('transport','gone','Media controls are not connected yet. Reconnect your music device.');return;}
+ if([...pending.values()].some(p=>['play','next','prev'].includes(p.key)))return;
+ send(command,'1','transport','1');render();
+}
+const transportSetCtl=setCtl;
+setCtl=function(id,status,message){
+ if(id==='transport'&&status==='gone')message='Media controls unavailable. Check the music device and Bluetooth-board connection.';
+ transportSetCtl(id,status,message);
+ if(id==='transport')setTimeout(()=>render(),0);
+};
+const transportResolveAck=resolveAck;
+resolveAck=function(a){const p=pending.get(a.seq);transportResolveAck(a);if(p&&['play','next','prev'].includes(p.key)&&a.r==='ok'){
+ $('msg-transport').textContent=p.key==='next'?'Next track requested.':p.key==='prev'?'Previous track requested.':'Playback command sent.';
+}};

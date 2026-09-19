@@ -58,3 +58,18 @@ dialog{width:min(440px,calc(100% - 36px));background:var(--card);color:var(--ink
 .scene-note:empty{display:none}
 #connectBtn{background:var(--accent);color:var(--onaccent)}
 @media(max-width:760px){.gold-header{min-height:108px}.dial-shell{width:min(100%,250px)}.dial-value{font-size:53px}.gold-audio{padding-bottom:14px}.gold-audio .bass-group{margin-top:16px;padding-top:14px}.gold-light{padding:17px 0}.gold-light .card{gap:8px}.gold-light .group-hd{margin-bottom:13px}.cdots{margin-top:7px}.scenes-card{padding-top:16px}.scene-button{min-height:67px}.scene-manage{margin-top:5px}.scene-manage>span{max-width:190px}.scenes-card .group-hd{margin-bottom:12px}}
+/* Revised Home: effects beneath the dial, EQ in the former scenes position. */
+.battery-status{white-space:nowrap;color:var(--ink);display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.battery-status #chipV{color:var(--dim);font-size:12px}
+.gold-audio{grid-row:1;grid-column:1}
+.gold-light{grid-row:1;grid-column:2}
+.gold-eq{grid-row:2;grid-column:2;margin:0}
+.gold-effects{grid-row:2;grid-column:1;margin:0;min-width:0}
+.gold-effects .shelf{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:14px;padding:2px 2px 12px;margin:0;scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--accent) var(--card2)}
+.gold-effects .shelf button{flex:0 0 78px;width:78px;scroll-snap-align:start}
+.gold-effects .shelf .art{height:72px;width:78px;aspect-ratio:auto;border-radius:10px}
+#msg-stbass{display:none}#msg-transport{min-height:16px;text-align:center;margin-top:10px}
+.setting-help{font-size:12px;color:var(--dim);line-height:1.55;margin:8px 0 16px;max-width:65ch}
+#v-adv .ctl-msg:empty{display:none}
+@media(max-width:760px){.gold-status{gap:9px}.battery-status #chipV{font-size:11px}.gold-effects{width:100%;background:none;border:0;border-top:1px solid var(--hair);border-radius:0;padding:18px 0}.gold-eq{width:100%;background:none;border:0;border-top:1px solid var(--hair);border-radius:0;padding:18px 0}.gold-effects .shelf button{flex-basis:72px;width:72px}.gold-effects .shelf .art{width:72px;height:62px}.gold-audio .dial-shell{margin-bottom:-12px}}
+@media(min-width:761px){.gold-audio{grid-row:1 / span 2}.gold-effects{grid-row:3;grid-column:1 / -1}.gold-eq{align-self:start}}

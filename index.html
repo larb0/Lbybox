@@ -557,6 +557,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="r"><span>Battery sensor</span><span id="pBattSt">&mdash;</span></div>
     </div>
     <p class="hint" id="battHint" style="margin:10px 0 0;color:var(--bad)"></p>
+    <p class="hint" id="psuHint" style="margin:10px 0 0;color:var(--live)"></p>
     <div style="display:none">
     </div>
   </div>
@@ -597,9 +598,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 <section class="view" id="v-adv" data-title="Advanced">
   <div class="group">
     <div class="group-hd"><h2>Tuning</h2><em>live</em></div>
-    <p class="hint">Every value here was set by reasoning, not by listening &mdash;
-      none of it had ever run when it was written. Changes apply instantly so
-      you can hear them; nothing persists until you save.</p>
+    <p class="hint">Fine-tune sound and lighting. Changes apply live. Use Save tuning for DSP settings and Save lights for LED settings to keep them after a restart.</p>
     <div class="row" style="margin-bottom:4px">
       <button data-cmd="tGet">Load current</button>
       <button data-cmd="tSave">Save tuning</button>
@@ -610,72 +609,81 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
   <div class="group" data-board="s3">
     <div class="group-hd"><h2>Light response</h2><span class="offline-note">DSP offline</span></div>
-    <p class="hint">How hot each band reads before it pins at full. Lower if the
-      lights sit maxed out.</p>
+    <p class="hint">These controls change how the lights react to music; they do not change the sound. Lower a scale if that band keeps the lights at full intensity.</p>
     <div class="card">
       <div class="ctl" id="ctl-tSpecBass">
         <div class="ctl-hd"><label for="tSpecBass">Bass scale</label><span class="val" id="tSpecBassVal">0.55</span></div>
-        <input type="range" id="tSpecBass" min="0.05" max="4" step="0.05" value="0.55">
+        <input type="range" id="tSpecBass" min="0.05" max="4" step="0.05" value="0.55" aria-describedby="help-tSpecBass">
+        <p class="setting-help" id="help-tSpecBass">Sensitivity to bass and kick drums. Higher makes bass-driven lighting stronger; lower stops it staying at full intensity.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tSpecBass"></div>
       </div>
       <div class="ctl" id="ctl-tSpecMid">
         <div class="ctl-hd"><label for="tSpecMid">Mid scale</label><span class="val" id="tSpecMidVal">0.75</span></div>
-        <input type="range" id="tSpecMid" min="0.05" max="4" step="0.05" value="0.75">
+        <input type="range" id="tSpecMid" min="0.05" max="4" step="0.05" value="0.75" aria-describedby="help-tSpecMid">
+        <p class="setting-help" id="help-tSpecMid">Sensitivity to vocals, guitars and other midrange sounds. Higher gives this band more influence on reactive lighting.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tSpecMid"></div>
       </div>
       <div class="ctl" id="ctl-tSpecTreb">
         <div class="ctl-hd"><label for="tSpecTreb">Treble scale</label><span class="val" id="tSpecTrebVal">0.90</span></div>
-        <input type="range" id="tSpecTreb" min="0.05" max="4" step="0.05" value="0.90">
+        <input type="range" id="tSpecTreb" min="0.05" max="4" step="0.05" value="0.90" aria-describedby="help-tSpecTreb">
+        <p class="setting-help" id="help-tSpecTreb">Sensitivity to cymbals and other high-frequency sounds. Higher makes treble-driven lighting more pronounced.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tSpecTreb"></div>
       </div>
       <div class="ctl" id="ctl-tSpecFloor">
         <div class="ctl-hd"><label for="tSpecFloor">Silence floor</label><span class="val" id="tSpecFloorVal">0.0060</span></div>
-        <input type="range" id="tSpecFloor" min="0.0005" max="0.05" step="0.0005" value="0.006">
+        <input type="range" id="tSpecFloor" min="0.0005" max="0.05" step="0.0005" value="0.006" aria-describedby="help-tSpecFloor">
+        <p class="setting-help" id="help-tSpecFloor">Minimum audio level used by the light analyser. Raising it reduces reactions to quiet hiss; lowering it lets very quiet music affect the lights.</p>
         <div class="state"></div>
-        <div class="ctl-msg" id="msg-tSpecFloor">Below this, lights go dark rather than amplifying hiss.</div>
+        <div class="ctl-msg" id="msg-tSpecFloor"></div>
       </div>
       <div class="ctl" id="ctl-tSpecRel">
         <div class="ctl-hd"><label for="tSpecRel">Level memory</label><span class="val" id="tSpecRelVal">6000 ms</span></div>
-        <input type="range" id="tSpecRel" min="500" max="20000" step="250" value="6000">
+        <input type="range" id="tSpecRel" min="500" max="20000" step="250" value="6000" aria-describedby="help-tSpecRel">
+        <p class="setting-help" id="help-tSpecRel">How long the analyser remembers recent loud passages, in milliseconds. Higher adapts more slowly; lower follows level changes more quickly and can make the lights fluctuate more.</p>
         <div class="state"></div>
-        <div class="ctl-msg" id="msg-tSpecRel">Longer = slower to follow volume changes, but less breathing.</div>
+        <div class="ctl-msg" id="msg-tSpecRel"></div>
       </div>
     </div>
   </div>
 
   <div class="group">
     <div class="group-hd"><h2>Light behaviour</h2></div>
-    <p class="hint">Attack and release do more for how the speaker looks than
-      any of the effect maths.</p>
+    <p class="hint">Set how quickly reactive effects respond and how sparkles and flashes behave.</p>
     <div class="card">
       <div class="ctl" id="ctl-lEnvAtk">
         <div class="ctl-hd"><label for="lEnvAtk">Attack</label><span class="val" id="lEnvAtkVal">0.55</span></div>
-        <input type="range" id="lEnvAtk" min="0.02" max="1" step="0.01" value="0.55">
-        <div class="state"></div><div class="ctl-msg" id="msg-lEnvAtk">Higher = punchier on the kick.</div>
+        <input type="range" id="lEnvAtk" min="0.02" max="1" step="0.01" value="0.55" aria-describedby="help-lEnvAtk">
+        <p class="setting-help" id="help-lEnvAtk">How quickly reactive lighting rises on a beat. Higher values react faster; lower values soften the start of each pulse.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-lEnvAtk"></div>
       </div>
       <div class="ctl" id="ctl-lEnvRel">
         <div class="ctl-hd"><label for="lEnvRel">Release</label><span class="val" id="lEnvRelVal">0.07</span></div>
-        <input type="range" id="lEnvRel" min="0.005" max="0.5" step="0.005" value="0.07">
-        <div class="state"></div><div class="ctl-msg" id="msg-lEnvRel">Lower = smoother, less flicker between hits.</div>
+        <input type="range" id="lEnvRel" min="0.005" max="0.5" step="0.005" value="0.07" aria-describedby="help-lEnvRel">
+        <p class="setting-help" id="help-lEnvRel">How quickly reactive lighting falls after a beat. Lower values create a longer, smoother fade; higher values drop faster.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-lEnvRel"></div>
       </div>
       <div class="ctl" id="ctl-lSparkle">
         <div class="ctl-hd"><label for="lSparkle">Sparkle rate</label><span class="val" id="lSparkleVal">1.00</span></div>
-        <input type="range" id="lSparkle" min="0.2" max="4" step="0.05" value="1">
-        <div class="state"></div><div class="ctl-msg" id="msg-lSparkle">Lower = busier.</div>
+        <input type="range" id="lSparkle" min="0.2" max="4" step="0.05" value="1" aria-describedby="help-lSparkle">
+        <p class="setting-help" id="help-lSparkle">Multiplier for the wait between new sparkles. Lower creates more frequent glints; higher leaves more space between them.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-lSparkle"></div>
       </div>
       <div class="ctl" id="ctl-lFade">
         <div class="ctl-hd"><label for="lFade">Sparkle decay</label><span class="val" id="lFadeVal">22</span></div>
-        <input type="range" id="lFade" min="4" max="90" step="1" value="22">
-        <div class="state"></div><div class="ctl-msg" id="msg-lFade">Higher = glints die faster.</div>
+        <input type="range" id="lFade" min="4" max="90" step="1" value="22" aria-describedby="help-lFade">
+        <p class="setting-help" id="help-lFade">How much sparkle brightness is removed each frame. Higher makes sparkles disappear sooner; lower leaves longer trails.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-lFade"></div>
       </div>
       <div class="ctl" id="ctl-lStrobeLo">
         <div class="ctl-hd"><label for="lStrobeLo">Strobe gap min</label><span class="val" id="lStrobeLoVal">70 ms</span></div>
-        <input type="range" id="lStrobeLo" min="30" max="600" step="10" value="70">
+        <input type="range" id="lStrobeLo" min="30" max="600" step="10" value="70" aria-describedby="help-lStrobeLo">
+        <p class="setting-help" id="help-lStrobeLo">Minimum waiting time before another music-triggered flash can occur. The actual wait is picked between the minimum and maximum. Keep this below the maximum.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lStrobeLo"></div>
       </div>
       <div class="ctl" id="ctl-lStrobeHi">
         <div class="ctl-hd"><label for="lStrobeHi">Strobe gap max</label><span class="val" id="lStrobeHiVal">420 ms</span></div>
-        <input type="range" id="lStrobeHi" min="60" max="2000" step="20" value="420">
+        <input type="range" id="lStrobeHi" min="60" max="2000" step="20" value="420" aria-describedby="help-lStrobeHi">
+        <p class="setting-help" id="help-lStrobeHi">Upper end of the random wait between music-triggered flashes. A larger maximum can space them further apart. Keep this above the minimum.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lStrobeHi"></div>
       </div>
     </div>
@@ -690,35 +698,91 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <div class="card">
       <div class="ctl" id="ctl-tCompThL">
         <div class="ctl-hd"><label for="tCompThL">Bass threshold</label><span class="val" id="tCompThLVal">-18.0 dB</span></div>
-        <input type="range" id="tCompThL" min="-40" max="0" step="0.5" value="-18">
+        <input type="range" id="tCompThL" min="-40" max="0" step="0.5" value="-18" aria-describedby="help-tCompThL">
+        <p class="setting-help" id="help-tCompThL">Bass level where compression begins, in digital dB. More negative values start reducing bass earlier; values closer to zero allow stronger bass peaks.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tCompThL"></div>
       </div>
       <div class="ctl" id="ctl-tCompRaL">
         <div class="ctl-hd"><label for="tCompRaL">Bass ratio</label><span class="val" id="tCompRaLVal">3.0</span></div>
-        <input type="range" id="tCompRaL" min="1" max="12" step="0.1" value="3">
+        <input type="range" id="tCompRaL" min="1" max="12" step="0.1" value="3" aria-describedby="help-tCompRaL">
+        <p class="setting-help" id="help-tCompRaL">Strength of bass compression above its threshold. 1 means no compression; 3 means a 3 dB increase above the threshold becomes about 1 dB.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tCompRaL"></div>
       </div>
       <div class="ctl" id="ctl-tCompThM">
         <div class="ctl-hd"><label for="tCompThM">Mid threshold</label><span class="val" id="tCompThMVal">-15.0 dB</span></div>
-        <input type="range" id="tCompThM" min="-40" max="0" step="0.5" value="-15">
+        <input type="range" id="tCompThM" min="-40" max="0" step="0.5" value="-15" aria-describedby="help-tCompThM">
+        <p class="setting-help" id="help-tCompThM">Midrange level where compression begins. More negative values act earlier on vocals and instruments; values closer to zero allow more variation.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tCompThM"></div>
       </div>
       <div class="ctl" id="ctl-tCompRaM">
         <div class="ctl-hd"><label for="tCompRaM">Mid ratio</label><span class="val" id="tCompRaMVal">2.5</span></div>
-        <input type="range" id="tCompRaM" min="1" max="12" step="0.1" value="2.5">
+        <input type="range" id="tCompRaM" min="1" max="12" step="0.1" value="2.5" aria-describedby="help-tCompRaM">
+        <p class="setting-help" id="help-tCompRaM">Strength of midrange compression above its threshold. Higher makes loud midrange passages more controlled; 1 leaves them uncompressed.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tCompRaM"></div>
       </div>
       <div class="ctl" id="ctl-tCompThH">
         <div class="ctl-hd"><label for="tCompThH">Treble threshold</label><span class="val" id="tCompThHVal">-12.0 dB</span></div>
-        <input type="range" id="tCompThH" min="-40" max="0" step="0.5" value="-12">
+        <input type="range" id="tCompThH" min="-40" max="0" step="0.5" value="-12" aria-describedby="help-tCompThH">
+        <p class="setting-help" id="help-tCompThH">Treble level where compression begins. More negative values act earlier on cymbals and other bright sounds.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tCompThH"></div>
       </div>
       <div class="ctl" id="ctl-tCompRaH">
         <div class="ctl-hd"><label for="tCompRaH">Treble ratio</label><span class="val" id="tCompRaHVal">2.0</span></div>
-        <input type="range" id="tCompRaH" min="1" max="12" step="0.1" value="2">
+        <input type="range" id="tCompRaH" min="1" max="12" step="0.1" value="2" aria-describedby="help-tCompRaH">
+        <p class="setting-help" id="help-tCompRaH">Strength of treble compression above its threshold. Higher reduces loud high-frequency peaks more strongly; 1 means no compression.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tCompRaH"></div>
       </div>
     </div>
+  </div>
+
+  <!-- Battery thresholds live on the BT board, not the S3 - that's where the
+       sensor is - so this group gates on the bluetooth board being present
+       rather than the DSP board. -->
+  <div class="group" data-board="bt">
+    <div class="group-hd"><h2>Battery warnings</h2><span class="offline-note">Bluetooth board offline</span></div>
+    <p class="hint">Voltages, not percentages &mdash; a flat LiFePO4 curve makes
+      percentage an interpretation, while volts are a measurement. The labels
+      are roughly where each sits on the curve. Warnings play even when the
+      speaker is muted.</p>
+    <div class="card">
+      <div class="ctl" id="ctl-pwV25">
+        <div class="ctl-hd"><label for="pwV25">First warning &middot; ~25%</label><span class="val" id="pwV25Val">12.95 V</span></div>
+        <input type="range" id="pwV25" min="11.5" max="14" step="0.05" value="12.95" aria-describedby="help-pwV25">
+        <div class="state"></div><p class="setting-help" id="help-pwV25">One long beep, once.</p><div class="ctl-msg" id="msg-pwV25"></div>
+      </div>
+      <div class="ctl" id="ctl-pwV10">
+        <div class="ctl-hd"><label for="pwV10">Second warning &middot; ~10%</label><span class="val" id="pwV10Val">12.75 V</span></div>
+        <input type="range" id="pwV10" min="11" max="14" step="0.05" value="12.75" aria-describedby="help-pwV10">
+        <div class="state"></div><p class="setting-help" id="help-pwV10">Two long beeps, once.</p><div class="ctl-msg" id="msg-pwV10"></div>
+      </div>
+      <div class="ctl" id="ctl-pwV0">
+        <div class="ctl-hd"><label for="pwV0">Final warning &middot; ~0%</label><span class="val" id="pwV0Val">12.00 V</span></div>
+        <input type="range" id="pwV0" min="10.5" max="13.5" step="0.05" value="12" aria-describedby="help-pwV0">
+        <div class="state"></div><p class="setting-help" id="help-pwV0">Repeats every 8 seconds until charged.</p><div class="ctl-msg" id="msg-pwV0"></div>
+      </div>
+      <div class="ctl" id="ctl-pwMute">
+        <div class="ctl-hd"><label for="pwMute">Mute cutoff</label><span class="val" id="pwMuteVal">12.00 V</span></div>
+        <input type="range" id="pwMute" min="10" max="13.5" step="0.05" value="12" aria-describedby="help-pwMute">
+        <div class="state"></div>
+        <p class="setting-help" id="help-pwMute">Audio stops here. Normally the same as the final warning.</p><div class="ctl-msg" id="msg-pwMute"></div>
+      </div>
+      <div class="ctl" id="ctl-pwUnmute">
+        <div class="ctl-hd"><label for="pwUnmute">Resume above</label><span class="val" id="pwUnmuteVal">12.60 V</span></div>
+        <input type="range" id="pwUnmute" min="10.5" max="14" step="0.05" value="12.6" aria-describedby="help-pwUnmute">
+        <div class="state"></div>
+        <p class="setting-help" id="help-pwUnmute">Must be at least 0.15 V above the cutoff to prevent rapid on/off switching.</p><div class="ctl-msg" id="msg-pwUnmute"></div>
+      </div>
+    </div>
+    <p class="hint" id="pwWarnHint" style="color:var(--bad)"></p>
+    <div class="row" style="margin-top:12px">
+      <button data-cmd="pwGet">Load current</button>
+      <button data-cmd="pwSave">Save thresholds</button>
+      <button data-cmd="pwReset">Defaults</button>
+    </div>
+    <div class="ctl" id="ctl-pwGet"><div class="state"></div><div class="ctl-msg" id="msg-pwGet"></div></div>
+    <div class="ctl" id="ctl-pwReset"><div class="state"></div><div class="ctl-msg" id="msg-pwReset"></div></div>
+    <div class="ctl" id="ctl-pwSave"><div class="state"></div>
+      <div class="ctl-msg" id="msg-pwSave"></div></div>
   </div>
 
   <div class="group" data-board="s3">
@@ -730,44 +794,51 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <div class="card">
       <div class="ctl" id="ctl-tLoudMax">
         <div class="ctl-hd"><label for="tLoudMax">Boost when quiet</label><span class="val" id="tLoudMaxVal">7.0 dB</span></div>
-        <input type="range" id="tLoudMax" min="0" max="12" step="0.5" value="7">
+        <input type="range" id="tLoudMax" min="0" max="12" step="0.5" value="7" aria-describedby="help-tLoudMax">
+        <p class="setting-help" id="help-tLoudMax">Extra low-bass boost at very low volume, on top of the selected EQ profile. It decreases as volume rises. Zero requests no extra contour boost.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tLoudMax"></div>
       </div>
       <div class="ctl" id="ctl-tLoudKnee">
         <div class="ctl-hd"><label for="tLoudKnee">Fades out by</label><span class="val" id="tLoudKneeVal">75%</span></div>
-        <input type="range" id="tLoudKnee" min="0.2" max="1" step="0.05" value="0.75">
+        <input type="range" id="tLoudKnee" min="0.2" max="1" step="0.05" value="0.75" aria-describedby="help-tLoudKnee">
+        <p class="setting-help" id="help-tLoudKnee">Volume level where the extra loudness boost fades to zero. Higher keeps the boost active further up the volume range. Your normal EQ profile still applies.</p>
         <div class="state"></div>
-        <div class="ctl-msg" id="msg-tLoudKnee">Volume above which no bass is added at all.</div>
+        <div class="ctl-msg" id="msg-tLoudKnee"></div>
       </div>
     </div>
   </div>
 
   <div class="group" data-board="s3">
-    <div class="group-hd"><h2>Thermal &amp; limiter</h2><span class="offline-note">DSP offline</span></div>
+    <div class="group-hd"><h2>Sustained-level backoff &amp; limiter</h2><span class="offline-note">DSP offline</span></div>
     <div class="card">
       <div class="ctl" id="ctl-tRmsHi">
         <div class="ctl-hd"><label for="tRmsHi">Backoff threshold</label><span class="val" id="tRmsHiVal">0.45</span></div>
-        <input type="range" id="tRmsHi" min="0.1" max="0.9" step="0.01" value="0.45">
-        <div class="state"></div><div class="ctl-msg" id="msg-tRmsHi">Sustained level that counts as working hard.</div>
+        <input type="range" id="tRmsHi" min="0.1" max="0.9" step="0.01" value="0.45" aria-describedby="help-tRmsHi">
+        <p class="setting-help" id="help-tRmsHi">Sustained signal level above which the RMS stage gradually reduces overall gain. Lower starts backoff sooner. This is a signal estimate, not a temperature measurement.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-tRmsHi"></div>
       </div>
       <div class="ctl" id="ctl-tRmsLo">
         <div class="ctl-hd"><label for="tRmsLo">Recovery threshold</label><span class="val" id="tRmsLoVal">0.30</span></div>
-        <input type="range" id="tRmsLo" min="0.05" max="0.85" step="0.01" value="0.30">
+        <input type="range" id="tRmsLo" min="0.05" max="0.85" step="0.01" value="0.30" aria-describedby="help-tRmsLo">
+        <p class="setting-help" id="help-tRmsLo">Signal level below which reduced gain starts recovering. Lower waits for quieter audio before recovery. Keep it below the backoff threshold.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tRmsLo"></div>
       </div>
       <div class="ctl" id="ctl-tRmsMin">
-        <div class="ctl-hd"><label for="tRmsMin">Max backoff</label><span class="val" id="tRmsMinVal">0.75</span></div>
-        <input type="range" id="tRmsMin" min="0.3" max="1" step="0.01" value="0.75">
-        <div class="state"></div><div class="ctl-msg" id="msg-tRmsMin">How far it's allowed to pull back.</div>
+        <div class="ctl-hd"><label for="tRmsMin">Minimum retained gain</label><span class="val" id="tRmsMinVal">1.00</span></div>
+        <input type="range" id="tRmsMin" min="0.3" max="1" step="0.01" value="1" aria-describedby="help-tRmsMin">
+        <p class="setting-help" id="help-tRmsMin">Lowest gain the RMS stage can approach. 1.00 disables new gain reduction from startup; 0.75 retains 75% of signal amplitude at maximum backoff. Lower allows more reduction.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-tRmsMin"></div>
       </div>
       <div class="ctl" id="ctl-tLimAtk">
         <div class="ctl-hd"><label for="tLimAtk">Limiter attack</label><span class="val" id="tLimAtkVal">0.5 ms</span></div>
-        <input type="range" id="tLimAtk" min="0.05" max="20" step="0.05" value="0.5">
+        <input type="range" id="tLimAtk" min="0.05" max="20" step="0.05" value="0.5" aria-describedby="help-tLimAtk">
+        <p class="setting-help" id="help-tLimAtk">How quickly the limiter detector responds to peaks, in milliseconds. Smaller values react faster; larger values allow longer transients before this stage reacts.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tLimAtk"></div>
       </div>
       <div class="ctl" id="ctl-tLimRel">
         <div class="ctl-hd"><label for="tLimRel">Limiter release</label><span class="val" id="tLimRelVal">120 ms</span></div>
-        <input type="range" id="tLimRel" min="10" max="1000" step="5" value="120">
+        <input type="range" id="tLimRel" min="10" max="1000" step="5" value="120" aria-describedby="help-tLimRel">
+        <p class="setting-help" id="help-tLimRel">How quickly the limiter detector settles after a peak. Larger values recover more slowly; smaller values recover faster but can make level changes more noticeable.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tLimRel"></div>
       </div>
     </div>
@@ -806,7 +877,7 @@ const STAT = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 // moments before the real answer lands.
 const ACK_TIMEOUT = 1200;
 const ACK_TIMEOUT_SLOW = 3000;
-const SLOW_CMDS = ['save','reset','tSave','tReset','ltSave','ltReset'];
+const SLOW_CMDS = ['save','reset','tSave','tReset','ltSave','ltReset','pwSave','pwReset'];
 
 const $ = id => document.getElementById(id);
 const enc = new TextEncoder(), dec = new TextDecoder();
@@ -978,7 +1049,7 @@ function checkForReboot(s){
     state = {}; fxNames = []; colNames = [];
     for (const p of pending.values()) setCtl(p.ctl, 'gone', 'Speaker restarted. Try again.');
     pending.clear(); txQueue.length = 0;
-    if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); }
+    if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); send('pwGet','1'); }
   }
   lastUptime = s.uptime;
 }
@@ -997,7 +1068,10 @@ function resolveAck(a){
   if (!p) return;
   pending.delete(a.seq);
   logUpdate(a.seq, a.r, Math.round(performance.now() - p.ms));
-  if (a.r === 'ok')         setCtl(p.ctl, 'ok', '');
+  const batterySetting = ['pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(p.key);
+  if (batterySetting && ['ok','clamp','bad'].includes(a.r) && Number.isFinite(Number(a.v))) snapTo(p.key, a.v);
+  if (p.key === 'pwReset' && ['ok','bad'].includes(a.r)) send('pwGet','1');
+  if (a.r === 'ok') setCtl(p.ctl, 'ok', ({pwGet:'Current thresholds loaded.',pwSave:'Thresholds saved.',pwReset:'Defaults applied and saved.'})[p.key] || '');
   else if (a.r === 'clamp') { setCtl(p.ctl, 'clamp', 'Limited to ' + a.v + '.'); snapTo(p.key, a.v); }
   else if (a.r === 'gone')  setCtl(p.ctl, 'gone', 'That board is not responding.');
   else {
@@ -1007,7 +1081,10 @@ function resolveAck(a){
     const detail = (a.v && /led:|s3:/.test(a.v))
       ? a.v.replace('led:', 'lights ').replace(',s3:', ', DSP ')
       : 'Rejected.';
-    setCtl(p.ctl, 'bad', detail);
+    const batteryDetail = batterySetting ? 'Rejected: keep first > second > final, cutoff at or below final, and resume at least 0.15 V above cutoff.'
+      : p.key === 'pwSave' ? 'Thresholds could not be saved. Live settings remain active.'
+      : p.key === 'pwReset' ? 'Defaults applied, but could not be saved. Try Save thresholds again.' : detail;
+    setCtl(p.ctl, 'bad', batteryDetail);
   }
 }
 // A control that stays where you dragged it after the firmware clamped the
@@ -1015,7 +1092,7 @@ function resolveAck(a){
 function snapTo(key, v){
   const map = {mic1:'mic1', mic2:'mic2', echo:'echo', ledbright:'bright', vol:'vol',
                vol12:'vol12', vol24:'vol24', hpf:'hpf', lim:'lim'};
-  const el = map[key] && $(map[key]);
+  const el = ['pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(key) ? $(key) : map[key] && $(map[key]);
   if (el){ el.value = v; el.dispatchEvent(new Event('render')); }
   render();
 }
@@ -1076,7 +1153,20 @@ function render(){
   $('pBatt').textContent = fmtV(state.vBatt);
   $('pPsu').textContent  = fmtV(state.vPsu);
   $('pLoad').textContent = fmtV(state.vLoad);
-  $('pSrc').textContent  = conn ? (state.onPsu ? 'wall power' : 'battery') : '\u2014';
+  // Two different questions: what's powering the amp, and what's plugged in.
+  // When they disagree the speaker is draining the pack with a wall supply
+  // sitting there unused - worth saying outright, since the beeping only
+  // tells you something is wrong, not what.
+  $('pSrc').textContent  = conn
+    ? (!(Number.isFinite(state.vLoad) && state.vLoad >= 0) ? 'unknown (load sensor unavailable)' : state.onPsu ? 'wall power'
+                   : (state.psuPresent ? 'battery (PSU plugged in)' : 'battery'))
+    : '\u2014';
+  $('pSrc').style.color = state.psuMismatch ? 'var(--live)' : '';
+
+  const pHint = $('psuHint');
+  if (pHint) pHint.textContent = state.psuMismatch
+    ? 'Wall power is connected but the switch is still on battery. Move the switch to stop the reminder and get the full volume ceiling.'
+    : '';
   $('pMute').textContent = conn ? (state.muted ? 'active \u2014 low battery' : 'off') : '\u2014';
   // -1 means the INA226 isn't answering, same sentinel the INA219s use.
   $('pAmpA').textContent = (state.ampA === undefined || state.ampA < 0)
@@ -1291,6 +1381,31 @@ bindSlider('tCompRaH','tCompRaH','tCompRaH', f2);
 bindSlider('tRmsHi','tRmsHi','tRmsHi', f2);
 bindSlider('tRmsLo','tRmsLo','tRmsLo', f2);
 bindSlider('tRmsMin','tRmsMin','tRmsMin', f2);
+const volts = v => (+v).toFixed(2) + ' V';
+bindSlider('pwV25','pwV25','pwV25', volts);
+bindSlider('pwV10','pwV10','pwV10', volts);
+bindSlider('pwV0','pwV0','pwV0', volts);
+bindSlider('pwMute','pwMute','pwMute', volts);
+bindSlider('pwUnmute','pwUnmute','pwUnmute', volts);
+
+// Preview invalid ordering; the Bluetooth firmware also rejects it.
+function checkThresholdOrder(){
+  const h = $('pwWarnHint'); if (!h) return;
+  const v25 = +$('pwV25').value, v10 = +$('pwV10').value, v0 = +$('pwV0').value;
+  const mute = +$('pwMute').value, unmute = +$('pwUnmute').value;
+  const msgs = [];
+  if (v10 >= v25) msgs.push('Second warning is not below the first, so one of them will never fire on its own.');
+  if (v0  >= v10) msgs.push('Final warning is not below the second.');
+  if (unmute - mute < 0.1499) msgs.push('Resume voltage must be at least 0.15 V above the cutoff.');
+  if (mute > v0) msgs.push('Audio cuts out before the final warning is reached.');
+  h.textContent = msgs.join(' ');
+}
+['pwV25','pwV10','pwV0','pwMute','pwUnmute'].forEach(id => {
+  const el = $(id);
+  if (el){ el.addEventListener('input', checkThresholdOrder);
+           el.addEventListener('render', checkThresholdOrder); }
+});
+
 bindSlider('tLoudMax','tLoudMax','tLoudMax', v => (+v).toFixed(1) + ' dB');
 bindSlider('tLoudKnee','tLoudKnee','tLoudKnee', v => Math.round(+v * 100) + '%');
 bindSlider('tLimAtk','tLimAtk','tLimAtk', v => (+v).toFixed(2) + ' ms');
@@ -1305,7 +1420,7 @@ bindSlider('lStrobeHi','lStrobeHi','lStrobeHi', ms);
 // Tuning arrives as its own message rather than in the heartbeat - sixteen
 // values that only change while someone is actively tuning don't belong in
 // a once-a-second broadcast.
-const TUNE_KEYS = ['tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel',
+const TUNE_KEYS = ['pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel',
   'tCompThL','tCompThM','tCompThH','tCompRaL','tCompRaM','tCompRaH',
   'tRmsHi','tRmsLo','tRmsMin','tLoudMax','tLoudKnee','tLimAtk','tLimRel',
   'lEnvAtk','lEnvRel','lSparkle','lFade','lStrobeLo','lStrobeHi'];
@@ -1319,7 +1434,8 @@ bindSlider('lim','lim','lim', v => (+v).toFixed(1)+' dB');
 
 document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => {
   const c = b.dataset.cmd;
-  const ctl = ['save','reset','tSave','tReset','ltSave','ltGet','tGet'].includes(c) ? c : 'transport';
+  if (['play','next','prev'].includes(c)) { sendTransport(c); return; }
+  const ctl = ['save','reset','tSave','tReset','ltSave','ltGet','tGet','pwGet','pwSave','pwReset'].includes(c) ? c : 'transport';
   send(c, '1', ctl, '1');
 }));
 document.querySelectorAll('#bassSeg button').forEach(b => b.addEventListener('click', () => {
@@ -1346,7 +1462,7 @@ document.querySelectorAll('.island button').forEach(t => t.addEventListener('cli
    play/pause and arrows for volume are what every media app does. */
 document.addEventListener('keydown', e => {
   if (e.target.closest('input,button,select,textarea,[role=slider],dialog') || !(demo || device?.gatt?.connected)) return;   // don't hijack slider arrows
-  if (e.code === 'Space'){ e.preventDefault(); send('play','1','transport','1'); }
+  if (e.code === 'Space'){ e.preventDefault(); sendTransport('play'); }
   else if (e.code === 'ArrowUp' || e.code === 'ArrowDown'){
     e.preventDefault();
     const el = $('vol');
@@ -1384,7 +1500,7 @@ $('connectBtn').addEventListener('click', async () => {
     // also re-sends on its own until listGot arrives, which covers the case
     // where this request is the thing that gets lost.
     setTimeout(() => { send('listGet','1'); }, 200);
-    setTimeout(() => { send('ltGet','1'); send('tGet','1'); }, 500);
+    setTimeout(() => { send('ltGet','1'); send('tGet','1'); send('pwGet','1'); }, 500);
     demo = false; clearInterval(demoTick); $('demoBtn').textContent = 'Demo';
     $('connectBtn').textContent = 'Disconnect';
     render();
@@ -1413,13 +1529,14 @@ $('demoBtn').addEventListener('click', () => {
   demo = !demo;
   $('demoBtn').textContent = demo ? 'Stop' : 'Demo';
   if (demo){
-    state = {fw:'LarbyBox LED 2.0', pv:2, vol:42, stbass:0, playing:true, uptime:437, batt:82, vBatt:13.1,
-             vPsu:-1, vLoad:12.9, onPsu:false, muted:false, ampA:2.4, ampW:31.4,
+    state = {fw:'LarbyBox LED 2.0', pv:2, vol:42, stbass:0, bt:true, avrc:true, playing:true, uptime:437, batt:82, vBatt:13.1,
+             vPsu:-1, vLoad:12.9, onPsu:false, psuPresent:false, psuMismatch:false, muted:false, ampA:2.4, ampW:31.4,
              linkBt:true, linkS3:true, ledbright:128,
              ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
              ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
              ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
-             saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0, battStatus:0, bleFails:0, bleDrops:0, btPv:2, s3Pv:2,
+             saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0, battStatus:0, battWarn:0, bleFails:0,
+             pwV25:12.95, pwV10:12.75, pwV0:12.0, pwMute:12.0, pwUnmute:12.6, bleDrops:0, btPv:2, s3Pv:2,
              mics:false, mic1:50, mic2:50, mic1mute:true, mic2mute:true,
              echo:20, reverb:25, fbsup:true};
     demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
@@ -1437,6 +1554,18 @@ function demoHandle(sq, key, value){
     const n = Math.max(c[0], Math.min(c[1], parseFloat(value)));
     if (n !== parseFloat(value)){ r = 'clamp'; v = String(n); }
   }
+  const pwKeys = ['pwV25','pwV10','pwV0','pwMute','pwUnmute'];
+  if (pwKeys.includes(key)) {
+    const candidate = {...state, [key]:Number(value)};
+    const el = $(key), n = Number(value);
+    if (!Number.isFinite(n) || n < +el.min || n > +el.max ||
+        !(candidate.pwV25 > candidate.pwV10 && candidate.pwV10 > candidate.pwV0 &&
+          candidate.pwMute <= candidate.pwV0 && candidate.pwUnmute - candidate.pwMute >= 0.1499)) {
+      r = 'bad'; v = String(state[key]);
+    } else state[key] = n;
+  }
+  if (key === 'pwReset') Object.assign(state, {pwV25:12.95,pwV10:12.75,pwV0:12,pwMute:12,pwUnmute:12.6});
+  if (key === 'pwGet') applyTuning(state);
   if (key === 'ledpreset'){
     state.ledpreset = +v; state.ledpname = state.ledlist[+v] || '?';
     state.ledusescolor = NO_COLOR.indexOf(state.ledpname) === -1;

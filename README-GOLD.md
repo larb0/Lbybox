@@ -1,24 +1,31 @@
-# LarbyBox — Gold / Dark app
+# LarbyBox — Gold / Dark, revision 3
 
-Replace the files in your existing web app with all files from this folder, keeping them together. This is a static app: there is no build step. Use your existing HTTPS hosting for Bluetooth control. No speaker firmware update is needed for this visual update.
+Upload all app files together to your existing HTTPS web host. There is no build step. Close and reopen the installed app after updating to load the new cached version. Demo works without a speaker.
 
-Open the app and choose Connect. Demo lets you try the layout and controls without a speaker. If your installed app still shows the older interface after uploading, close and reopen it after the new service worker has installed; refreshing once more can also fetch the new shell.
+## Requested changes
 
-## Controls
+- Battery voltage appears next to its percentage.
+- Favourite scenes and the dial's mute button have been removed.
+- EQ profiles occupy the former scenes area.
+- LED effects are available on Home in a single horizontally scrollable row. Swipe sideways on phone; use the scrollbar or trackpad on desktop.
+- Every Advanced slider has persistent explanatory text, including the meaning of higher/lower values and units.
+- Playback commands now avoid overlapping clicks, report unavailable connections and use reported playback state for the play/pause symbol.
 
-- Home: volume dial, playback, bass profile, lighting and favourite scenes.
-- Drag or tap the dial. Keyboard: arrows change volume by 1, Page Up/Down by 10, Home/End select 0/100. Commands send when a drag ends.
-- The centre mute button sends volume 0; pressing it again restores the previous app volume. It does not change the speaker's battery-protection mute.
-- Scene buttons set bass profile, lighting effect, colour and brightness. They do not change volume or EQ trim values. Save current replaces one of the three scene slots; scenes are stored in this browser on this device, not automatically shared across devices or saved to the speaker's startup settings.
-- Lights: all effects with a preview and the same colour/brightness controls.
-- Sound: the existing sound controls, startup defaults and save/reset actions.
-- Settings: Power & system, Activity and Advanced.
-- Controls are unavailable when disconnected or when their board is absent. Microphone controls require the reported microphone hardware.
+## Playback update
 
-The main playback button sends the existing play/pause command. Current firmware does not report playback state, so the live app uses a play symbol for this toggle; demo mode can show pause.
+Flash the updated larbybox_bt sketch to the Bluetooth/audio ESP32 for the new playing/avrc status fields and command connection checks. The LED and S3 firmware do not need another update for these app revisions. The full bundle retains the prior LED ::memcpy compile fix.
 
-## Changes and validation
+Pair your music phone or PC to LarbyBox for audio, then connect the app to the BLE control service. The app can control the music device via the Bluetooth board. A connected BLE app alone is not a connected music source. Track skipping depends on the music player supporting Bluetooth media controls.
 
-Implemented the approved charcoal/gold layout with a circular SVG dial, responsive navigation, accessible controls, scene storage, and acknowledgement-based dial updates. Added gold.css and gold.js; updated index.html, manifest colours and the offline cache version. Fixed the supplied app's missing checkForReboot/lastUptime definitions so incoming acknowledgements can be processed.
+The app sends one play, next or previous command through its acknowledged BLE queue. The Bluetooth board dispatches the existing A2DP library media command only when its AVRCP media-control connection is ready; otherwise it returns an unavailable reply. A successful reply confirms dispatch, not that the phone obeyed. The play/pause icon follows the reported audio-stream state on the once-per-second heartbeat.
 
-Browser checks passed: desktop and mobile layouts (360, 390, 768, 1024 and 1440px widths); dial pointer/keyboard input; mute/restore; scene application and persistence; tab navigation; queued commands and clamped replies through a simulated Bluetooth characteristic; disconnect gating. No physical speaker or Bluetooth radio was available for hardware testing. Firmware files in the full bundle are unchanged from the uploaded version 8.
+## Advanced controls
+
+Load current requests the board's current tuning values. Save tuning stores DSP tuning; Save lights stores LED tuning. Reset all DSP tuning restores and saves the DSP tuning defaults. Control descriptions remain visible independently of command acknowledgement messages.
+
+## Validation
+
+Browser checks passed at 360, 390, 768 and 1440px: navigation, battery text, removal of scenes/mute, playback command dispatch through a simulated BLE characteristic, live playback-state updates, disconnected controls, and descriptions for every Advanced slider. Physical Bluetooth operation and a full ESP32 firmware compilation have not been tested here.
+
+The media-control readiness API was checked against the library's official reference:
+https://pschatzmann.github.io/ESP32-A2DP/html/class_bluetooth_a2_d_p_sink.html
