@@ -373,7 +373,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       </div>
       <div class="ctl" id="ctl-ledbright">
         <div class="ctl-hd"><label for="bright">Brightness</label><span class="val" id="brightVal">128</span></div>
-        <input type="range" id="bright" min="0" max="255" value="128">
+        <input type="range" id="bright" min="0" max="255" value="128" aria-describedby="help-bright">
+        <p class="setting-help" id="help-bright">Bottom lights only; button lights are unaffected. Every startup begins at 50% on battery or 100% on mains, then this adjusts it until the next restart.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-ledbright"></div>
       </div>
     </div>
@@ -643,6 +644,12 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <div class="state"></div>
         <div class="ctl-msg" id="msg-tSpecRel"></div>
       </div>
+      <div class="ctl" id="ctl-tSpecBassHz">
+        <div class="ctl-hd"><label for="tSpecBassHz">Lighting bass cutoff</label><span class="val" id="tSpecBassHzVal">220 Hz</span></div>
+        <input type="range" id="tSpecBassHz" min="40" max="500" step="5" value="220" aria-describedby="help-tSpecBassHz">
+        <p class="setting-help" id="help-tSpecBassHz">Highest frequency the lights count as bass, in hertz. Lower makes Bass Pulse and Strobe follow only kick drums and sub-bass; higher lets bass guitar and low vocals drive them too. Affects the lights only, never the sound.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-tSpecBassHz"></div>
+      </div>
     </div>
   </div>
 
@@ -685,6 +692,18 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <input type="range" id="lStrobeHi" min="60" max="2000" step="20" value="420" aria-describedby="help-lStrobeHi">
         <p class="setting-help" id="help-lStrobeHi">Upper end of the random wait between music-triggered flashes. A larger maximum can space them further apart. Keep this above the minimum.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lStrobeHi"></div>
+      </div>
+      <div class="ctl" id="ctl-lIdleMs">
+        <div class="ctl-hd"><label for="lIdleMs">Idle delay</label><span class="val" id="lIdleMsVal">3000 ms</span></div>
+        <input type="range" id="lIdleMs" min="500" max="30000" step="250" value="3000" aria-describedby="help-lIdleMs">
+        <p class="setting-help" id="help-lIdleMs">How long without any detected audio before Bass Pulse, Strobe and Sparkle switch to their calm idle versions, in milliseconds. Higher avoids switching during pauses between songs. Music resuming switches back straight away.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-lIdleMs"></div>
+      </div>
+      <div class="ctl" id="ctl-lIdleBr">
+        <div class="ctl-hd"><label for="lIdleBr">Idle brightness</label><span class="val" id="lIdleBrVal">35%</span></div>
+        <input type="range" id="lIdleBr" min="0.05" max="1" step="0.05" value="0.35" aria-describedby="help-lIdleBr">
+        <p class="setting-help" id="help-lIdleBr">Peak brightness of the idle heartbeat, flashes and sparkles while nothing is playing, as a percentage of their full brightness. Breathe, Rainbow and Two-Tone keep running normally.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-lIdleBr"></div>
       </div>
     </div>
     <div class="row" style="margin-top:12px">
@@ -1100,18 +1119,18 @@ function snapTo(key, v){
 /* ---------- hero ---------- */
 const HEX = {red:'#e2574c',orange:'#f0a63d',gold:'#f0b429',green:'#3ddc84',
              cyan:'#3dd0dc',blue:'#4a8ef0',purple:'#a765e0',magenta:'#e05ca7'};
-const NICE = {huedrift:'Hue Drift', twotone:'Two-Tone', basspulse:'Bass Pulse'};
+const NICE = {huedrift:'Rainbow', twotone:'Two-Tone', basspulse:'Bass Pulse'};
 const label = n => NICE[n] || (n ? n.charAt(0).toUpperCase()+n.slice(1) : '\u2014');
 // Mirrors presetUsesColor() in presets.ino. The firmware is authoritative via
 // ledusescolor; this list is only the fallback before state first arrives.
-const NO_COLOR = ['off','huedrift','strobe'];
+const NO_COLOR = ['off','huedrift','twotone','strobe'];
 const SUBTITLE = {
   off:       () => 'Lights are off',
-  huedrift:  () => 'Cycling through every colour',
+  huedrift:  () => 'Rainbow moving left to right',
   strobe:    () => 'Full white, on the beat',
   basspulse: c  => 'Reacting to bass \u00b7 ' + label(c),
   sparkle:   c  => 'White glints over ' + label(c),
-  twotone:   c  => label(c) + ' against its opposite',
+  twotone:   () => 'Colour pairs chasing left to right',
   breathe:   c  => 'Slow swell \u00b7 ' + label(c)
 };
 
@@ -1372,6 +1391,7 @@ bindSlider('tSpecMid','tSpecMid','tSpecMid', f2);
 bindSlider('tSpecTreb','tSpecTreb','tSpecTreb', f2);
 bindSlider('tSpecFloor','tSpecFloor','tSpecFloor', f4);
 bindSlider('tSpecRel','tSpecRel','tSpecRel', ms);
+bindSlider('tSpecBassHz','tSpecBassHz','tSpecBassHz', v => Math.round(+v) + ' Hz');
 bindSlider('tCompThL','tCompThL','tCompThL', db);
 bindSlider('tCompThM','tCompThM','tCompThM', db);
 bindSlider('tCompThH','tCompThH','tCompThH', db);
@@ -1416,14 +1436,16 @@ bindSlider('lSparkle','lSparkle','lSparkle', f2);
 bindSlider('lFade','lFade','lFade', v => Math.round(+v));
 bindSlider('lStrobeLo','lStrobeLo','lStrobeLo', ms);
 bindSlider('lStrobeHi','lStrobeHi','lStrobeHi', ms);
+bindSlider('lIdleMs','lIdleMs','lIdleMs', ms);
+bindSlider('lIdleBr','lIdleBr','lIdleBr', v => Math.round(+v * 100) + '%');
 
 // Tuning arrives as its own message rather than in the heartbeat - sixteen
 // values that only change while someone is actively tuning don't belong in
 // a once-a-second broadcast.
-const TUNE_KEYS = ['pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel',
+const TUNE_KEYS = ['pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel','tSpecBassHz',
   'tCompThL','tCompThM','tCompThH','tCompRaL','tCompRaM','tCompRaH',
   'tRmsHi','tRmsLo','tRmsMin','tLoudMax','tLoudKnee','tLimAtk','tLimRel',
-  'lEnvAtk','lEnvRel','lSparkle','lFade','lStrobeLo','lStrobeHi'];
+  'lEnvAtk','lEnvRel','lSparkle','lFade','lStrobeLo','lStrobeHi','lIdleMs','lIdleBr'];
 function applyTuning(s){
   TUNE_KEYS.forEach(k => { if (s[k] !== undefined) syncSlider(k, s[k]); });
 }
@@ -1529,14 +1551,15 @@ $('demoBtn').addEventListener('click', () => {
   demo = !demo;
   $('demoBtn').textContent = demo ? 'Stop' : 'Demo';
   if (demo){
-    state = {fw:'LarbyBox LED 2.0', pv:2, vol:42, stbass:0, bt:true, avrc:true, playing:true, uptime:437, batt:82, vBatt:13.1,
+    state = {fw:'LarbyBox LED 2.1', pv:3, vol:42, stbass:0, bt:true, avrc:true, playing:true, uptime:437, batt:82, vBatt:13.1,
              vPsu:-1, vLoad:12.9, onPsu:false, psuPresent:false, psuMismatch:false, muted:false, ampA:2.4, ampW:31.4,
              linkBt:true, linkS3:true, ledbright:128,
              ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
              ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
              ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
              saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0, battStatus:0, battWarn:0, bleFails:0,
-             pwV25:12.95, pwV10:12.75, pwV0:12.0, pwMute:12.0, pwUnmute:12.6, bleDrops:0, btPv:2, s3Pv:2,
+             pwV25:12.95, pwV10:12.75, pwV0:12.0, pwMute:12.0, pwUnmute:12.6, bleDrops:0, btPv:3, s3Pv:3,
+             tSpecBassHz:220, lIdleMs:3000, lIdleBr:0.35,
              mics:false, mic1:50, mic2:50, mic1mute:true, mic2mute:true,
              echo:20, reverb:25, fbsup:true};
     demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
@@ -1565,7 +1588,8 @@ function demoHandle(sq, key, value){
     } else state[key] = n;
   }
   if (key === 'pwReset') Object.assign(state, {pwV25:12.95,pwV10:12.75,pwV0:12,pwMute:12,pwUnmute:12.6});
-  if (key === 'pwGet') applyTuning(state);
+  if (key === 'pwGet' || key === 'tGet' || key === 'ltGet') applyTuning(state);
+  if (TUNE_KEYS.includes(key) && r !== 'bad') state[key] = Number(v);
   if (key === 'ledpreset'){
     state.ledpreset = +v; state.ledpname = state.ledlist[+v] || '?';
     state.ledusescolor = NO_COLOR.indexOf(state.ledpname) === -1;
@@ -1576,7 +1600,8 @@ function demoHandle(sq, key, value){
   const persisted = ['stbass','hpf','lim','benh','vol12','vol24','startvol',
                      'mic1','mic2','echo','reverb','fbsup'];
   if (persisted.includes(key) || /^b[0-2][bt]$/.test(key)) state.saved = false;
-  if (['ledpreset','ledcolor','ledbright'].includes(key)) state.ledsaved = false;
+  // Brightness is chosen from the power source at startup, not saved.
+  if (['ledpreset','ledcolor'].includes(key)) state.ledsaved = false;
   if (key === 'save' || key === 'reset'){ state.saved = true; state.ledsaved = true; }
   if (key === 'ledbright') state.ledbright = +v;
   setTimeout(()=>onState(JSON.stringify({ack:{seq:sq, r:r, k:key, v:v}}) + '\n'), 60 + Math.random()*140);
