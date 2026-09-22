@@ -46,9 +46,9 @@ const effectSelect=document.createElement('select');effectSelect.id='homeEffect'
 effectSelect.addEventListener('change',()=>send('ledpreset',effectSelect.value,'ledpreset',effectSelect.value));
 // Keep effect acknowledgements visible next to the Home effect selector.
 lighting.append($('ctl-ledpreset'));
-function goldReady(board){return (demo||!!device?.gatt?.connected)&&(board==='s3'?!!state.linkS3:board==='bt'?!!state.linkBt:true);}
+function goldReady(board){return (connectionReady&&!!device?.gatt?.connected)&&(board==='s3'?!!state.linkS3:board==='bt'?!!state.linkBt:true);}
 const legacyRender=render;
-render=function(){legacyRender();const conn=demo||!!device?.gatt?.connected,ready=goldReady('s3');
+render=function(){legacyRender();const conn=connectionReady&&!!device?.gatt?.connected,ready=goldReady('s3');
  // No disconnected or absent-board actions; native disabled state also covers keyboard users.
  document.querySelectorAll('main button,main input,main select').forEach(el=>{const g=el.closest('[data-board]');el.disabled=!conn||(g&&!goldReady(g.dataset.board))||!!el.closest('.missing');});
  document.querySelectorAll('.settings-tabs button').forEach(b=>b.disabled=false);
@@ -61,7 +61,6 @@ render=function(){legacyRender();const conn=demo||!!device?.gatt?.connected,read
  if(state.ledpreset!==undefined)effectSelect.value=state.ledpreset;
  $('brightVal').textContent=Math.round(+$('bright').value/255*100)+'%';
  document.querySelectorAll('input[type=range]').forEach(el=>el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%'));
- $('demoBtn').disabled=!!device?.gatt?.connected;
  const playButton=playback.querySelector('.play');playButton.innerHTML=icon(state.playing?'pause':'play');playButton.setAttribute('aria-label',state.playing?'Pause':'Play');const transportPending=[...pending.values()].some(p=>['play','next','prev'].includes(p.key));playback.querySelectorAll('[data-cmd]').forEach(b=>b.disabled=!goldReady('bt')||state.bt===false||state.avrc===false||transportPending);
 };
 document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%');if(el.id==='bright')$('brightVal').textContent=Math.round(+el.value/255*100)+'%';}));

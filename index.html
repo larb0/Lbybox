@@ -871,8 +871,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 <div class="dock">
   <div class="err" id="err"></div>
   <div class="dock-in">
-    <button id="connectBtn">Connect</button>
-    <button class="ghost" id="demoBtn">Demo</button>
+    
+    
   </div>
 </div>
 
@@ -884,6 +884,13 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   <button data-v="adv">Advanced</button>
 </div>
 
+<dialog id="connectionGate" aria-labelledby="connectionTitle" aria-describedby="connectionMessage">
+ <div class="connection-mark">L</div><p class="connection-eyebrow">LARBYBOX CONTROL</p>
+ <h2 id="connectionTitle">Connect your speaker</h2>
+ <p id="connectionMessage" role="status" aria-live="polite">Turn on LarbyBox, then connect to its controls.</p>
+ <button id="connectBtn" autofocus>Connect to LarbyBox</button>
+ <small>Music connects separately through your device’s Bluetooth settings.</small>
+</dialog>
 <script>
 'use strict';
 const SVC  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
@@ -902,7 +909,8 @@ const $ = id => document.getElementById(id);
 const enc = new TextEncoder(), dec = new TextDecoder();
 
 let device=null, ctrlChar=null, statChar=null;
-let demo=false, seq=0, demoTick=null;
+let seq=0;
+let connecting=false, connectionReady=false;
 const pending = new Map();
 let state = {};
 
@@ -984,7 +992,6 @@ function send(key, value, ctlId, requested, coalesce){
       logUpdate(mine, 'bad', null);
     }, timeout);
   }
-  if (demo) return demoHandle(mine, key, value);
   enqueue({cmd, seq:mine, ctl:ctlId, key, coalesce:!!coalesce});
 }
 
@@ -1003,9 +1010,8 @@ function setCtl(id, s, msg){
    (ledlist/ledcolors are the largest fields) can arrive split across
    several events. Previously each event was parsed on its own, so a split
    message failed JSON.parse and was dropped silently: the exact
-   "presets/colours sometimes missing until reconnecting" symptom, since
-   Demo mode hands the UI a complete object directly and never hits this
-   path. Buffer chunks and only consume the buffer once it parses. */
+   "presets/colours sometimes missing until reconnecting" symptom.
+   Buffer chunks and only consume the buffer once it parses. */
 let rxBuf = '';
 function onState(chunk){
   rxBuf += chunk;
@@ -1135,7 +1141,7 @@ const SUBTITLE = {
 };
 
 function updateHero(){
-  const conn = demo || !!device;
+  const conn = connectionReady && !!device;
   const fx = state.ledpname;
   if (!conn || !fx){
     $('heroCanvas').dataset.fx = 'off';
@@ -1157,9 +1163,9 @@ function updateHero(){
 
 /* ---------- rendering ---------- */
 function render(){
-  const btUp = !!state.linkBt, s3Up = !!state.linkS3, conn = demo || !!device;
+  const btUp = !!state.linkBt, s3Up = !!state.linkS3, conn = connectionReady && !!device;
 
-  chip('chipLink', conn, conn ? (demo?'demo':'connected') : 'offline');
+  chip('chipLink', conn, conn ? 'connected' : 'offline');
   chip('chipBt', conn && btUp, 'bluetooth');
   chip('chipS3', conn && s3Up, 'dsp');
   chip('chipLed', conn, 'lights');
@@ -1483,7 +1489,7 @@ document.querySelectorAll('.island button').forEach(t => t.addEventListener('cli
    Desktop gets a real keyboard; not using it would be a waste. Space for
    play/pause and arrows for volume are what every media app does. */
 document.addEventListener('keydown', e => {
-  if (e.target.closest('input,button,select,textarea,[role=slider],dialog') || !(demo || device?.gatt?.connected)) return;   // don't hijack slider arrows
+  if (e.target.closest('input,button,select,textarea,[role=slider],dialog') || !(connectionReady && device?.gatt?.connected)) return;   // don't hijack slider arrows
   if (e.code === 'Space'){ e.preventDefault(); sendTransport('play'); }
   else if (e.code === 'ArrowUp' || e.code === 'ArrowDown'){
     e.preventDefault();
@@ -1499,8 +1505,9 @@ function showErr(m){ const e=$('err'); e.textContent=m; e.classList.add('on');
   setTimeout(()=>e.classList.remove('on'), 4000); }
 
 $('connectBtn').addEventListener('click', async () => {
-  if (device && device.gatt.connected){ device.gatt.disconnect(); return; }
-  if (!navigator.bluetooth) return showErr('This browser has no Web Bluetooth. Use Chrome or Edge.');
+  if (connecting || connectionReady) return;
+  if (!navigator.bluetooth || !isSecureContext) return;
+  connecting=true; updateConnectionGate('Choose your speaker in the device picker.');
   try{
     device = await navigator.bluetooth.requestDevice({ filters:[{ services:[SVC] }] });
     device.addEventListener('gattserverdisconnected', onDrop);
@@ -1521,17 +1528,21 @@ $('connectBtn').addEventListener('click', async () => {
     // Subscribed by this point, so asking now actually works. The board
     // also re-sends on its own until listGot arrives, which covers the case
     // where this request is the thing that gets lost.
-    setTimeout(() => { send('listGet','1'); }, 200);
-    setTimeout(() => { send('ltGet','1'); send('tGet','1'); send('pwGet','1'); }, 500);
-    demo = false; clearInterval(demoTick); $('demoBtn').textContent = 'Demo';
-    $('connectBtn').textContent = 'Disconnect';
+    const sessionDevice=device;
+    setTimeout(() => { if(connectionReady && device===sessionDevice) send('listGet','1'); }, 200);
+    setTimeout(() => { if(connectionReady && device===sessionDevice){send('ltGet','1'); send('tGet','1'); send('pwGet','1');} }, 500);
+    if (!device?.gatt?.connected) throw new Error('Speaker disconnected during setup.');
+    connectionReady=true; connecting=false;
     render();
   } catch(e){
-    if (e.name !== 'NotFoundError') showErr('Could not connect: ' + e.message);
-    device = null; render();
+    const failedDevice=device;
+    if(failedDevice?.gatt?.connected) failedDevice.gatt.disconnect();
+    onDrop(); connecting=false;
+    updateConnectionGate(e.name === 'NotFoundError' ? 'Connection cancelled. Tap below to try again.' : 'Could not connect: ' + e.message);
   }
 });
 function onDrop(){
+  connectionReady=false;
   device=null; ctrlChar=null; statChar=null; state={}; rxBuf='';
   // Clear the built-grid caches too. Without this, tiles from the previous
   // session stay in the DOM and buildFxShelf's early-return sees a matching
@@ -1540,71 +1551,7 @@ function onDrop(){
   fxNames = []; colNames = [];
   lastUptime = null;
   txQueue.length = 0;   // nothing queued survives a disconnect
-  $('connectBtn').textContent='Connect'; render();
-}
-
-/* ---------- demo mode ----------
-   Runs the whole interface with no hardware, faking realistic latency and
-   clamping exactly the way the firmware does, so the confirmation behaviour
-   can be judged before anything is flashed. */
-$('demoBtn').addEventListener('click', () => {
-  demo = !demo;
-  $('demoBtn').textContent = demo ? 'Stop' : 'Demo';
-  if (demo){
-    state = {fw:'LarbyBox LED 2.1', pv:3, vol:42, stbass:0, bt:true, avrc:true, playing:true, uptime:437, batt:82, vBatt:13.1,
-             vPsu:-1, vLoad:12.9, onPsu:false, psuPresent:false, psuMismatch:false, muted:false, ampA:2.4, ampW:31.4,
-             linkBt:true, linkS3:true, ledbright:128,
-             ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
-             ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
-             ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
-             saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0, battStatus:0, battWarn:0, bleFails:0,
-             pwV25:12.95, pwV10:12.75, pwV0:12.0, pwMute:12.0, pwUnmute:12.6, bleDrops:0, btPv:3, s3Pv:3,
-             tSpecBassHz:220, lIdleMs:3000, lIdleBr:0.35,
-             mics:false, mic1:50, mic2:50, mic1mute:true, mic2mute:true,
-             echo:20, reverb:25, fbsup:true};
-    demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
-  } else { clearInterval(demoTick); state = {}; fxNames = []; colNames = []; lastUptime = null; }
-  render();
-});
-
-const CLAMPS = {ledbright:[0,255], ledcolor:[0,7], ledpreset:[0,6], vol:[0,100],
-                mic1:[0,100], mic2:[0,100], echo:[0,100], vol12:[0,115], vol24:[0,115],
-                hpf:[55,90], lim:[-24,0], b0b:[-20,24], b0t:[-20,20]};
-function demoHandle(sq, key, value){
-  let r = 'ok', v = value;
-  const c = CLAMPS[key];
-  if (c){
-    const n = Math.max(c[0], Math.min(c[1], parseFloat(value)));
-    if (n !== parseFloat(value)){ r = 'clamp'; v = String(n); }
-  }
-  const pwKeys = ['pwV25','pwV10','pwV0','pwMute','pwUnmute'];
-  if (pwKeys.includes(key)) {
-    const candidate = {...state, [key]:Number(value)};
-    const el = $(key), n = Number(value);
-    if (!Number.isFinite(n) || n < +el.min || n > +el.max ||
-        !(candidate.pwV25 > candidate.pwV10 && candidate.pwV10 > candidate.pwV0 &&
-          candidate.pwMute <= candidate.pwV0 && candidate.pwUnmute - candidate.pwMute >= 0.1499)) {
-      r = 'bad'; v = String(state[key]);
-    } else state[key] = n;
-  }
-  if (key === 'pwReset') Object.assign(state, {pwV25:12.95,pwV10:12.75,pwV0:12,pwMute:12,pwUnmute:12.6});
-  if (key === 'pwGet' || key === 'tGet' || key === 'ltGet') applyTuning(state);
-  if (TUNE_KEYS.includes(key) && r !== 'bad') state[key] = Number(v);
-  if (key === 'ledpreset'){
-    state.ledpreset = +v; state.ledpname = state.ledlist[+v] || '?';
-    state.ledusescolor = NO_COLOR.indexOf(state.ledpname) === -1;
-  }
-  if (key === 'vol' || key === 'stbass') state[key] = +v;
-  if (key === 'play') state.playing = !state.playing;
-  if (key === 'ledcolor')  state.ledcolor = +v;
-  const persisted = ['stbass','hpf','lim','benh','vol12','vol24','startvol',
-                     'mic1','mic2','echo','reverb','fbsup'];
-  if (persisted.includes(key) || /^b[0-2][bt]$/.test(key)) state.saved = false;
-  // Brightness is chosen from the power source at startup, not saved.
-  if (['ledpreset','ledcolor'].includes(key)) state.ledsaved = false;
-  if (key === 'save' || key === 'reset'){ state.saved = true; state.ledsaved = true; }
-  if (key === 'ledbright') state.ledbright = +v;
-  setTimeout(()=>onState(JSON.stringify({ack:{seq:sq, r:r, k:key, v:v}}) + '\n'), 60 + Math.random()*140);
+  pending.clear(); render();
 }
 
 /* ---------- PWA ----------
@@ -1613,15 +1560,10 @@ function demoHandle(sq, key, value){
    but the page has to come from somewhere, and a party is exactly where
    signal is worst. Registered after load so it never competes with first
    paint. */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(e =>
-      console.log('sw registration failed:', e));
-  });
-}
 
 render();
 </script>
 <script src="gold.js"></script>
+<script src="connection.js"></script>
 </body>
 </html>

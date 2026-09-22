@@ -1,31 +1,13 @@
-# LarbyBox — Gold / Dark, revision 3
+# Connection screen and installed PWA update
 
-Upload all app files together to your existing HTTPS web host. There is no build step. Close and reopen the installed app after updating to load the new cached version. Demo works without a speaker.
+Upload ALL files inside larbybox-app to the same GitHub Pages location as the existing app, including connection.js and sw.js. Keep the manifest location, start URL and scope unchanged. No build step or reinstallation is needed.
 
-## Requested changes
+Wait for the GitHub Pages deployment to finish, then open the installed app with internet access. The previous app may remain visible while Chrome installs the new service worker: fully close and reopen it once more if needed. The new build has the central connection card and no simulation mode.
 
-- Battery voltage appears next to its percentage.
-- Favourite scenes and the dial's mute button have been removed.
-- EQ profiles occupy the former scenes area.
-- LED effects are available on Home in a single horizontally scrollable row. Swipe sideways on phone; use the scrollbar or trackpad on desktop.
-- Every Advanced slider has persistent explanatory text, including the meaning of higher/lower values and units.
-- Playback commands now avoid overlapping clicks, report unavailable connections and use reported playback state for the play/pause symbol.
+This build checks for service-worker updates at launch, when returning to the app, when coming online, and every five minutes. It reloads after an update when disconnected. While connected it defers reloading until controls disconnect. Updates cannot download while offline, and GitHub/Chrome delivery timing cannot be forced from the ZIP.
 
-## Playback update
+Future releases must bump CACHE_NAME in sw.js and upload the complete app together. Shell installation is all-or-nothing to avoid activating a release with missing files. Offline launches use the cached shell.
 
-Flash the updated larbybox_bt sketch to the Bluetooth/audio ESP32 for the new playing/avrc status fields and command connection checks. The LED and S3 firmware do not need another update for these app revisions. The full bundle retains the prior LED ::memcpy compile fix.
+Connection is required to use controls. Cancelled/failed attempts can be retried; disconnection returns the card. Settings contains Disconnect controls. Browser Bluetooth pairing still requires a user click. Music pairing is separate.
 
-Pair your music phone or PC to LarbyBox for audio, then connect the app to the BLE control service. The app can control the music device via the Bluetooth board. A connected BLE app alone is not a connected music source. Track skipping depends on the music player supporting Bluetooth media controls.
-
-The app sends one play, next or previous command through its acknowledged BLE queue. The Bluetooth board dispatches the existing A2DP library media command only when its AVRCP media-control connection is ready; otherwise it returns an unavailable reply. A successful reply confirms dispatch, not that the phone obeyed. The play/pause icon follows the reported audio-stream state on the once-per-second heartbeat.
-
-## Advanced controls
-
-Load current requests the board's current tuning values. Save tuning stores DSP tuning; Save lights stores LED tuning. Reset all DSP tuning restores and saves the DSP tuning defaults. Control descriptions remain visible independently of command acknowledgement messages.
-
-## Validation
-
-Browser checks passed at 360, 390, 768 and 1440px: navigation, battery text, removal of scenes/mute, playback command dispatch through a simulated BLE characteristic, live playback-state updates, disconnected controls, and descriptions for every Advanced slider. Physical Bluetooth operation and a full ESP32 firmware compilation have not been tested here.
-
-The media-control readiness API was checked against the library's official reference:
-https://pschatzmann.github.io/ESP32-A2DP/html/class_bluetooth_a2_d_p_sink.html
+Only app files changed in this release; all firmware is preserved from the uploaded LED-overhaul bundle.

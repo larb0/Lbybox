@@ -73,3 +73,16 @@ dialog{width:min(440px,calc(100% - 36px));background:var(--card);color:var(--ink
 #v-adv .ctl-msg:empty{display:none}
 @media(max-width:760px){.gold-status{gap:9px}.battery-status #chipV{font-size:11px}.gold-effects{width:100%;background:none;border:0;border-top:1px solid var(--hair);border-radius:0;padding:18px 0}.gold-eq{width:100%;background:none;border:0;border-top:1px solid var(--hair);border-radius:0;padding:18px 0}.gold-effects .shelf button{flex-basis:72px;width:72px}.gold-effects .shelf .art{width:72px;height:62px}.gold-audio .dial-shell{margin-bottom:-12px}}
 @media(min-width:761px){.gold-audio{grid-row:1 / span 2}.gold-effects{grid-row:3;grid-column:1 / -1}.gold-eq{align-self:start}}
+
+/* Native modal makes the blurred application inert, including keyboard input. */
+#connectionGate{box-sizing:border-box;width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;margin:auto;padding:34px 26px;border:1px solid #80612b;border-radius:24px;background:#171613;color:#f4eee3;text-align:center;box-shadow:0 24px 90px #0009}
+#connectionGate::backdrop{background:rgba(8,8,8,.64);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.connection-mark{width:60px;height:60px;margin:0 auto 20px;border:1px solid #d4aa53;border-radius:18px;display:grid;place-items:center;color:#e4bb65;font-size:32px}
+.connection-eyebrow{font-size:11px;letter-spacing:.2em;color:#d4aa53}
+#connectionGate h2{font-size:25px;margin:12px 0}
+#connectionMessage{line-height:1.6;color:#c6beb0;margin:16px 0 24px}
+#connectionGate #connectBtn{display:block;width:100%;min-height:52px;background:#d8af58;color:#18140d;border:0;border-radius:12px;font-weight:700}
+#connectionGate small{display:block;margin-top:20px;line-height:1.5;color:#a99f8e}
+#connectionGate button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+#connectionGate button:disabled{opacity:.6;cursor:wait}
+.dock:has(.err:not(.on)){display:none}
