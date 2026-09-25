@@ -1072,7 +1072,9 @@ function checkForReboot(s){
 }
 
 function handleState(s){
-  checkProtoVersions(s);
+  // State arrives as separate messages (this board, BT, S3), so compare
+  // versions across everything known so far, not just this one message.
+  checkProtoVersions(Object.assign({}, state, s));
   checkForReboot(s);
   applyTuning(s);
   state = Object.assign(state, s);
