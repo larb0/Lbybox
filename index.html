@@ -1322,7 +1322,8 @@ function render(){
     document.querySelectorAll('#colGrid button').forEach(b =>
       b.classList.toggle('on', +b.dataset.i === state.ledcolor));
     const cn = state.ledcolors && state.ledcolors[state.ledcolor];
-    $('colorState').textContent = cn ? label(cn) : '';
+    const colorStateEl = $('colorState');
+    if (colorStateEl) colorStateEl.textContent = cn ? label(cn) : '';
   }
   // Firmware reports whether the active preset reads gColor at all. Dim the
   // row rather than offering a control that would silently do nothing.
@@ -1592,6 +1593,9 @@ function showErr(m){ const e=$('err'); e.textContent=m; e.classList.add('on');
 $('connectBtn').addEventListener('click', async () => {
   if (device && device.gatt.connected){ device.gatt.disconnect(); return; }
   if (!navigator.bluetooth) return showErr('This browser has no Web Bluetooth. Use Chrome or Edge.');
+  const btn = $('connectBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting…';
   try{
     device = await navigator.bluetooth.requestDevice({ filters:[{ services:[SVC] }] });
     device.addEventListener('gattserverdisconnected', onDrop);
@@ -1614,11 +1618,15 @@ $('connectBtn').addEventListener('click', async () => {
     // where this request is the thing that gets lost.
     setTimeout(() => { send('listGet','1'); }, 200);
     setTimeout(() => { send('ltGet','1'); send('tGet','1'); send('pwGet','1'); }, 500);
-    $('connectBtn').textContent = 'Disconnect';
+    btn.textContent = 'Disconnect';
+    btn.disabled = false;
     render();
   } catch(e){
     if (e.name !== 'NotFoundError') showErr('Could not connect: ' + e.message);
-    device = null; render();
+    device = null;
+    btn.textContent = 'Connect';
+    btn.disabled = false;
+    render();
   }
 });
 function onDrop(){

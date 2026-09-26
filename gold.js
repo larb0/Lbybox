@@ -1,15 +1,3 @@
-/* On-screen error reporting: a phone has no console, so any script error is
-   shown in a red bar at the top of the app. Tap it to dismiss. */
-function showAppError(where,e){
-  let bar=document.getElementById('appErrorBar');
-  if(!bar){bar=document.createElement('div');bar.id='appErrorBar';
-    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#b00020;color:#fff;font:12px/1.4 monospace;padding:8px 10px;white-space:pre-wrap;max-height:40vh;overflow:auto';
-    bar.addEventListener('click',()=>bar.remove());document.body.appendChild(bar);}
-  const msg=(e&&(e.stack||e.message))||String(e);
-  bar.textContent=('App error in '+where+':\n'+msg).slice(0,1200);
-}
-window.addEventListener('error',ev=>showAppError('script',ev.error||ev.message));
-window.addEventListener('unhandledrejection',ev=>showAppError('promise',ev.reason));
 /* Presentation layer: retains the existing BLE queue, framing and acknowledgements. */
 const ICONS={home:'<path d="M3 10 12 3l9 7v10h-6v-6H9v6H3z"/>',sound:'<path d="M4 9v6m5-11v16m6-13v10m5-6v2"/>',lights:'<path d="M8 17c0-4-3-4-3-8a7 7 0 0 1 14 0c0 4-3 4-3 8M8 17h8m-7 4h6"/>',settings:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/>',outdoor:'<path d="m12 2 6 8h-3l5 7h-6v5h-4v-5H4l5-7H6z"/>',moon:'<path d="M20 15A9 9 0 0 1 9 3a9 9 0 1 0 11 12z"/>',mute:'<path d="M4 9h4l5-4v14l-5-4H4zM17 9l5 6m0-6-5 6"/>',prev:'<path d="M5 5v14M19 5 7 12l12 7z"/>',next:'<path d="M19 5v14M5 5l12 7-12 7z"/>',play:'<path d="m8 4 12 8-12 8z"/>',pause:'<path d="M8 5v14M16 5v14"/>'};
 function icon(name){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[name]+'</svg>';}
@@ -20,6 +8,10 @@ volume.classList.add('volume-group');playback.classList.add('transport-group');b
 audio.append(volume,playback);
 effects.classList.add('gold-effects');
 effects.querySelector('h2').textContent='Lighting';
+// The colour-state label originally lives in the separate Lights group header.
+// Move it before removing that group so the main render loop still has its target.
+const colorState = lighting.querySelector('#colorState');
+if (colorState) effects.querySelector('.group-hd').append(colorState);
 effects.append(lighting.querySelector('.card'));
 lighting.remove();
 bass.classList.add('gold-eq');bass.querySelector('h2').textContent='EQ profile';
@@ -59,12 +51,7 @@ $('vol').addEventListener('input',drawDial);$('vol').addEventListener('render',d
 
 function goldReady(board){return (!!device?.gatt?.connected)&&(board==='s3'?!!state.linkS3:board==='bt'?!!state.linkBt:true);}
 const legacyRender=render;
-render=function(){const conn=!!device?.gatt?.connected,ready=goldReady('s3');
- // Hide the connect screen FIRST: if anything later in render throws, the
- // app must still get out of the way and show the error, not sit on the
- // overlay looking disconnected.
- $('connectOverlay').classList.toggle('hidden',conn);
- try{legacyRender();}catch(e){showAppError('render',e);}
+render=function(){legacyRender();const conn=!!device?.gatt?.connected,ready=goldReady('s3'); $('connectOverlay').classList.toggle('hidden',conn);
  // No disconnected or absent-board actions; native disabled state also covers keyboard users.
  document.querySelectorAll('main button,main input,main select').forEach(el=>{const g=el.closest('[data-board]');el.disabled=!conn||(g&&!goldReady(g.dataset.board))||!!el.closest('.missing');});
  document.querySelectorAll('.settings-tabs button').forEach(b=>b.disabled=false);
