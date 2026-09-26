@@ -81,6 +81,24 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
   radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--led) 22%,#0f0f10),#0f0f10 75%)}
 .hero-canvas[data-fx=sparkle] .hero-fx i{display:none}
 @media (prefers-reduced-motion:reduce){ .hero-canvas,.hero-fx i{animation:none!important} }
+/* LarbyBox LED 2.4 effect previews */
+.hero-canvas[data-fx=colourflow]{background:linear-gradient(120deg,#3dd0dc,#4a8ef0,#a765e0,#e05ca7);background-size:220% 100%;animation:hFlow 8s linear infinite}
+.hero-canvas[data-fx=colourflow] .hero-fx i{display:none}
+.hero-canvas[data-fx=centreburst]{background:radial-gradient(circle at 50% 60%,#fff 0 4%,#a765e0 10%,#4a8ef0 24%,#101015 55%)}
+.hero-canvas[data-fx=centreburst] .hero-fx i{display:none}
+.hero-canvas[data-fx=energy]{background:linear-gradient(110deg,#e05c5c 0 20%,#a765e0 42%,#3dd0dc 62%,#f2f2f2 100%)}
+.hero-canvas[data-fx=energy] .hero-fx i{display:none}
+.hero-canvas[data-fx=comet]{background:linear-gradient(115deg,#0f0f10 15%,#3dd0dc 35%,#a765e0 46%,#fff 50%,#0f0f10 58%);background-size:240% 100%;animation:hFlow 5s linear infinite}
+.hero-canvas[data-fx=comet] .hero-fx i{display:none}
+.hero-canvas[data-fx=atmosphere]{background:radial-gradient(circle at 25% 35%,rgba(255,255,255,.9) 0 2px,transparent 4px),radial-gradient(circle at 68% 60%,rgba(255,255,255,.7) 0 2px,transparent 4px),linear-gradient(120deg,#18224d,#3a2369,#194f59)}
+.hero-canvas[data-fx=atmosphere] .hero-fx i{display:none}
+@keyframes hFlow{from{background-position:0 0}to{background-position:220% 0}}
+.a-colourflow{background:linear-gradient(120deg,#3dd0dc,#4a8ef0,#a765e0,#e05ca7)}
+.a-centreburst{background:radial-gradient(circle,#fff 0 5%,#a765e0 13%,#4a8ef0 28%,#111 60%)}
+.a-energy{background:linear-gradient(115deg,#d85f4f,#a765e0,#3dd0dc,#f5f5f5)}
+.a-comet{background:linear-gradient(115deg,#111 18%,#3dd0dc 39%,#fff 50%,#a765e0 54%,#111 70%)}
+.a-atmosphere{background:radial-gradient(circle at 28% 30%,#fff 0 2px,transparent 3px),radial-gradient(circle at 72% 65%,#fff 0 1.5px,transparent 3px),linear-gradient(125deg,#16264e,#432465,#14545b)}
+
 
 .hero-top{position:absolute;top:0;left:0;right:0;padding:18px 18px 0;display:flex;align-items:center;gap:10px}
 .hero-top .name{font-weight:800;font-size:16px}
@@ -645,7 +663,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="ctl" id="ctl-tSpecBassHz">
         <div class="ctl-hd"><label for="tSpecBassHz">Lighting bass cutoff</label><span class="val" id="tSpecBassHzVal">220 Hz</span></div>
         <input type="range" id="tSpecBassHz" min="40" max="500" step="5" value="220" aria-describedby="help-tSpecBassHz">
-        <p class="setting-help" id="help-tSpecBassHz">Highest frequency the lights count as bass, in hertz. Lower makes Bass Pulse and Strobe follow only kick drums and sub-bass; higher lets bass guitar and low vocals drive them too. Affects the lights only, never the sound.</p>
+        <p class="setting-help" id="help-tSpecBassHz">Highest frequency the lights count as bass, in hertz. Lower makes Bass Pulse and Centre Burst focus on kick drums and sub-bass; higher lets bass guitar and low vocals drive them too. Affects the lights only, never the sound.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tSpecBassHz"></div>
       </div>
     </div>
@@ -653,7 +671,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
   <div class="group">
     <div class="group-hd"><h2>Light behaviour</h2></div>
-    <p class="hint">Set how quickly reactive effects respond and how sparkles and flashes behave.</p>
+    <p class="hint">Set how quickly reactive effects respond and how Centre Burst and Atmosphere behave.</p>
     <div class="card">
       <div class="ctl" id="ctl-lEnvAtk">
         <div class="ctl-hd"><label for="lEnvAtk">Attack</label><span class="val" id="lEnvAtkVal">0.55</span></div>
@@ -668,39 +686,39 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <div class="state"></div><div class="ctl-msg" id="msg-lEnvRel"></div>
       </div>
       <div class="ctl" id="ctl-lSparkle">
-        <div class="ctl-hd"><label for="lSparkle">Sparkle rate</label><span class="val" id="lSparkleVal">1.00</span></div>
+        <div class="ctl-hd"><label for="lSparkle">Atmosphere glint rate</label><span class="val" id="lSparkleVal">1.00</span></div>
         <input type="range" id="lSparkle" min="0.2" max="4" step="0.05" value="1" aria-describedby="help-lSparkle">
-        <p class="setting-help" id="help-lSparkle">Multiplier for the wait between new sparkles. Lower creates more frequent glints; higher leaves more space between them.</p>
+        <p class="setting-help" id="help-lSparkle">Multiplier for the wait between Atmosphere glints. Lower creates more frequent glints; higher leaves more space between them.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lSparkle"></div>
       </div>
       <div class="ctl" id="ctl-lFade">
-        <div class="ctl-hd"><label for="lFade">Sparkle decay</label><span class="val" id="lFadeVal">22</span></div>
+        <div class="ctl-hd"><label for="lFade">Atmosphere glint decay</label><span class="val" id="lFadeVal">22</span></div>
         <input type="range" id="lFade" min="4" max="90" step="1" value="22" aria-describedby="help-lFade">
-        <p class="setting-help" id="help-lFade">How much sparkle brightness is removed each frame. Higher makes sparkles disappear sooner; lower leaves longer trails.</p>
+        <p class="setting-help" id="help-lFade">How much glint brightness is removed each frame in Atmosphere. Higher makes glints disappear sooner; lower leaves longer trails.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lFade"></div>
       </div>
       <div class="ctl" id="ctl-lStrobeLo">
-        <div class="ctl-hd"><label for="lStrobeLo">Strobe gap min</label><span class="val" id="lStrobeLoVal">70 ms</span></div>
+        <div class="ctl-hd"><label for="lStrobeLo">Burst gap min</label><span class="val" id="lStrobeLoVal">70 ms</span></div>
         <input type="range" id="lStrobeLo" min="30" max="600" step="10" value="70" aria-describedby="help-lStrobeLo">
-        <p class="setting-help" id="help-lStrobeLo">Minimum waiting time before another music-triggered flash can occur. The actual wait is picked between the minimum and maximum. Keep this below the maximum.</p>
+        <p class="setting-help" id="help-lStrobeLo">Minimum waiting time before Centre Burst can retrigger on another bass hit. Keep this below the maximum.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lStrobeLo"></div>
       </div>
       <div class="ctl" id="ctl-lStrobeHi">
-        <div class="ctl-hd"><label for="lStrobeHi">Strobe gap max</label><span class="val" id="lStrobeHiVal">420 ms</span></div>
+        <div class="ctl-hd"><label for="lStrobeHi">Burst gap max</label><span class="val" id="lStrobeHiVal">420 ms</span></div>
         <input type="range" id="lStrobeHi" min="60" max="2000" step="20" value="420" aria-describedby="help-lStrobeHi">
-        <p class="setting-help" id="help-lStrobeHi">Upper end of the random wait between music-triggered flashes. A larger maximum can space them further apart. Keep this above the minimum.</p>
+        <p class="setting-help" id="help-lStrobeHi">Upper end of the retrigger wait used by Centre Burst. A larger maximum spaces bursts further apart. Keep this above the minimum.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lStrobeHi"></div>
       </div>
       <div class="ctl" id="ctl-lIdleMs">
         <div class="ctl-hd"><label for="lIdleMs">Idle delay</label><span class="val" id="lIdleMsVal">3000 ms</span></div>
         <input type="range" id="lIdleMs" min="500" max="30000" step="250" value="3000" aria-describedby="help-lIdleMs">
-        <p class="setting-help" id="help-lIdleMs">How long without any detected audio before Bass Pulse, Strobe and Sparkle switch to their calm idle versions, in milliseconds. Higher avoids switching during pauses between songs. Music resuming switches back straight away.</p>
+        <p class="setting-help" id="help-lIdleMs">How long without detected audio before reactive effects switch to their calm idle behaviour, in milliseconds. Higher avoids switching during pauses between songs. Music resuming switches back straight away.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lIdleMs"></div>
       </div>
       <div class="ctl" id="ctl-lIdleBr">
         <div class="ctl-hd"><label for="lIdleBr">Idle brightness</label><span class="val" id="lIdleBrVal">35%</span></div>
         <input type="range" id="lIdleBr" min="0.05" max="1" step="0.05" value="0.35" aria-describedby="help-lIdleBr">
-        <p class="setting-help" id="help-lIdleBr">Peak brightness of the idle heartbeat, flashes and sparkles while nothing is playing, as a percentage of their full brightness. Breathe, Rainbow and Two-Tone keep running normally.</p>
+        <p class="setting-help" id="help-lIdleBr">Peak brightness of the calm idle behaviour while nothing is playing, as a percentage of full brightness. Colour Flow and Comet keep moving at reduced intensity.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lIdleBr"></div>
       </div>
     </div>
@@ -1119,19 +1137,19 @@ function snapTo(key, v){
 /* ---------- hero ---------- */
 const HEX = {red:'#e2574c',orange:'#f0a63d',gold:'#f0b429',green:'#3ddc84',
              cyan:'#3dd0dc',blue:'#4a8ef0',purple:'#a765e0',magenta:'#e05ca7'};
-const NICE = {huedrift:'Rainbow', twotone:'Two-Tone', basspulse:'Bass Pulse'};
+const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', centreburst:'Centre Burst'};
 const label = n => NICE[n] || (n ? n.charAt(0).toUpperCase()+n.slice(1) : '\u2014');
 // Mirrors presetUsesColor() in presets.ino. The firmware is authoritative via
 // ledusescolor; this list is only the fallback before state first arrives.
-const NO_COLOR = ['off','huedrift','twotone','strobe'];
+const NO_COLOR = ['off','colourflow','centreburst','energy','comet','atmosphere'];
 const SUBTITLE = {
-  off:       () => 'Lights are off',
-  huedrift:  () => 'Rainbow moving left to right',
-  strobe:    () => 'Full white, on the beat',
-  basspulse: c  => 'Reacting to bass \u00b7 ' + label(c),
-  sparkle:   c  => 'White glints over ' + label(c),
-  twotone:   () => 'Colour pairs chasing left to right',
-  breathe:   c  => 'Slow swell \u00b7 ' + label(c)
+  off:         () => 'Lights are off',
+  colourflow:  () => 'Slow evolving colour range across the port',
+  centreburst: () => 'Bass hits launch outward from the centre',
+  energy:      () => 'Bass, mids and treble shape different layers',
+  basspulse:   c  => 'Bass pulse with a moving palette around ' + label(c),
+  comet:       () => 'A music-reactive trail follows the LED route',
+  atmosphere:  () => 'Moving colour bed with treble-driven glints'
 };
 
 function updateHero(){
@@ -1295,8 +1313,8 @@ function fmtUp(s){ s|=0; const h=s/3600|0, m=(s%3600)/60|0;
    Names come from the board, never hardcoded. Anything without designed art
    gets a stable colour derived from its own name, so a preset added in
    presets.ino appears here looking deliberate rather than broken. */
-const ART = {off:'a-off',breathe:'a-breathe',huedrift:'a-huedrift',twotone:'a-twotone',
-             basspulse:'a-basspulse',strobe:'a-strobe',sparkle:'a-sparkle'};
+const ART = {off:'a-off',colourflow:'a-colourflow',centreburst:'a-centreburst',
+             energy:'a-energy',basspulse:'a-basspulse',comet:'a-comet',atmosphere:'a-atmosphere'};
 function fallbackArt(name){
   let h = 0; for (const c of name) h = (h*31 + c.charCodeAt(0)) % 360;
   return 'background:radial-gradient(circle at 50% 55%,hsl('+h+',72%,52%),hsl('+h+',70%,14%) 76%)';
@@ -1552,7 +1570,7 @@ $('demoBtn').addEventListener('click', () => {
              vPsu:-1, vLoad:12.9, onPsu:false, psuPresent:false, psuMismatch:false, psuMute:false, muted:false,
              linkBt:true, linkS3:true, ledbright:128,
              ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
-             ledlist:['off','breathe','huedrift','twotone','basspulse','strobe','sparkle'],
+             ledlist:['off','colourflow','centreburst','energy','basspulse','comet','atmosphere'],
              ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
              saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0, battStatus:0, battWarn:0, bleFails:0,
              pwV25:12.95, pwV10:12.75, pwV0:12.0, pwMute:12.0, pwUnmute:12.6, bleDrops:0, btPv:3, s3Pv:3,
