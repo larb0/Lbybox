@@ -4,12 +4,16 @@ function icon(name){return '<svg viewBox="0 0 24 24" fill="none" stroke="current
 const home=$('v-panel'), originalGroups=[...home.children].filter(e=>e.classList.contains('group'));
 const [effects,lighting,volume,playback,bass]=originalGroups;
 const audio=document.createElement('div');audio.className='gold-audio gold-card';
-volume.classList.add('volume-group');playback.classList.add('transport-group');bass.classList.add('bass-group');lighting.classList.add('gold-light');
-audio.append(volume,playback);bass.classList.add('gold-eq');effects.classList.add('gold-effects');effects.querySelector('h2').textContent='LED presets';bass.querySelector('h2').textContent='EQ profile';home.replaceChildren(audio,effects,lighting,bass);
-const lightsView=document.createElement('section');lightsView.id='v-lights';lightsView.className='view';
-const hero=document.querySelector('.hero');lightsView.append(hero);document.querySelector('main').append(lightsView);
+volume.classList.add('volume-group');playback.classList.add('transport-group');bass.classList.add('bass-group');
+audio.append(volume,playback);
+effects.classList.add('gold-effects');
+effects.querySelector('h2').textContent='Lighting';
+effects.append(lighting.querySelector('.card'));
+lighting.remove();
+bass.classList.add('gold-eq');bass.querySelector('h2').textContent='EQ profile';
+home.replaceChildren(audio,effects,bass);
 const nav=document.querySelector('.island');nav.setAttribute('aria-label','Main navigation');
-nav.innerHTML=[['panel','Home','home'],['sound','Sound','sound'],['lights','Lights','lights'],['power','Settings','settings']].map(([v,t,i])=>'<button data-v="'+v+'"><span class="nav-icon">'+icon(i)+'</span>'+t+'</button>').join('');
+nav.innerHTML=[['panel','Home','home'],['sound','Sound','sound'],['power','Settings','settings']].map(([v,t,i])=>'<button data-v="'+v+'"><span class="nav-icon">'+icon(i)+'</span>'+t+'</button>').join('');
 const header=document.createElement('header');header.className='gold-header';header.innerHTML='<span class="gold-brand">LarbyBox</span>';
 const statusBar=document.createElement('div');statusBar.className='gold-status';const battery=document.createElement('span');battery.className='battery-status';battery.append($('battPct'),document.createTextNode(' · '),$('chipV'));statusBar.append($('chipLink'),$('chipBt'),battery);header.append(nav,statusBar);document.body.prepend(header);
 const oldChips=document.querySelector('.chips');oldChips.hidden=true;
@@ -20,7 +24,6 @@ function goldNavigate(page){
  const inSettings=['power','log','adv'].includes(page);
  nav.querySelectorAll('button').forEach(b=>{const on=b.dataset.v===(inSettings?'power':page);b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  settingsTabs.classList.toggle('on',inSettings);settingsTabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.page===page));
- if(page==='lights')lightsView.append(effects,lighting);else {home.insertBefore(effects,bass);home.insertBefore(lighting,bass);}
  window.scrollTo(0,0);
 }
 nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>goldNavigate(b.dataset.v)));
@@ -42,13 +45,9 @@ dial.addEventListener('pointercancel',()=>{dialDragging=false;render();});
 dial.addEventListener('keydown',e=>{let v=+$('vol').value;if(['ArrowUp','ArrowRight'].includes(e.key))v++;else if(['ArrowDown','ArrowLeft'].includes(e.key))v--;else if(e.key==='Home')v=0;else if(e.key==='End')v=100;else if(e.key==='PageUp')v+=10;else if(e.key==='PageDown')v-=10;else return;e.preventDefault();e.stopPropagation();setDial(v,true);});
 $('vol').addEventListener('input',drawDial);$('vol').addEventListener('render',drawDial);
 
-const effectSelect=document.createElement('select');effectSelect.id='homeEffect';effectSelect.className='effect-select';effectSelect.setAttribute('aria-label','Lighting effect');lighting.querySelector('.group-hd').append(effectSelect);lighting.querySelector('h2').textContent='Lighting';
-effectSelect.addEventListener('change',()=>send('ledpreset',effectSelect.value,'ledpreset',effectSelect.value));
-// Keep effect acknowledgements visible next to the Home effect selector.
-lighting.append($('ctl-ledpreset'));
-function goldReady(board){return (demo||!!device?.gatt?.connected)&&(board==='s3'?!!state.linkS3:board==='bt'?!!state.linkBt:true);}
+function goldReady(board){return (!!device?.gatt?.connected)&&(board==='s3'?!!state.linkS3:board==='bt'?!!state.linkBt:true);}
 const legacyRender=render;
-render=function(){legacyRender();const conn=demo||!!device?.gatt?.connected,ready=goldReady('s3');
+render=function(){legacyRender();const conn=!!device?.gatt?.connected,ready=goldReady('s3'); $('connectOverlay').classList.toggle('hidden',conn);
  // No disconnected or absent-board actions; native disabled state also covers keyboard users.
  document.querySelectorAll('main button,main input,main select').forEach(el=>{const g=el.closest('[data-board]');el.disabled=!conn||(g&&!goldReady(g.dataset.board))||!!el.closest('.missing');});
  document.querySelectorAll('.settings-tabs button').forEach(b=>b.disabled=false);
@@ -57,21 +56,15 @@ render=function(){legacyRender();const conn=demo||!!device?.gatt?.connected,read
  if(!dialDragging&&!volPending&&Number.isFinite(state.vol)){$('vol').value=state.vol;drawDial();}
  else if(!conn){$('vol').value=0;drawDial();}
  if(Number.isFinite(state.stbass)&&![...pending.values()].some(p=>p.key==='stbass'))document.querySelectorAll('#bassSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.v===state.stbass));
- const names=state.ledlist||[];if(effectSelect.dataset.names!==JSON.stringify(names)){effectSelect.replaceChildren(...(names.length?names.map((n,i)=>new Option(label(n),i)):[new Option('Connect for effects','')]));effectSelect.dataset.names=JSON.stringify(names);}
- if(state.ledpreset!==undefined)effectSelect.value=state.ledpreset;
  $('brightVal').textContent=Math.round(+$('bright').value/255*100)+'%';
  document.querySelectorAll('input[type=range]').forEach(el=>el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%'));
- $('demoBtn').disabled=!!device?.gatt?.connected;
  const playButton=playback.querySelector('.play');playButton.innerHTML=icon(state.playing?'pause':'play');playButton.setAttribute('aria-label',state.playing?'Pause':'Play');const transportPending=[...pending.values()].some(p=>['play','next','prev'].includes(p.key));playback.querySelectorAll('[data-cmd]').forEach(b=>b.disabled=!goldReady('bt')||state.bt===false||state.avrc===false||transportPending);
 };
 document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%');if(el.id==='bright')$('brightVal').textContent=Math.round(+el.value/255*100)+'%';}));
 goldNavigate('panel');render();
 // Confirmed command values should be shown immediately, before the next heartbeat.
 const legacyResolveAck=resolveAck;
-resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(a.r)){const n=Number(a.v),k=p.key;if(Number.isFinite(n)&&['vol','stbass','ledbright','ledcolor','ledpreset'].includes(k)){state[k]=n;if(k==='ledpreset'){state.ledpname=state.ledlist?.[n];state.ledusescolor=!NO_COLOR.includes(state.ledpname);}}}legacyResolveAck(a);};
-// A microphone section is unavailable until the speaker reports installed hardware.
-const goldRender=render;
-render=function(){document.querySelectorAll('[data-requires=mics]').forEach(g=>g.classList.toggle('missing',!state.mics));goldRender();};
+resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(a.r)){const n=Number(a.v),k=p.key;if(Number.isFinite(n)){if(['vol','stbass','ledbright','ledcolor','ledpreset','sfxvol'].includes(k))state[k]=n;else if(/^b[0-2][bt]$/.test(k))state[k]=n;if(k==='ledpreset'){state.ledpname=state.ledlist?.[n];state.ledusescolor=!NO_COLOR.includes(state.ledpname);}}}legacyResolveAck(a);};
 render();
 
 // One command per click. Await the board reply instead of pretending the phone changed state.

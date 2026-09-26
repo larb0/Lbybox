@@ -73,3 +73,25 @@ dialog{width:min(440px,calc(100% - 36px));background:var(--card);color:var(--ink
 #v-adv .ctl-msg:empty{display:none}
 @media(max-width:760px){.gold-status{gap:9px}.battery-status #chipV{font-size:11px}.gold-effects{width:100%;background:none;border:0;border-top:1px solid var(--hair);border-radius:0;padding:18px 0}.gold-eq{width:100%;background:none;border:0;border-top:1px solid var(--hair);border-radius:0;padding:18px 0}.gold-effects .shelf button{flex-basis:72px;width:72px}.gold-effects .shelf .art{width:72px;height:62px}.gold-audio .dial-shell{margin-bottom:-12px}}
 @media(min-width:761px){.gold-audio{grid-row:1 / span 2}.gold-effects{grid-row:3;grid-column:1 / -1}.gold-eq{align-self:start}}
+
+/* v2.6 app cleanup */
+#v-panel.on{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+.gold-effects{grid-column:2;grid-row:1 / span 2}
+.gold-effects .card{margin-top:18px;padding-top:18px;border-top:1px solid var(--hair)}
+.gold-effects #ctl-ledbright{margin-top:8px}
+.gold-eq{grid-column:1;grid-row:3}
+.effect-select{display:none!important}
+#v-adv .card{display:flex;flex-direction:column;gap:12px}
+#v-adv .ctl{margin:0}
+#v-adv .setting-help{margin:5px 0 7px;line-height:1.42}
+#v-adv .ctl-msg{min-height:0;margin-top:3px}
+#v-adv .group{align-self:start}
+.connect-overlay{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:rgba(8,8,10,.32);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:opacity .2s ease,visibility .2s ease}
+.connect-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.connect-card{width:min(390px,calc(100vw - 42px));background:rgba(24,24,27,.94);border:1px solid var(--hair);border-radius:22px;padding:30px;text-align:center;box-shadow:0 24px 70px #0009}
+.connect-mark{width:56px;height:56px;border-radius:16px;margin:0 auto 16px;display:grid;place-items:center;background:var(--accent);color:var(--onaccent);font-weight:800;letter-spacing:-1px}
+.connect-card h2{margin:0 0 8px;font-size:23px;font-weight:600}
+.connect-card p{margin:0 auto 22px;max-width:30ch;color:var(--dim);font-size:13px;line-height:1.5}
+.connect-card #connectBtn{min-width:160px;padding:13px 24px;border-radius:999px;background:var(--accent);color:var(--onaccent);font-weight:700}
+.dock{pointer-events:none}.dock .err{pointer-events:auto}
+@media(max-width:760px){.gold-effects{width:100%;grid-column:auto;grid-row:auto;border-top:1px solid var(--hair);padding:18px 0}.gold-effects .card{padding-top:16px}.gold-eq{grid-column:auto;grid-row:auto}}

@@ -81,23 +81,24 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
   radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--led) 22%,#0f0f10),#0f0f10 75%)}
 .hero-canvas[data-fx=sparkle] .hero-fx i{display:none}
 @media (prefers-reduced-motion:reduce){ .hero-canvas,.hero-fx i{animation:none!important} }
-/* LarbyBox LED 2.4 effect previews */
+/* LarbyBox LED 2.5 effect previews */
 .hero-canvas[data-fx=colourflow]{background:linear-gradient(120deg,#3dd0dc,#4a8ef0,#a765e0,#e05ca7);background-size:220% 100%;animation:hFlow 8s linear infinite}
 .hero-canvas[data-fx=colourflow] .hero-fx i{display:none}
-.hero-canvas[data-fx=centreburst]{background:radial-gradient(circle at 50% 60%,#fff 0 4%,#a765e0 10%,#4a8ef0 24%,#101015 55%)}
-.hero-canvas[data-fx=centreburst] .hero-fx i{display:none}
-.hero-canvas[data-fx=energy]{background:linear-gradient(110deg,#e05c5c 0 20%,#a765e0 42%,#3dd0dc 62%,#f2f2f2 100%)}
-.hero-canvas[data-fx=energy] .hero-fx i{display:none}
+.hero-canvas[data-fx=wave]{background:linear-gradient(to bottom,#08090c 0 18%,#fff 22%,#63c9ff 28%,#7656e8 40%,#101015 62%,#08090c 100%);background-size:100% 220%;animation:hDepthWave 1.7s ease-in-out infinite}
+.hero-canvas[data-fx=wave] .hero-fx i{display:none}
+.hero-canvas[data-fx=strobe]{background:#080808;animation:hStrobe 1.1s steps(1) infinite}
+.hero-canvas[data-fx=strobe] .hero-fx i{display:none}
 .hero-canvas[data-fx=comet]{background:linear-gradient(115deg,#0f0f10 15%,#3dd0dc 35%,#a765e0 46%,#fff 50%,#0f0f10 58%);background-size:240% 100%;animation:hFlow 5s linear infinite}
 .hero-canvas[data-fx=comet] .hero-fx i{display:none}
-.hero-canvas[data-fx=atmosphere]{background:radial-gradient(circle at 25% 35%,rgba(255,255,255,.9) 0 2px,transparent 4px),radial-gradient(circle at 68% 60%,rgba(255,255,255,.7) 0 2px,transparent 4px),linear-gradient(120deg,#18224d,#3a2369,#194f59)}
-.hero-canvas[data-fx=atmosphere] .hero-fx i{display:none}
+.hero-canvas[data-fx=sparkle]{background:radial-gradient(circle at 18% 34%,#fff 0 2px,transparent 3px),radial-gradient(circle at 49% 67%,#c86bff 0 1.7px,transparent 2.6px),radial-gradient(circle at 78% 28%,#fff 0 1.4px,transparent 2.4px),#08080b}
+.hero-canvas[data-fx=sparkle] .hero-fx i{display:none}
 @keyframes hFlow{from{background-position:0 0}to{background-position:220% 0}}
+@keyframes hDepthWave{0%{background-position:0 -80%}100%{background-position:0 130%}}
 .a-colourflow{background:linear-gradient(120deg,#3dd0dc,#4a8ef0,#a765e0,#e05ca7)}
-.a-centreburst{background:radial-gradient(circle,#fff 0 5%,#a765e0 13%,#4a8ef0 28%,#111 60%)}
-.a-energy{background:linear-gradient(115deg,#d85f4f,#a765e0,#3dd0dc,#f5f5f5)}
+.a-wave{background:linear-gradient(to bottom,#08090c 0 20%,#fff 26%,#4a8ef0 34%,#a765e0 46%,#0c0c10 72%)}
+.a-strobe{background:linear-gradient(100deg,#fff 0 44%,#111 45% 55%,#a765e0 56% 100%)}
 .a-comet{background:linear-gradient(115deg,#111 18%,#3dd0dc 39%,#fff 50%,#a765e0 54%,#111 70%)}
-.a-atmosphere{background:radial-gradient(circle at 28% 30%,#fff 0 2px,transparent 3px),radial-gradient(circle at 72% 65%,#fff 0 1.5px,transparent 3px),linear-gradient(125deg,#16264e,#432465,#14545b)}
+.a-sparkle{background:radial-gradient(circle at 28% 30%,#fff 0 2px,transparent 3px),radial-gradient(circle at 72% 65%,#c86bff 0 1.5px,transparent 3px),#08080b}
 
 
 .hero-top{position:absolute;top:0;left:0;right:0;padding:18px 18px 0;display:flex;align-items:center;gap:10px}
@@ -436,52 +437,9 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 </section>
 
 <section class="view" id="v-sound" data-title="Sound & DSP">
-  <!-- Karaoke. Gated on data-requires="mics", which the S3 asserts in its
-       heartbeat - the firmware is the only thing that knows whether the
-       preamps and second ADC actually exist, so it's the only thing that
-       should be claiming it. Until then this whole card is visibly
-       unavailable rather than showing controls that get refused. -->
-  <div class="group" data-board="s3" data-requires="mics">
-    <div class="group-hd"><h2>Karaoke</h2>
-      <span class="offline-note">DSP offline</span>
-      <span class="missing-note">No mic hardware</span></div>
-    <div class="card">
-      <div class="ctl" id="ctl-mic1">
-        <div class="ctl-hd"><label for="mic1">Mic 1</label><span class="val" id="mic1Val">0</span></div>
-        <div class="with-toggle">
-          <input type="range" id="mic1" min="0" max="100" value="0">
-          <button class="mute" data-mute="mic1">Mute</button>
-        </div>
-        <div class="state"></div><div class="ctl-msg" id="msg-mic1"></div>
-      </div>
-      <div class="ctl" id="ctl-mic2">
-        <div class="ctl-hd"><label for="mic2">Mic 2</label><span class="val" id="mic2Val">0</span></div>
-        <div class="with-toggle">
-          <input type="range" id="mic2" min="0" max="100" value="0">
-          <button class="mute" data-mute="mic2">Mute</button>
-        </div>
-        <div class="state"></div><div class="ctl-msg" id="msg-mic2"></div>
-      </div>
-      <div class="ctl" id="ctl-echo">
-        <div class="ctl-hd"><label for="echo">Echo</label><span class="val" id="echoVal">0</span></div>
-        <input type="range" id="echo" min="0" max="100" value="0">
-        <div class="state"></div>
-        <div class="ctl-msg" id="msg-echo">Also on the panel encoder.</div>
-      </div>
-      <div class="ctl" id="ctl-reverb">
-        <div class="ctl-hd"><label for="reverb">Reverb</label><span class="val" id="reverbVal">25</span></div>
-        <input type="range" id="reverb" min="0" max="100" value="25">
-        <div class="state"></div>
-        <div class="ctl-msg" id="msg-reverb">App only &mdash; set once per room rather than ridden mid-song.</div>
-      </div>
-      <div class="ctl" id="ctl-fbsup">
-        <div class="ctl-hd"><label>Feedback suppression</label>
-          <button class="toggle on" id="fbsupBtn" data-toggle="fbsup">On</button></div>
-        <div class="state"></div>
-        <div class="ctl-msg" id="msg-fbsup">Watches for a frequency ringing up and notches it automatically.</div>
-      </div>
-    </div>
-  </div>
+  <!-- FUTURE KARAOKE UI: removed in v2.7 until mic hardware exists.
+       v2.6 had Mic 1/2 level+mute, Echo, Reverb and feedback suppression
+       controls here. Firmware restoration notes are in larbybox_s3/params.h. -->
 
   <div class="group" data-board="s3">
     <div class="group-hd"><h2>Tone</h2><em>one profile at a time</em>
@@ -495,13 +453,25 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <div class="card">
       <div class="ctl" id="ctl-eqb">
         <div class="ctl-hd"><label for="eqBass">Bass</label><span class="val" id="eqBassVal">0.0 dB</span></div>
-        <input type="range" id="eqBass" min="-20" max="24" step="0.5" value="0">
+        <input type="range" id="eqBass" min="-17" max="35" step="0.5" value="3">
         <div class="state"></div><div class="ctl-msg" id="msg-eqb"></div>
       </div>
       <div class="ctl" id="ctl-eqt">
         <div class="ctl-hd"><label for="eqTreb">Treble</label><span class="val" id="eqTrebVal">0.0 dB</span></div>
-        <input type="range" id="eqTreb" min="-20" max="20" step="0.5" value="0">
+        <input type="range" id="eqTreb" min="-18" max="24" step="0.5" value="2">
         <div class="state"></div><div class="ctl-msg" id="msg-eqt"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" data-board="s3">
+    <div class="group-hd"><h2>System sounds</h2><span class="offline-note">DSP offline</span></div>
+    <div class="card">
+      <div class="ctl" id="ctl-sfxvol">
+        <div class="ctl-hd"><label for="sfxvol">SFX volume</label><span class="val" id="sfxvolVal">100%</span></div>
+        <input type="range" id="sfxvol" min="0" max="100" step="1" value="100">
+        <p class="setting-help">Global level for startup, pairing, battery and other system beeps. 100% is the current clean tested level.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-sfxvol"></div>
       </div>
     </div>
   </div>
@@ -566,7 +536,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   <div class="group" data-board="bt">
     <div class="group-hd"><h2>Rails</h2><span class="offline-note">Bluetooth offline</span></div>
     <div class="card readout">
-      <div class="r"><span>Battery</span><span id="pBatt">&mdash;</span></div>
+      <div class="r"><span>Battery live</span><span id="pBatt">&mdash;</span></div>
+      <div class="r"><span>Battery average</span><span id="pBattAvg">&mdash;</span></div>
       <div class="r"><span>PSU</span><span id="pPsu">&mdash;</span></div>
       <div class="r"><span>Load</span><span id="pLoad">&mdash;</span></div>
       <div class="r"><span>Source</span><span id="pSrc">&mdash;</span></div>
@@ -663,7 +634,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="ctl" id="ctl-tSpecBassHz">
         <div class="ctl-hd"><label for="tSpecBassHz">Lighting bass cutoff</label><span class="val" id="tSpecBassHzVal">220 Hz</span></div>
         <input type="range" id="tSpecBassHz" min="40" max="500" step="5" value="220" aria-describedby="help-tSpecBassHz">
-        <p class="setting-help" id="help-tSpecBassHz">Highest frequency the lights count as bass, in hertz. Lower makes Bass Pulse and Centre Burst focus on kick drums and sub-bass; higher lets bass guitar and low vocals drive them too. Affects the lights only, never the sound.</p>
+        <p class="setting-help" id="help-tSpecBassHz">Highest frequency the lights count as bass, in hertz. Lower makes Bass Pulse, Wave and Strobe focus on kick drums and sub-bass; higher lets bass guitar and low vocals drive them too. Affects the lights only, never the sound.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-tSpecBassHz"></div>
       </div>
     </div>
@@ -671,7 +642,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
   <div class="group">
     <div class="group-hd"><h2>Light behaviour</h2></div>
-    <p class="hint">Set how quickly reactive effects respond and how Centre Burst and Atmosphere behave.</p>
+    <p class="hint">Fine-tune the current six effects. Every control below maps to behaviour that is active in this firmware.</p>
     <div class="card">
       <div class="ctl" id="ctl-lEnvAtk">
         <div class="ctl-hd"><label for="lEnvAtk">Attack</label><span class="val" id="lEnvAtkVal">0.55</span></div>
@@ -686,28 +657,76 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <div class="state"></div><div class="ctl-msg" id="msg-lEnvRel"></div>
       </div>
       <div class="ctl" id="ctl-lSparkle">
-        <div class="ctl-hd"><label for="lSparkle">Atmosphere glint rate</label><span class="val" id="lSparkleVal">1.00</span></div>
+        <div class="ctl-hd"><label for="lSparkle">Sparkle rate</label><span class="val" id="lSparkleVal">1.00</span></div>
         <input type="range" id="lSparkle" min="0.2" max="4" step="0.05" value="1" aria-describedby="help-lSparkle">
-        <p class="setting-help" id="help-lSparkle">Multiplier for the wait between Atmosphere glints. Lower creates more frequent glints; higher leaves more space between them.</p>
+        <p class="setting-help" id="help-lSparkle">Multiplier for the wait between Sparkle glints. Lower creates more frequent sparkles; higher leaves more black space between them.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lSparkle"></div>
       </div>
       <div class="ctl" id="ctl-lFade">
-        <div class="ctl-hd"><label for="lFade">Atmosphere glint decay</label><span class="val" id="lFadeVal">22</span></div>
+        <div class="ctl-hd"><label for="lFade">Sparkle decay</label><span class="val" id="lFadeVal">22</span></div>
         <input type="range" id="lFade" min="4" max="90" step="1" value="22" aria-describedby="help-lFade">
-        <p class="setting-help" id="help-lFade">How much glint brightness is removed each frame in Atmosphere. Higher makes glints disappear sooner; lower leaves longer trails.</p>
+        <p class="setting-help" id="help-lFade">How much sparkle brightness is removed each frame. Higher makes sparkles disappear sooner; lower leaves longer trails.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lFade"></div>
       </div>
       <div class="ctl" id="ctl-lStrobeLo">
-        <div class="ctl-hd"><label for="lStrobeLo">Burst gap min</label><span class="val" id="lStrobeLoVal">70 ms</span></div>
+        <div class="ctl-hd"><label for="lStrobeLo">Strobe gap min</label><span class="val" id="lStrobeLoVal">70 ms</span></div>
         <input type="range" id="lStrobeLo" min="30" max="600" step="10" value="70" aria-describedby="help-lStrobeLo">
-        <p class="setting-help" id="help-lStrobeLo">Minimum waiting time before Centre Burst can retrigger on another bass hit. Keep this below the maximum.</p>
+        <p class="setting-help" id="help-lStrobeLo">Minimum waiting time before Strobe can retrigger on another bass hit. Keep this below the maximum.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lStrobeLo"></div>
       </div>
       <div class="ctl" id="ctl-lStrobeHi">
-        <div class="ctl-hd"><label for="lStrobeHi">Burst gap max</label><span class="val" id="lStrobeHiVal">420 ms</span></div>
+        <div class="ctl-hd"><label for="lStrobeHi">Strobe gap max</label><span class="val" id="lStrobeHiVal">420 ms</span></div>
         <input type="range" id="lStrobeHi" min="60" max="2000" step="20" value="420" aria-describedby="help-lStrobeHi">
-        <p class="setting-help" id="help-lStrobeHi">Upper end of the retrigger wait used by Centre Burst. A larger maximum spaces bursts further apart. Keep this above the minimum.</p>
+        <p class="setting-help" id="help-lStrobeHi">Upper end of the retrigger wait used by Strobe. A larger maximum spaces flash trains further apart. Keep this above the minimum.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-lStrobeHi"></div>
+      </div>
+      <div class="ctl" id="ctl-lFlowBr">
+        <div class="ctl-hd"><label for="lFlowBr">Colour Flow brightness</label><span class="val" id="lFlowBrVal">205</span></div>
+        <input type="range" id="lFlowBr" min="80" max="255" step="5" value="205"><p class="setting-help">Steady base brightness for Colour Flow. Bass glints sit on top of this.</p><div class="state"></div><div class="ctl-msg" id="msg-lFlowBr"></div>
+      </div>
+      <div class="ctl" id="ctl-lFlowTrig">
+        <div class="ctl-hd"><label for="lFlowTrig">Colour Flow glint trigger</label><span class="val" id="lFlowTrigVal">0.48</span></div>
+        <input type="range" id="lFlowTrig" min="0.15" max="0.9" step="0.01" value="0.48"><p class="setting-help">Bass level needed to throw a white glint. Lower reacts more often.</p><div class="state"></div><div class="ctl-msg" id="msg-lFlowTrig"></div>
+      </div>
+      <div class="ctl" id="ctl-lWaveTrig">
+        <div class="ctl-hd"><label for="lWaveTrig">Wave trigger</label><span class="val" id="lWaveTrigVal">0.43</span></div>
+        <input type="range" id="lWaveTrig" min="0.15" max="0.9" step="0.01" value="0.43"><p class="setting-help">Bass level needed to launch a front-to-back wave.</p><div class="state"></div><div class="ctl-msg" id="msg-lWaveTrig"></div>
+      </div>
+      <div class="ctl" id="ctl-lWaveMs">
+        <div class="ctl-hd"><label for="lWaveMs">Wave travel time</label><span class="val" id="lWaveMsVal">620 ms</span></div>
+        <input type="range" id="lWaveMs" min="180" max="1600" step="20" value="620"><p class="setting-help">Time for the wave wall to travel from the front port to the deepest row.</p><div class="state"></div><div class="ctl-msg" id="msg-lWaveMs"></div>
+      </div>
+      <div class="ctl" id="ctl-lWaveWid">
+        <div class="ctl-hd"><label for="lWaveWid">Wave thickness</label><span class="val" id="lWaveWidVal">54</span></div>
+        <input type="range" id="lWaveWid" min="18" max="110" step="2" value="54"><p class="setting-help">Depth width of the moving wave. Lower is a sharper wall; higher is broader.</p><div class="state"></div><div class="ctl-msg" id="msg-lWaveWid"></div>
+      </div>
+      <div class="ctl" id="ctl-lStrTrig">
+        <div class="ctl-hd"><label for="lStrTrig">Strobe trigger</label><span class="val" id="lStrTrigVal">0.50</span></div>
+        <input type="range" id="lStrTrig" min="0.15" max="0.95" step="0.01" value="0.50"><p class="setting-help">Bass level needed to start a full-brightness flash train.</p><div class="state"></div><div class="ctl-msg" id="msg-lStrTrig"></div>
+      </div>
+      <div class="ctl" id="ctl-lStrPulse">
+        <div class="ctl-hd"><label for="lStrPulse">Strobe flash length</label><span class="val" id="lStrPulseVal">22 ms</span></div>
+        <input type="range" id="lStrPulse" min="8" max="80" step="2" value="22"><p class="setting-help">Length of each individual full-brightness flash.</p><div class="state"></div><div class="ctl-msg" id="msg-lStrPulse"></div>
+      </div>
+      <div class="ctl" id="ctl-lStrGap">
+        <div class="ctl-hd"><label for="lStrGap">Strobe train gap</label><span class="val" id="lStrGapVal">34 ms</span></div>
+        <input type="range" id="lStrGap" min="10" max="100" step="2" value="34"><p class="setting-help">Dark gap between flashes inside a double/triple flash train.</p><div class="state"></div><div class="ctl-msg" id="msg-lStrGap"></div>
+      </div>
+      <div class="ctl" id="ctl-lCometMs">
+        <div class="ctl-hd"><label for="lCometMs">Comet base speed</label><span class="val" id="lCometMsVal">55 ms</span></div>
+        <input type="range" id="lCometMs" min="20" max="120" step="2" value="55"><p class="setting-help">Milliseconds per LED before the music-driven midrange speed boost. Lower is faster.</p><div class="state"></div><div class="ctl-msg" id="msg-lCometMs"></div>
+      </div>
+      <div class="ctl" id="ctl-lCometTail">
+        <div class="ctl-hd"><label for="lCometTail">Comet tail</label><span class="val" id="lCometTailVal">11</span></div>
+        <input type="range" id="lCometTail" min="3" max="35" step="1" value="11"><p class="setting-help">Base trail length in LEDs.</p><div class="state"></div><div class="ctl-msg" id="msg-lCometTail"></div>
+      </div>
+      <div class="ctl" id="ctl-lCometBass">
+        <div class="ctl-hd"><label for="lCometBass">Comet bass tail boost</label><span class="val" id="lCometBassVal">18</span></div>
+        <input type="range" id="lCometBass" min="0" max="35" step="1" value="18"><p class="setting-help">Extra trail length available on bass hits. Zero keeps tail length fixed.</p><div class="state"></div><div class="ctl-msg" id="msg-lCometBass"></div>
+      </div>
+      <div class="ctl" id="ctl-lSparkTrig">
+        <div class="ctl-hd"><label for="lSparkTrig">Sparkle bass burst trigger</label><span class="val" id="lSparkTrigVal">0.58</span></div>
+        <input type="range" id="lSparkTrig" min="0.2" max="0.95" step="0.01" value="0.58"><p class="setting-help">Bass level needed to throw the small extra sparkle cluster.</p><div class="state"></div><div class="ctl-msg" id="msg-lSparkTrig"></div>
       </div>
       <div class="ctl" id="ctl-lIdleMs">
         <div class="ctl-hd"><label for="lIdleMs">Idle delay</label><span class="val" id="lIdleMsVal">3000 ms</span></div>
@@ -778,8 +797,13 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <p class="hint">Voltages, not percentages &mdash; a flat LiFePO4 curve makes
       percentage an interpretation, while volts are a measurement. The labels
       are roughly where each sits on the curve. Warnings play even when the
-      speaker is muted.</p>
+      speaker is muted and use the averaged voltage shown on the main page.</p>
     <div class="card">
+      <div class="ctl" id="ctl-pwAvgSec">
+        <div class="ctl-hd"><label for="pwAvgSec">Voltage averaging window</label><span class="val" id="pwAvgSecVal">5 min</span></div>
+        <input type="range" id="pwAvgSec" min="10" max="600" step="10" value="300" aria-describedby="help-pwAvgSec">
+        <div class="state"></div><p class="setting-help" id="help-pwAvgSec">Battery percentage and warning chimes use this rolling average to ignore music-related sag. Live voltage is still shown separately, and the emergency mute still watches live voltage.</p><div class="ctl-msg" id="msg-pwAvgSec"></div>
+      </div>
       <div class="ctl" id="ctl-pwV25">
         <div class="ctl-hd"><label for="pwV25">First warning &middot; ~25%</label><span class="val" id="pwV25Val">12.95 V</span></div>
         <input type="range" id="pwV25" min="11.5" max="14" step="0.05" value="12.95" aria-describedby="help-pwV25">
@@ -884,12 +908,17 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 </section>
 </main>
 
+<div class="connect-overlay" id="connectOverlay">
+  <div class="connect-card">
+    <div class="connect-mark">LB</div>
+    <h2>Connect to LarbyBox</h2>
+    <p>Connect over Bluetooth to control sound, lighting and settings.</p>
+    <button id="connectBtn">Connect</button>
+  </div>
+</div>
+
 <div class="dock">
   <div class="err" id="err"></div>
-  <div class="dock-in">
-    <button id="connectBtn">Connect</button>
-    <button class="ghost" id="demoBtn">Demo</button>
-  </div>
 </div>
 
 <div class="island">
@@ -1105,7 +1134,7 @@ function resolveAck(a){
   if (!p) return;
   pending.delete(a.seq);
   logUpdate(a.seq, a.r, Math.round(performance.now() - p.ms));
-  const batterySetting = ['pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(p.key);
+  const batterySetting = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(p.key);
   if (batterySetting && ['ok','clamp','bad'].includes(a.r) && Number.isFinite(Number(a.v))) snapTo(p.key, a.v);
   if (p.key === 'pwReset' && ['ok','bad'].includes(a.r)) send('pwGet','1');
   if (a.r === 'ok') setCtl(p.ctl, 'ok', ({pwGet:'Current thresholds loaded.',pwSave:'Thresholds saved.',pwReset:'Defaults applied and saved.'})[p.key] || '');
@@ -1127,9 +1156,9 @@ function resolveAck(a){
 // A control that stays where you dragged it after the firmware clamped the
 // value is lying. Snap it to whatever actually took effect.
 function snapTo(key, v){
-  const map = {mic1:'mic1', mic2:'mic2', echo:'echo', ledbright:'bright', vol:'vol',
+  const map = {ledbright:'bright', vol:'vol',
                vol12:'vol12', vol24:'vol24', hpf:'hpf', lim:'lim'};
-  const el = ['pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(key) ? $(key) : map[key] && $(map[key]);
+  const el = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(key) ? $(key) : map[key] && $(map[key]);
   if (el){ el.value = v; el.dispatchEvent(new Event('render')); }
   render();
 }
@@ -1137,19 +1166,19 @@ function snapTo(key, v){
 /* ---------- hero ---------- */
 const HEX = {red:'#e2574c',orange:'#f0a63d',gold:'#f0b429',green:'#3ddc84',
              cyan:'#3dd0dc',blue:'#4a8ef0',purple:'#a765e0',magenta:'#e05ca7'};
-const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', centreburst:'Centre Burst'};
+const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', wave:'Front-to-Back Wave', strobe:'Strobe', sparkle:'Sparkle'};
 const label = n => NICE[n] || (n ? n.charAt(0).toUpperCase()+n.slice(1) : '\u2014');
 // Mirrors presetUsesColor() in presets.ino. The firmware is authoritative via
 // ledusescolor; this list is only the fallback before state first arrives.
-const NO_COLOR = ['off','colourflow','centreburst','energy','comet','atmosphere'];
+const NO_COLOR = ['off','colourflow','wave','strobe','comet','sparkle'];
 const SUBTITLE = {
   off:         () => 'Lights are off',
   colourflow:  () => 'Slow evolving colour range across the port',
-  centreburst: () => 'Bass hits launch outward from the centre',
-  energy:      () => 'Bass, mids and treble shape different layers',
+  wave:        () => 'Bass hits launch a wave from the front port toward the back',
+  strobe:      () => 'Full-brightness music-reactive flash trains',
   basspulse:   c  => 'Bass pulse with a moving palette around ' + label(c),
   comet:       () => 'A music-reactive trail follows the LED route',
-  atmosphere:  () => 'Moving colour bed with treble-driven glints'
+  sparkle:     () => 'Mostly-dark isolated sparkles with music-reactive bursts'
 };
 
 function updateHero(){
@@ -1188,6 +1217,8 @@ function render(){
   $('battPct').textContent = (state.batt === undefined || state.batt < 0) ? '--%' : state.batt+'%';
   $('chipV').textContent = fmtV(state.vBatt);
   $('pBatt').textContent = fmtV(state.vBatt);
+  const avgMin = state.battAvgSec ? (state.battAvgSec / 60) : 0;
+  $('pBattAvg').textContent = fmtV(state.vBattAvg) + (state.battAvgSec ? ' · ' + (avgMin >= 1 ? avgMin.toFixed(avgMin % 1 ? 1 : 0) + ' min' : state.battAvgSec + ' s') : '');
   $('pPsu').textContent  = fmtV(state.vPsu);
   $('pLoad').textContent = fmtV(state.vLoad);
   // Two different questions: what's powering the amp, and what's plugged in.
@@ -1251,6 +1282,9 @@ function render(){
     ?.classList.toggle('pending', state.ledsaved === false);
 
   syncSlider('startvol', state.startvol);
+  syncSlider('sfxvol', state.sfxvol);
+  syncEqTabToActive();
+  refreshEqEditor();
 
   // Diagnostics. cpu is worst-case block time as a percentage of the budget
   // - the max, not the average, because one late block is an audible
@@ -1262,8 +1296,8 @@ function render(){
 
   const hint = $('cpuHint');
   if (state.cpu === undefined) hint.textContent = '';
-  else if (state.cpu < 35) hint.textContent = 'Comfortable. Room for the mic path.';
-  else if (state.cpu < 60) hint.textContent = 'Fine today, but karaoke roughly doubles this.';
+  else if (state.cpu < 35) hint.textContent = 'Comfortable DSP headroom.';
+  else if (state.cpu < 60) hint.textContent = 'Normal DSP load.';
   else if (state.cpu < 85) hint.textContent = 'Tight. Optimise before adding anything.';
   else hint.textContent = 'Over budget \u2014 dropouts likely.';
 
@@ -1313,8 +1347,8 @@ function fmtUp(s){ s|=0; const h=s/3600|0, m=(s%3600)/60|0;
    Names come from the board, never hardcoded. Anything without designed art
    gets a stable colour derived from its own name, so a preset added in
    presets.ino appears here looking deliberate rather than broken. */
-const ART = {off:'a-off',colourflow:'a-colourflow',centreburst:'a-centreburst',
-             energy:'a-energy',basspulse:'a-basspulse',comet:'a-comet',atmosphere:'a-atmosphere'};
+const ART = {off:'a-off',colourflow:'a-colourflow',wave:'a-wave',
+             strobe:'a-strobe',basspulse:'a-basspulse',comet:'a-comet',sparkle:'a-sparkle'};
 function fallbackArt(name){
   let h = 0; for (const c of name) h = (h*31 + c.charCodeAt(0)) % 360;
   return 'background:radial-gradient(circle at 50% 55%,hsl('+h+',72%,52%),hsl('+h+',70%,14%) 76%)';
@@ -1388,9 +1422,7 @@ function bindSlider(id, ctlId, key, fmt){
   paint();
 }
 bindSlider('vol','vol','vol');
-bindSlider('mic1','mic1','mic1'); bindSlider('mic2','mic2','mic2');
-bindSlider('echo','echo','echo');
-bindSlider('reverb','reverb','reverb'); bindSlider('bright','ledbright','ledbright');
+bindSlider('sfxvol','sfxvol','sfxvol', v => Math.round(+v)+'%'); bindSlider('bright','ledbright','ledbright');
 bindSlider('vol12','vol12','vol12'); bindSlider('vol24','vol24','vol24');
 bindSlider('startvol','startvol','startvol');
 
@@ -1417,6 +1449,8 @@ bindSlider('tRmsHi','tRmsHi','tRmsHi', f2);
 bindSlider('tRmsLo','tRmsLo','tRmsLo', f2);
 bindSlider('tRmsMin','tRmsMin','tRmsMin', f2);
 const volts = v => (+v).toFixed(2) + ' V';
+const avgWindow = v => (+v >= 60 ? ((+v/60).toFixed((+v%60)?1:0)+' min') : (Math.round(+v)+' s'));
+bindSlider('pwAvgSec','pwAvgSec','pwAvgSec', avgWindow);
 bindSlider('pwV25','pwV25','pwV25', volts);
 bindSlider('pwV10','pwV10','pwV10', volts);
 bindSlider('pwV0','pwV0','pwV0', volts);
@@ -1435,7 +1469,7 @@ function checkThresholdOrder(){
   if (mute > v0) msgs.push('Audio cuts out before the final warning is reached.');
   h.textContent = msgs.join(' ');
 }
-['pwV25','pwV10','pwV0','pwMute','pwUnmute'].forEach(id => {
+['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute'].forEach(id => {
   const el = $(id);
   if (el){ el.addEventListener('input', checkThresholdOrder);
            el.addEventListener('render', checkThresholdOrder); }
@@ -1453,19 +1487,45 @@ bindSlider('lStrobeLo','lStrobeLo','lStrobeLo', ms);
 bindSlider('lStrobeHi','lStrobeHi','lStrobeHi', ms);
 bindSlider('lIdleMs','lIdleMs','lIdleMs', ms);
 bindSlider('lIdleBr','lIdleBr','lIdleBr', v => Math.round(+v * 100) + '%');
+bindSlider('lFlowBr','lFlowBr','lFlowBr', v => Math.round(+v));
+bindSlider('lFlowTrig','lFlowTrig','lFlowTrig', f2);
+bindSlider('lWaveTrig','lWaveTrig','lWaveTrig', f2);
+bindSlider('lWaveMs','lWaveMs','lWaveMs', ms);
+bindSlider('lWaveWid','lWaveWid','lWaveWid', v => Math.round(+v));
+bindSlider('lStrTrig','lStrTrig','lStrTrig', f2);
+bindSlider('lStrPulse','lStrPulse','lStrPulse', ms);
+bindSlider('lStrGap','lStrGap','lStrGap', ms);
+bindSlider('lCometMs','lCometMs','lCometMs', ms);
+bindSlider('lCometTail','lCometTail','lCometTail', v => Math.round(+v));
+bindSlider('lCometBass','lCometBass','lCometBass', v => Math.round(+v));
+bindSlider('lSparkTrig','lSparkTrig','lSparkTrig', f2);
 
 // Tuning arrives as its own message rather than in the heartbeat - sixteen
 // values that only change while someone is actively tuning don't belong in
 // a once-a-second broadcast.
-const TUNE_KEYS = ['pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel','tSpecBassHz',
+const TUNE_KEYS = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel','tSpecBassHz',
   'tCompThL','tCompThM','tCompThH','tCompRaL','tCompRaM','tCompRaH',
   'tRmsHi','tRmsLo','tRmsMin','tLoudMax','tLoudKnee','tLimAtk','tLimRel',
-  'lEnvAtk','lEnvRel','lSparkle','lFade','lStrobeLo','lStrobeHi','lIdleMs','lIdleBr'];
+  'lEnvAtk','lEnvRel','lSparkle','lFade','lStrobeLo','lStrobeHi','lIdleMs','lIdleBr','lFlowBr','lFlowTrig','lWaveTrig','lWaveMs','lWaveWid','lStrTrig','lStrPulse','lStrGap','lCometMs','lCometTail','lCometBass','lSparkTrig'];
 function applyTuning(s){
   TUNE_KEYS.forEach(k => { if (s[k] !== undefined) syncSlider(k, s[k]); });
 }
-bindSlider('eqBass','eqb', () => ['b0b','b1b','b2b'][eqTab], v => (+v).toFixed(1)+' dB');
-bindSlider('eqTreb','eqt', () => ['b0t','b1t','b2t'][eqTab], v => (+v).toFixed(1)+' dB');
+{
+  const el=$('eqBass'), out=$('eqBassVal');
+  const paint=()=>{ out.textContent=(+el.value).toFixed(1)+' dB'; };
+  el.addEventListener('input',paint); el.addEventListener('render',paint);
+  el.addEventListener('change',()=>send(['b0b','b1b','b2b'][eqTab],
+    (+el.value-EQ_BASE_BASS[eqTab]).toFixed(1),'eqb',el.value,true));
+  paint();
+}
+{
+  const el=$('eqTreb'), out=$('eqTrebVal');
+  const paint=()=>{ out.textContent=(+el.value).toFixed(1)+' dB'; };
+  el.addEventListener('input',paint); el.addEventListener('render',paint);
+  el.addEventListener('change',()=>send(['b0t','b1t','b2t'][eqTab],
+    (+el.value-EQ_BASE_TREB[eqTab]).toFixed(1),'eqt',el.value,true));
+  paint();
+}
 bindSlider('hpf','hpf','hpf', v => v+' Hz');
 bindSlider('lim','lim','lim', v => (+v).toFixed(1)+' dB');
 
@@ -1482,11 +1542,27 @@ document.querySelectorAll('#bassSeg button').forEach(b => b.addEventListener('cl
 const EQ_HINTS = ['A light V \u2014 gentle lift at both ends.',
                   'A heavier V \u2014 the same shape, dug in further.',
                   'Bass 1 with more bass again. Treble unchanged.'];
-let eqTab = 0;
+const EQ_BASE_BASS = [3.0, 7.0, 11.0];
+const EQ_BASE_TREB = [2.0, 4.0, 4.0];
+let eqTab = 0, lastEqProfile = null;
+function syncEqTabToActive(){
+  if (state.stbass === undefined || state.stbass === lastEqProfile) return;
+  lastEqProfile = Number(state.stbass); eqTab = lastEqProfile;
+  $('eqHint').textContent = EQ_HINTS[eqTab];
+  document.querySelectorAll('#eqTabs button').forEach(x => x.classList.toggle('on', +x.dataset.v===eqTab));
+}
+function refreshEqEditor(){
+  const bk='b'+eqTab+'b', tk='b'+eqTab+'t';
+  const bv = state[bk] !== undefined ? EQ_BASE_BASS[eqTab] + Number(state[bk]) : EQ_BASE_BASS[eqTab];
+  const tv = state[tk] !== undefined ? EQ_BASE_TREB[eqTab] + Number(state[tk]) : EQ_BASE_TREB[eqTab];
+  $('eqBass').value=bv; $('eqBass').dispatchEvent(new Event('render'));
+  $('eqTreb').value=tv; $('eqTreb').dispatchEvent(new Event('render'));
+}
 document.querySelectorAll('#eqTabs button').forEach(b => b.addEventListener('click', () => {
   eqTab = +b.dataset.v;
   $('eqHint').textContent = EQ_HINTS[eqTab];
   document.querySelectorAll('#eqTabs button').forEach(x => x.classList.toggle('on', x===b));
+  refreshEqEditor();
 }));
 document.querySelectorAll('.island button').forEach(t => t.addEventListener('click', () => {
   document.querySelectorAll('.island button').forEach(x => x.classList.toggle('on', x===t));
@@ -1538,7 +1614,6 @@ $('connectBtn').addEventListener('click', async () => {
     // where this request is the thing that gets lost.
     setTimeout(() => { send('listGet','1'); }, 200);
     setTimeout(() => { send('ltGet','1'); send('tGet','1'); send('pwGet','1'); }, 500);
-    demo = false; clearInterval(demoTick); $('demoBtn').textContent = 'Demo';
     $('connectBtn').textContent = 'Disconnect';
     render();
   } catch(e){
@@ -1558,69 +1633,7 @@ function onDrop(){
   $('connectBtn').textContent='Connect'; render();
 }
 
-/* ---------- demo mode ----------
-   Runs the whole interface with no hardware, faking realistic latency and
-   clamping exactly the way the firmware does, so the confirmation behaviour
-   can be judged before anything is flashed. */
-$('demoBtn').addEventListener('click', () => {
-  demo = !demo;
-  $('demoBtn').textContent = demo ? 'Stop' : 'Demo';
-  if (demo){
-    state = {fw:'LarbyBox LED 2.1', pv:3, vol:42, stbass:0, bt:true, avrc:true, playing:true, uptime:437, batt:82, vBatt:13.1,
-             vPsu:-1, vLoad:12.9, onPsu:false, psuPresent:false, psuMismatch:false, psuMute:false, muted:false,
-             linkBt:true, linkS3:true, ledbright:128,
-             ledpreset:4, ledpname:'basspulse', ledcolor:2, ledusescolor:true,
-             ledlist:['off','colourflow','centreburst','energy','basspulse','comet','atmosphere'],
-             ledcolors:['red','orange','gold','green','cyan','blue','purple','magenta'],
-             saved:true, ledsaved:true, ledstart:0, startvol:50, cpu:24, underruns:0, btReboots:0, s3Reboots:0, battStatus:0, battWarn:0, bleFails:0,
-             pwV25:12.95, pwV10:12.75, pwV0:12.0, pwMute:12.0, pwUnmute:12.6, bleDrops:0, btPv:3, s3Pv:3,
-             tSpecBassHz:220, lIdleMs:3000, lIdleBr:0.35,
-             mics:false, mic1:50, mic2:50, mic1mute:true, mic2mute:true,
-             echo:20, reverb:25, fbsup:true};
-    demoTick = setInterval(()=>{ state.uptime++; render(); }, 1000);
-  } else { clearInterval(demoTick); state = {}; fxNames = []; colNames = []; lastUptime = null; }
-  render();
-});
-
-const CLAMPS = {ledbright:[0,255], ledcolor:[0,7], ledpreset:[0,6], vol:[0,100],
-                mic1:[0,100], mic2:[0,100], echo:[0,100], vol12:[0,115], vol24:[0,115],
-                hpf:[55,90], lim:[-24,0], b0b:[-20,24], b0t:[-20,20]};
-function demoHandle(sq, key, value){
-  let r = 'ok', v = value;
-  const c = CLAMPS[key];
-  if (c){
-    const n = Math.max(c[0], Math.min(c[1], parseFloat(value)));
-    if (n !== parseFloat(value)){ r = 'clamp'; v = String(n); }
-  }
-  const pwKeys = ['pwV25','pwV10','pwV0','pwMute','pwUnmute'];
-  if (pwKeys.includes(key)) {
-    const candidate = {...state, [key]:Number(value)};
-    const el = $(key), n = Number(value);
-    if (!Number.isFinite(n) || n < +el.min || n > +el.max ||
-        !(candidate.pwV25 > candidate.pwV10 && candidate.pwV10 > candidate.pwV0 &&
-          candidate.pwMute <= candidate.pwV0 && candidate.pwUnmute - candidate.pwMute >= 0.1499)) {
-      r = 'bad'; v = String(state[key]);
-    } else state[key] = n;
-  }
-  if (key === 'pwReset') Object.assign(state, {pwV25:12.95,pwV10:12.75,pwV0:12,pwMute:12,pwUnmute:12.6});
-  if (key === 'pwGet' || key === 'tGet' || key === 'ltGet') applyTuning(state);
-  if (TUNE_KEYS.includes(key) && r !== 'bad') state[key] = Number(v);
-  if (key === 'ledpreset'){
-    state.ledpreset = +v; state.ledpname = state.ledlist[+v] || '?';
-    state.ledusescolor = NO_COLOR.indexOf(state.ledpname) === -1;
-  }
-  if (key === 'vol' || key === 'stbass') state[key] = +v;
-  if (key === 'play') state.playing = !state.playing;
-  if (key === 'ledcolor')  state.ledcolor = +v;
-  const persisted = ['stbass','hpf','lim','benh','vol12','vol24','startvol',
-                     'mic1','mic2','echo','reverb','fbsup'];
-  if (persisted.includes(key) || /^b[0-2][bt]$/.test(key)) state.saved = false;
-  // Brightness is chosen from the power source at startup, not saved.
-  if (['ledpreset','ledcolor'].includes(key)) state.ledsaved = false;
-  if (key === 'save' || key === 'reset'){ state.saved = true; state.ledsaved = true; }
-  if (key === 'ledbright') state.ledbright = +v;
-  setTimeout(()=>onState(JSON.stringify({ack:{seq:sq, r:r, k:key, v:v}}) + '\n'), 60 + Math.random()*140);
-}
+/* Demo mode removed: the app now always reflects real LarbyBox state. */
 
 /* ---------- PWA ----------
    The service worker only makes the app LAUNCH offline. Control itself is
