@@ -968,7 +968,9 @@ const STAT = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 // that plus transmission, or every successful save reports "no reply"
 // moments before the real answer lands.
 const ACK_TIMEOUT = 1200;
-const ACK_TIMEOUT_SLOW = 3000;
+// The LED board now waits up to 5 s for the S3's save reply, so this must be
+// comfortably longer than that.
+const ACK_TIMEOUT_SLOW = 8000;
 const SLOW_CMDS = ['save','reset','tSave','tReset','ltSave','ltReset','pwSave','pwReset'];
 
 const $ = id => document.getElementById(id);
