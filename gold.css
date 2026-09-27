@@ -139,3 +139,12 @@ dialog{width:min(440px,calc(100% - 36px));background:var(--card);color:var(--ink
 }
 body:not([data-page=panel])>.hero{display:none}
 #v-sound>.save-toolbar,#v-lights>.save-toolbar{margin-bottom:20px}
+
+/* All effects: always-visible lighting settings, in labelled sub-sections */
+.global-lights .global-sub{min-width:0}
+.global-lights .global-sub+.global-sub{margin-top:22px;padding-top:20px;border-top:1px solid var(--hair)}
+.global-lights h3{font-size:14px;font-weight:600;margin:0 0 14px;color:var(--ink)}
+.global-lights .ctl{margin:0 0 18px}
+.global-lights .global-sub .ctl:last-child{margin-bottom:0}
+.global-lights .ctl-msg:empty{display:none}
+@media(min-width:761px){#v-lights>.global-lights{grid-column:1/-1}}

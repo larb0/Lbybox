@@ -38,19 +38,34 @@
  }
  const battery=findGroup('Battery warnings');$('v-power').append(battery);fold(battery);
  function take(ids){return ids.map(id=>{const el=$('ctl-'+id);if(!el)throw new Error('Missing setting '+id);return el;});}
+ // Settings that affect EVERY effect sit in one always-visible group at the
+ // top, not folded away. Each part keeps its own board tag, so the music
+ // sensitivity controls still grey out when the DSP board is offline.
+ function subsection(title, nodes, board){
+  const s=document.createElement('div');s.className='global-sub';
+  if(board)s.dataset.board=board;
+  const h=document.createElement('h3');h.textContent=title;
+  s.append(h,...nodes);return s;
+ }
+ const globalLights=document.createElement('div');globalLights.className='group global-lights';
+ globalLights.innerHTML='<div class="group-hd"><h2>All effects</h2></div>';
+ globalLights.append(
+  subsection('Music sensitivity',take(['tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel','tSpecBassHz']),'s3'),
+  subsection('Reaction smoothing',take(['lEnvAtk','lEnvRel'])),
+  subsection('Idle behaviour',take(['lIdleMs','lIdleBr'])));
+ // Bass Pulse: one group. Its frequency range lives on the DSP board, so
+ // that part is wrapped with the s3 tag on its own.
+ const pulseRange=document.createElement('div');pulseRange.dataset.board='s3';
+ pulseRange.append(...take(['tPulseLo','tPulseHi']));
  const lightCategories=[
-  category('Music sensitivity',take(['tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel','tSpecBassHz']),'s3'),
-  category('Reaction smoothing',take(['lEnvAtk','lEnvRel'])),
-  category('Bass Pulse · frequency range',take(['tPulseLo','tPulseHi']),'s3'),
-  category('Bass Pulse · shape & brightness',take(['lBassGate','lBassRel','lBassFloor'])),
+  category('Bass Pulse',[pulseRange,...take(['lBassGate','lBassRel','lBassFloor'])]),
   category('Colour Flow',take(['lFlowBr','lFlowTrig','lFlowGlint'])),
   category('Waves',take(['lWaveMs','lWaveWid','lWaveMusic'])),
   category('Strobe',take(['lStrHzLo','lStrHzHi','lStrTrig','lStrPulse','lStrGap'])),
   category('Comet',take(['lCometMs','lCometTail','lCometBass'])),
-  category('Sparkle',take(['lSparkle','lFade','lSparkTrig'])),
-  category('Idle behaviour',take(['lIdleMs','lIdleBr']))
+  category('Sparkle',take(['lSparkle','lFade','lSparkTrig']))
  ];
- lights.append(...lightCategories);
+ lights.append(globalLights,...lightCategories);
  // Preserve any future, unclassified advanced groups under Settings.
  for(const group of [...advanced.querySelectorAll(':scope > .group')]){
   if([tuning,response,behaviour].includes(group))continue;
@@ -59,7 +74,14 @@
  advanced.remove();
  const saveButtons=[],messages=[];
  let saveResults=null;
- const saveCommands=['save','tSave','ltSave'];
+ // Order matters. ltSave writes ~25 values to the LED board's flash, and
+ // while a flash write runs that board can't service its UART - the S3's
+ // replies to save/tSave, arriving in the middle of it, were being lost, so
+ // the app reported "incomplete" even when every board had saved. Running
+ // the three one at a time, LED-only work first, keeps replies out of that
+ // window.
+ const saveCommands=['ltSave','save','tSave'];
+ const saveNames={ltSave:'lighting tuning',save:'sound & lighting settings',tSave:'sound tuning'};
  function paintSave(){
   const busy=saveResults&&Object.values(saveResults).includes('pending');
   const ready=goldReady('s3');
@@ -68,14 +90,22 @@
   if(saveResults){
    if(busy)message='Waiting for the speaker to confirm all settings.';
    else if(Object.values(saveResults).every(s=>s==='ok'))message='Sound and lighting settings and tuning saved.';
-   else message='Save incomplete. Check the board connection and try again.';
+   else{
+    const failed=saveCommands.filter(k=>saveResults[k]!=='ok').map(k=>saveNames[k]);
+    message='Save incomplete - not saved: '+failed.join(', ')+'. Check the board connection and try again.';
+   }
   }
   messages.forEach(m=>{m.textContent=message;m.classList.toggle('save-error',!!saveResults&&!busy&&Object.values(saveResults).some(s=>s!=='ok'));});
  }
- function saveAll(){
+ // Resolves once this command has an answer (ok, bad, or the app's own
+ // timeout marking it failed).
+ function waitForSave(k){
+  return new Promise(res=>{const poll=()=>{if(!saveResults||saveResults[k]!=='pending')return res();setTimeout(poll,40);};poll();});
+ }
+ async function saveAll(){
   if(!goldReady('s3')||saveResults&&Object.values(saveResults).includes('pending'))return;
   saveResults=Object.fromEntries(saveCommands.map(k=>[k,'pending']));paintSave();
-  saveCommands.forEach(k=>send(k,'1',k,'1'));
+  for(const k of saveCommands){send(k,'1',k,'1');await waitForSave(k);}
  }
  function toolbar(view,loadButtons){
   const bar=document.createElement('div');bar.className='group save-toolbar';
@@ -109,7 +139,9 @@
  const desktop=matchMedia('(min-width: 761px)');
  const layouts=[{view:home,items:[audio,effects,bass,connection],columns:[[audio,bass],[effects,connection]]},
   {view:sound,items:soundCategories,columns:[[soundCategories[0],soundCategories[1],soundCategories[4]],[soundCategories[2],soundCategories[3],soundCategories[5],soundCategories[6]]]},
-  {view:lights,items:lightCategories,columns:[lightCategories.filter((_,i)=>i%2===0),lightCategories.filter((_,i)=>i%2===1)]}];
+  // The All effects group is in items but in no column, so on desktop it
+  // stays full width above the two columns of per-effect groups.
+  {view:lights,items:[globalLights,...lightCategories],columns:[lightCategories.filter((_,i)=>i%2===0),lightCategories.filter((_,i)=>i%2===1)]}];
  function arrange(){for(const l of layouts){
   l.items.forEach(item=>l.view.append(item));
   l.view.querySelectorAll(':scope > .layout-columns').forEach(el=>el.remove());
