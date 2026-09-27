@@ -17,13 +17,14 @@ lighting.remove();
 bass.classList.add('gold-eq');bass.querySelector('h2').textContent='EQ profile';
 home.replaceChildren(audio,effects,bass);
 const nav=document.querySelector('.island');nav.setAttribute('aria-label','Main navigation');
-nav.innerHTML=[['panel','Home','home'],['sound','Sound','sound'],['power','Settings','settings']].map(([v,t,i])=>'<button data-v="'+v+'"><span class="nav-icon">'+icon(i)+'</span>'+t+'</button>').join('');
+nav.innerHTML=[['panel','Home','home'],['sound','Sound','sound'],['lights','Lighting','lights'],['power','Settings','settings']].map(([v,t,i])=>'<button data-v="'+v+'"><span class="nav-icon">'+icon(i)+'</span>'+t+'</button>').join('');
 const header=document.createElement('header');header.className='gold-header';header.innerHTML='<span class="gold-brand">LarbyBox</span>';
 const statusBar=document.createElement('div');statusBar.className='gold-status';const battery=document.createElement('span');battery.className='battery-status';battery.append($('battPct'),document.createTextNode(' · '),$('chipV'));statusBar.append($('chipLink'),$('chipBt'),battery);header.append(nav,statusBar);document.body.prepend(header);
 const oldChips=document.querySelector('.chips');oldChips.hidden=true;
-const settingsTabs=document.createElement('div');settingsTabs.className='settings-tabs';settingsTabs.innerHTML='<button data-page="power">Power & system</button><button data-page="log">Activity</button><button data-page="adv">Advanced</button>';
+const settingsTabs=document.createElement('div');settingsTabs.className='settings-tabs';settingsTabs.innerHTML='<button data-page="power">Power & system</button><button data-page="log">Activity</button>';
 document.querySelector('main').prepend(settingsTabs);
 function goldNavigate(page){
+ document.body.dataset.page=page;
  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+page));
  const inSettings=['power','log','adv'].includes(page);
  nav.querySelectorAll('button').forEach(b=>{const on=b.dataset.v===(inSettings?'power':page);b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
