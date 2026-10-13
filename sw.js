@@ -16,7 +16,7 @@
 //  the old one - the activate handler deletes any cache that isn't the
 //  current name, which is what makes the update actually take effect.
 
-const CACHE_NAME = 'larbybox-v29-save2';
+const CACHE_NAME = 'larbybox-v29-dev1';
 
 const SHELL = [
   './',
@@ -24,6 +24,7 @@ const SHELL = [
   './gold.css',
   './gold.js',
   './layout.js',
+  './panel.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

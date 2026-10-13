@@ -58,7 +58,7 @@
  const pulseRange=document.createElement('div');pulseRange.dataset.board='s3';
  pulseRange.append(...take(['tPulseLo','tPulseHi']));
  const lightCategories=[
-  category('Bass Pulse',[pulseRange,...take(['lBassGate','lBassRel','lBassFloor'])]),
+  category('Bass Pulse',[pulseRange,...take(['lBassGate','lBassRel','lBassFloor','lBassKick'])]),
   category('Colour Flow',take(['lFlowBr','lFlowTrig','lFlowGlint'])),
   category('Waves',take(['lWaveMs','lWaveWid','lWaveMusic'])),
   category('Strobe',take(['lStrHzLo','lStrHzHi','lStrTrig','lStrPulse','lStrGap'])),

@@ -379,17 +379,12 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="ctl-msg" id="msg-ledpreset"></div></div>
   </div>
 
-  <!-- Colour and brightness both belong to the LED board, same as the
-       effect shelf above them. Neither touches the S3, so neither carries
-       the DSP-offline gate. -->
+  <!-- Brightness belongs to the LED board, same as the effect shelf above
+       it, so it doesn't carry the DSP-offline gate. There is no colour
+       picker: every effect chooses its own colours. -->
   <div class="group">
-    <div class="group-hd"><h2>Lights</h2><em id="colorState">—</em></div>
+    <div class="group-hd"><h2>Lights</h2></div>
     <div class="card">
-      <div class="ctl" id="ctl-ledcolor">
-        <div class="ctl-hd"><label>Colour</label></div>
-        <div class="cdots" id="colGrid"></div>
-        <div class="state"></div><div class="ctl-msg" id="msg-ledcolor"></div>
-      </div>
       <div class="ctl" id="ctl-ledbright">
         <div class="ctl-hd"><label for="bright">Brightness</label><span class="val" id="brightVal">128</span></div>
         <input type="range" id="bright" min="0" max="255" value="128" aria-describedby="help-bright">
@@ -752,6 +747,10 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <div class="ctl-hd"><label for="lBassFloor">Bass Pulse minimum light</label><span class="val" id="lBassFloorVal">5</span></div>
         <input type="range" id="lBassFloor" min="0" max="40" step="1" value="5"><p class="setting-help">Minimum brightness while music is active but bass is below the pulse gate. Lower gives more black between hits.</p><div class="state"></div><div class="ctl-msg" id="msg-lBassFloor"></div>
       </div>
+      <div class="ctl" id="ctl-lBassKick">
+        <div class="ctl-hd"><label for="lBassKick">Bass Pulse colour change</label><span class="val" id="lBassKickVal">0.62</span></div>
+        <input type="range" id="lBassKick" min="0.3" max="0.95" step="0.01" value="0.62"><p class="setting-help">How big a kick has to be to switch Bass Pulse to a new colour. Lower changes colour more often; higher saves it for the biggest hits.</p><div class="state"></div><div class="ctl-msg" id="msg-lBassKick"></div>
+      </div>
       <div class="ctl" id="ctl-lSparkTrig">
         <div class="ctl-hd"><label for="lSparkTrig">Sparkle bass burst trigger</label><span class="val" id="lSparkTrigVal">0.58</span></div>
         <input type="range" id="lSparkTrig" min="0.2" max="0.95" step="0.01" value="0.58"><p class="setting-help">Bass level needed to throw the small extra sparkle cluster.</p><div class="state"></div><div class="ctl-msg" id="msg-lSparkTrig"></div>
@@ -1103,7 +1102,7 @@ function onState(chunk){
     // it hears this, because the lists are sent from the GATT connect
     // callback - before this app has subscribed to notifications - so the
     // first attempt reliably goes nowhere.
-    if (s.ledlist && s.ledcolors) send('listGot', '1');
+    if (s.ledlist) send('listGot', '1');
   }
 
   // Runaway guard for the case framing can't cover: firmware old enough not
@@ -1140,7 +1139,7 @@ let lastUptime = null;
 function checkForReboot(s){
   if (!Number.isFinite(s.uptime)) return;
   if (lastUptime !== null && s.uptime < lastUptime){
-    state = {}; fxNames = []; colNames = [];
+    state = {}; fxNames = [];
     for (const p of pending.values()) setCtl(p.ctl, 'gone', 'Speaker restarted. Try again.');
     pending.clear(); txQueue.length = 0;
     if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); send('pwGet','1'); }
@@ -1198,15 +1197,12 @@ const HEX = {red:'#e2574c',orange:'#f0a63d',gold:'#f0b429',green:'#3ddc84',
              cyan:'#3dd0dc',blue:'#4a8ef0',purple:'#a765e0',magenta:'#e05ca7'};
 const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', wave:'Depth Wave', strobe:'Strobe', sparkle:'Sparkle'};
 const label = n => NICE[n] || (n ? n.charAt(0).toUpperCase()+n.slice(1) : '\u2014');
-// Mirrors presetUsesColor() in presets.ino. The firmware is authoritative via
-// ledusescolor; this list is only the fallback before state first arrives.
-const NO_COLOR = ['off','colourflow','wave','strobe','comet','sparkle'];
 const SUBTITLE = {
   off:         () => 'Lights are off',
   colourflow:  () => 'Steady colour flow with white music glints',
   wave:        () => 'A depth wave rolls back to front and back again',
   strobe:      () => 'Full-brightness club strobe with bass impact doubles',
-  basspulse:   c  => 'Shorter gated bass pulses around ' + label(c),
+  basspulse:   () => 'Punchy bass pulses that change colour on big kicks',
   comet:       () => 'A smooth trail follows the LED route; bass stretches and flares it',
   sparkle:     () => 'Mostly-dark isolated sparkles with music-reactive bursts'
 };
@@ -1221,8 +1217,8 @@ function updateHero(){
     $('heroSub').textContent = 'Connect to your speaker to begin';
     return;
   }
-  const cname = (state.ledcolors && state.ledcolors[state.ledcolor]) || 'green';
-  document.documentElement.style.setProperty('--led', HEX[cname] || '#f0b429');
+  const cname = 'gold';
+  document.documentElement.style.setProperty('--led', HEX[cname]);
   $('heroCanvas').dataset.fx = fx;
   // The S3 already sends clip - showing it where you're looking anyway beats
   // burying it in a tab you'd have to go find.
@@ -1244,7 +1240,10 @@ function render(){
   document.querySelectorAll('[data-board=bt]').forEach(g => g.classList.toggle('offline', conn && !btUp));
   document.querySelectorAll('[data-board=s3]').forEach(g => g.classList.toggle('offline', conn && !s3Up));
 
-  $('battPct').textContent = (state.batt === undefined || state.batt < 0) ? '--%' : state.batt+'%';
+  // While charging the BT board sends an estimate (see charge.ino), shown
+  // with "charging" so it isn't mistaken for a measured resting level.
+  $('battPct').textContent = (state.batt === undefined || state.batt < 0) ? '--%'
+    : state.batt + '%' + (state.chg ? ' \u00b7 charging' : '');
   $('chipV').textContent = fmtV(state.vBatt);
   $('pBatt').textContent = fmtV(state.vBatt);
   const avgMin = state.battAvgSec ? (state.battAvgSec / 60) : 0;
@@ -1337,29 +1336,11 @@ function render(){
   $('pS3Reb').style.color = state.s3Reboots ? 'var(--bad)' : '';
   $('pUnder').style.color = state.underruns ? 'var(--bad)' : '';
 
-  if (!conn){ $('fxShelf').innerHTML = ''; $('colGrid').innerHTML = ''; }
+  if (!conn){ $('fxShelf').innerHTML = ''; }
   if (state.ledlist)   buildFxShelf(state.ledlist);
-  if (state.ledcolors) buildColGrid(state.ledcolors);
   if (state.ledpreset !== undefined)
     document.querySelectorAll('#fxShelf button').forEach(b =>
       b.classList.toggle('on', +b.dataset.i === state.ledpreset));
-  // Deliberately NOT guarded on state.ledcolors being present. It used to
-  // be, which meant that if the list never arrived the ring and the label
-  // silently stopped updating for the entire session while the colour
-  // itself changed fine - the symptom looked like a rendering bug when the
-  // real cause was a message that never got sent.
-  if (state.ledcolor !== undefined){
-    document.querySelectorAll('#colGrid button').forEach(b =>
-      b.classList.toggle('on', +b.dataset.i === state.ledcolor));
-    const cn = state.ledcolors && state.ledcolors[state.ledcolor];
-    const colorStateEl = $('colorState');
-    if (colorStateEl) colorStateEl.textContent = cn ? label(cn) : '';
-  }
-  // Firmware reports whether the active preset reads gColor at all. Dim the
-  // row rather than offering a control that would silently do nothing.
-  const uses = state.ledusescolor !== undefined
-    ? state.ledusescolor : !NO_COLOR.includes(state.ledpname);
-  $('ctl-ledcolor').classList.toggle('na', conn && !uses);
 
   if (state.ledbright !== undefined && document.activeElement !== $('bright')){
     $('bright').value = state.ledbright; $('brightVal').textContent = state.ledbright;
@@ -1401,21 +1382,6 @@ function buildFxShelf(names){
     g.appendChild(b);
   });
 }
-let colNames = [];
-function buildColGrid(names){
-  if (JSON.stringify(names) === JSON.stringify(colNames)) return;
-  colNames = names;
-  const g = $('colGrid'); g.innerHTML = '';
-  names.forEach((n,i) => {
-    const b = document.createElement('button');
-    b.dataset.i = i;
-    b.setAttribute('aria-label', label(n));
-    b.style.background = HEX[n] || '#666';
-    b.addEventListener('click', () => send('ledcolor', i, 'ledcolor', i));
-    g.appendChild(b);
-  });
-}
-
 /* ---------- activity log ---------- */
 const logRows = [];
 function logAdd(s,k,v,r,ms){ logRows.unshift({seq:s,key:k,value:v,result:r,ms:ms});
@@ -1535,6 +1501,7 @@ bindSlider('lCometBass','lCometBass','lCometBass', v => Math.round(+v));
 bindSlider('lBassGate','lBassGate','lBassGate', f2);
 bindSlider('lBassRel','lBassRel','lBassRel', f2);
 bindSlider('lBassFloor','lBassFloor','lBassFloor', v => Math.round(+v));
+bindSlider('lBassKick','lBassKick','lBassKick', v => (+v).toFixed(2));
 bindSlider('lSparkTrig','lSparkTrig','lSparkTrig', f2);
 
 // Tuning arrives as its own message rather than in the heartbeat - sixteen
@@ -1543,7 +1510,7 @@ bindSlider('lSparkTrig','lSparkTrig','lSparkTrig', f2);
 const TUNE_KEYS = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel','tSpecBassHz','tPulseLo','tPulseHi',
   'tCompThL','tCompThM','tCompThH','tCompRaL','tCompRaM','tCompRaH',
   'tRmsHi','tRmsLo','tRmsMin','tLoudMax','tLoudKnee','tLimAtk','tLimRel',
-  'lEnvAtk','lEnvRel','lSparkle','lFade','lIdleMs','lIdleBr','lFlowBr','lFlowTrig','lFlowGlint','lWaveMs','lWaveWid','lWaveMusic','lStrHzLo','lStrHzHi','lStrTrig','lStrPulse','lStrGap','lCometMs','lCometTail','lCometBass','lBassGate','lBassRel','lBassFloor','lSparkTrig'];
+  'lEnvAtk','lEnvRel','lSparkle','lFade','lIdleMs','lIdleBr','lFlowBr','lFlowTrig','lFlowGlint','lWaveMs','lWaveWid','lWaveMusic','lStrHzLo','lStrHzHi','lStrTrig','lStrPulse','lStrGap','lCometMs','lCometTail','lCometBass','lBassGate','lBassRel','lBassFloor','lBassKick','lSparkTrig'];
 function applyTuning(s){
   TUNE_KEYS.forEach(k => { if (s[k] !== undefined) syncSlider(k, s[k]); });
 }
@@ -1671,7 +1638,7 @@ function onDrop(){
   // session stay in the DOM and buildFxShelf's early-return sees a matching
   // name list and skips rebuilding - so a stale grid can outlive the
   // connection it came from and look like live data.
-  fxNames = []; colNames = [];
+  fxNames = [];
   lastUptime = null;
   txQueue.length = 0;   // nothing queued survives a disconnect
   $('connectBtn').textContent='Connect'; render();
@@ -1696,5 +1663,6 @@ render();
 </script>
 <script src="gold.js"></script>
 <script src="layout.js"></script>
+<script src="panel.js"></script>
 </body>
 </html>
