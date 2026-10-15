@@ -80,13 +80,13 @@
  // the app reported "incomplete" even when every board had saved. Running
  // the three one at a time, LED-only work first, keeps replies out of that
  // window.
- const saveCommands=['ltSave','save','tSave'];
- const saveNames={ltSave:'lighting tuning',save:'sound & lighting settings',tSave:'sound tuning'};
+ const saveCommands=['ltSave','save','tSave','cSave'];
+ const saveNames={cSave:'audio curves',ltSave:'lighting tuning',save:'sound & lighting settings',tSave:'sound tuning'};
  function paintSave(){
   const busy=saveResults&&Object.values(saveResults).includes('pending');
   const ready=goldReady('s3');
   saveButtons.forEach(b=>{b.disabled=!ready||!!busy;b.textContent=busy?'Saving…':'Save settings & tuning';});
-  let message='Saves sound and lighting, including tuning, for the next startup.';
+  let message='Saves sound, audio curves and lighting for the next startup.';
   if(saveResults){
    if(busy)message='Waiting for the speaker to confirm all settings.';
    else if(Object.values(saveResults).every(s=>s==='ok'))message='Sound and lighting settings and tuning saved.';
@@ -103,6 +103,7 @@
   return new Promise(res=>{const poll=()=>{if(!saveResults||saveResults[k]!=='pending')return res();setTimeout(poll,40);};poll();});
  }
  async function saveAll(){
+  if(window.larbyCurveUnapplied?.()){alert('Apply your curve edits before saving.');return;}
   if(!goldReady('s3')||saveResults&&Object.values(saveResults).includes('pending'))return;
   saveResults=Object.fromEntries(saveCommands.map(k=>[k,'pending']));paintSave();
   for(const k of saveCommands){send(k,'1',k,'1');await waitForSave(k);}

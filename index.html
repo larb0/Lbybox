@@ -970,7 +970,7 @@ const ACK_TIMEOUT = 1200;
 // The LED board now waits up to 5 s for the S3's save reply, so this must be
 // comfortably longer than that.
 const ACK_TIMEOUT_SLOW = 8000;
-const SLOW_CMDS = ['save','reset','tSave','tReset','ltSave','ltReset','pwSave','pwReset'];
+const SLOW_CMDS = ['cSave','save','reset','tSave','tReset','ltSave','ltReset','pwSave','pwReset'];
 
 const $ = id => document.getElementById(id);
 const enc = new TextEncoder(), dec = new TextDecoder();
@@ -1664,5 +1664,6 @@ render();
 <script src="gold.js"></script>
 <script src="layout.js"></script>
 <script src="panel.js"></script>
+<script src="curves.js"></script>
 </body>
 </html>

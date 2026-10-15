@@ -78,7 +78,7 @@
   send('plock',m,'plock',m);
  }
  lock.querySelectorAll('input[data-bit]').forEach(cb=>cb.addEventListener('change',()=>{
-  let m=Number.isFinite(state.plock)?state.plock:0;
+  let m=Number.isFinite(shownMask)?shownMask:(Number.isFinite(state.plock)?state.plock:0);
   const b=+cb.dataset.bit;
   m=cb.checked?(m|b):(m&~b);
   sendMask(m);
@@ -112,7 +112,8 @@
   if(conn&&Number.isFinite(state.plock)&&!pendingKey('plock')){
    if(shownMask!==state.plock){shownMask=state.plock;paintLocks(state.plock);}
   }
-  const m=Number.isFinite(state.plock)?state.plock:0;
+  const m=Number.isFinite(shownMask)?shownMask:(Number.isFinite(state.plock)?state.plock:0);
+  lock.querySelectorAll('input[data-bit]').forEach(cb=>cb.disabled=!conn);
   $('lockAll').disabled=!conn||m===ALL;
   $('unlockAll').disabled=!conn||m===0;
 
