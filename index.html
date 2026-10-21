@@ -198,6 +198,54 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 input[type=range]::-moz-range-track{height:6px;border-radius:4px;background:var(--card2)}
 input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:none}
 
+/* Battery percentage curve editor */
+#socChart{display:block;width:100%;max-width:440px;height:auto;margin:6px auto 12px}
+.soc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.soc-grid.loading{opacity:.35;pointer-events:none}
+.soc-cell{display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:12px;padding:3px 10px}
+.soc-cell label{font-size:12px;font-weight:700;color:var(--dim);min-width:34px}
+.soc-cell input{flex:1;min-width:0;height:38px;background:transparent;border:0;color:var(--ink);
+  font:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;
+  -moz-appearance:textfield;appearance:textfield}
+.soc-cell input::-webkit-outer-spin-button,.soc-cell input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.soc-cell:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.soc-cell span{font-size:12px;color:var(--faint)}
+
+/* 10-band graphic EQ. Native range inputs rotated -90deg inside a fixed box:
+   min at the bottom, max at the top, and the track/thumb styling above still
+   applies unchanged (a vertical writing-mode range would flip height/width).
+   --eqh is the slider length; bigger on laptops, tighter on small phones. */
+.eqx{--eqh:200px;display:flex;gap:2px;justify-content:space-between;
+  max-width:680px;margin:0 auto;padding:6px 0 2px}
+.eqb{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px}
+.eqb .eqnum{width:100%;max-width:46px;height:22px;padding:0;margin:0;background:transparent;border:0;
+  border-bottom:1px solid transparent;border-radius:0;color:var(--dim);font:inherit;font-size:11px;font-weight:700;
+  font-variant-numeric:tabular-nums;text-align:center;-moz-appearance:textfield;appearance:textfield}
+.eqb .eqnum::-webkit-outer-spin-button,.eqb .eqnum::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.eqb .eqnum:hover{border-bottom-color:var(--hair)}
+.eqb .eqnum:focus{outline:none;border-bottom-color:var(--accent);color:var(--ink)}
+.eqb.boost .eqnum{color:var(--accent)}
+.eqb.boost .eqnum:focus{color:var(--ink)}
+.eqb label{font-size:11px;font-weight:700;color:var(--faint);white-space:nowrap}
+.eqv{position:relative;width:30px;height:var(--eqh)}
+.eqv input[type=range]{position:absolute;left:0;top:var(--eqh);width:var(--eqh);height:30px;margin:0;
+  transform-origin:0 0;transform:rotate(-90deg);touch-action:none;cursor:pointer}
+.eqv input[type=range]::-webkit-slider-runnable-track{
+  background:linear-gradient(to right,#38393b 0 39.2%,var(--accent) 39.2% 40.8%,#38393b 40.8%)}
+.eqv input[type=range]::-moz-range-track{
+  background:linear-gradient(to right,#38393b 0 39.2%,var(--accent) 39.2% 40.8%,#38393b 40.8%)}
+.eqv input[type=range]::-moz-range-progress{background:transparent}
+.eqv input[type=range]:disabled{opacity:.35}
+.eqx.loading{opacity:.35;pointer-events:none}
+.eq-actions{display:flex;align-items:center;gap:10px;margin:10px 0 2px}
+.eq-flat{padding:0 18px;height:36px;border-radius:100px;background:var(--card2);font-size:12px;
+  font-weight:700;color:var(--dim);min-width:64px}
+.eq-flat:active{transform:scale(.96)}
+.eq-flat:disabled{opacity:.4}
+#eqFlatNote{font-size:11px;color:var(--faint)}
+@media (min-width:761px){ .eqx{--eqh:240px;gap:6px} .eqv{width:34px} .eqv input[type=range]{height:34px} }
+@media (max-width:380px){ .eqx{--eqh:170px;gap:0} .eqb label,.eqb .eqnum{font-size:10px} }
+
 .cdots{display:flex;gap:9px;flex-wrap:wrap}
 .cdots button{width:36px;height:36px;border-radius:50%;border:2px solid transparent;
   transition:transform .08s,border-color .15s}
@@ -344,6 +392,10 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   main{max-width:1560px;column-count:4}
   .hero,.chips{max-width:1560px}
 }
+
+.hero-canvas[data-fx=vumeter],.a-vumeter{background:linear-gradient(to right,#23df65 0 57%,#ffe145 57% 79%,#ff4545 79%);}
+.hero-canvas[data-fx=vumeter] .hero-fx{display:none}
+.hero-canvas[data-fx=vumeter]::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to right,transparent 0 6%,#111 6% 7.14%);}
 </style>
 <link rel="stylesheet" href="gold.css">
 </head>
@@ -446,15 +498,11 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     </div>
     <p class="hint" id="eqHint">A light V &mdash; gentle lift at both ends.</p>
     <div class="card">
-      <div class="ctl" id="ctl-eqb">
-        <div class="ctl-hd"><label for="eqBass">Bass</label><span class="val" id="eqBassVal">0.0 dB</span></div>
-        <input type="range" id="eqBass" min="-17" max="35" step="0.5" value="3">
-        <div class="state"></div><div class="ctl-msg" id="msg-eqb"></div>
-      </div>
-      <div class="ctl" id="ctl-eqt">
-        <div class="ctl-hd"><label for="eqTreb">Treble</label><span class="val" id="eqTrebVal">0.0 dB</span></div>
-        <input type="range" id="eqTreb" min="-18" max="24" step="0.5" value="2">
-        <div class="state"></div><div class="ctl-msg" id="msg-eqt"></div>
+      <div class="ctl" id="ctl-eq">
+        <div class="eqx" id="eqx" role="group" aria-label="10-band equaliser, gain per band in dB"></div>
+        <div class="eq-actions"><button type="button" class="eq-flat" id="eqFlat">Flat</button><span id="eqFlatNote">Sets this profile's ten bands to 0 dB</span></div>
+        <p class="setting-help">Drag a slider, or tap the number above it and type a value. First band is a low shelf, last a high shelf, the rest are bells. &minus;20 to +30 dB each; neighbouring bass boosts stack. High-pass and limiter still apply.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-eq"></div>
       </div>
     </div>
   </div>
@@ -859,6 +907,23 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <p class="setting-help" id="help-pwUnmute">Must be at least 0.15 V above the cutoff to prevent rapid on/off switching.</p><div class="ctl-msg" id="msg-pwUnmute"></div>
       </div>
     </div>
+    <div class="card" id="socCard">
+      <div class="ctl-hd"><label>Percentage curve</label><span class="val" id="socNow">--</span></div>
+      <p class="setting-help">The resting voltage your pack reads at each percentage. The battery percentage is read off this curve, with straight lines between points, using the averaged voltage. Set the points from a few measured rest voltages for your pack.</p>
+      <div class="soc-grid loading" id="socTune" role="group" aria-label="Percentage averaging and sag correction">
+        <div class="soc-cell"><label for="pwPctSec">Average</label><input type="number" id="pwPctSec" min="10" max="600" step="10" inputmode="numeric" aria-label="Percentage averaging time in seconds"><span>s</span></div>
+        <div class="soc-cell"><label for="pwSag">Sag fix</label><input type="number" id="pwSag" min="0" max="1.5" step="0.01" inputmode="decimal" aria-label="Sag correction in volts"><span>V</span></div>
+      </div>
+      <p class="setting-help"><b>Average</b> is how many seconds of voltage the percentage is averaged over; the warnings above keep their own window. <b>Sag fix</b> adds volts back while the speaker is playing, scaled by the output level the DSP reports (the amount you enter applies at a loud average level; 0 turns it off). To tune it, play steadily loud and raise it until the percentage stops dropping compared with quiet.</p>
+      <div class="val" id="sagLive" style="display:block;margin:2px 0 8px;font-size:12px;font-weight:600;color:var(--dim)"></div>
+      <svg id="socChart" viewBox="0 0 320 150" role="img" aria-label="Battery voltage against percentage"></svg>
+      <div class="ctl" id="ctl-pwSoc">
+        <div class="soc-grid loading" id="socGrid" role="group" aria-label="Voltage for each percentage"></div>
+        <div class="state"></div><div class="ctl-msg" id="msg-pwSoc"></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button type="button" data-cmd="pwSocReset">Reset curve</button></div>
+      <div class="ctl" id="ctl-pwSocReset"><div class="state"></div><div class="ctl-msg" id="msg-pwSocReset"></div></div>
+    </div>
     <p class="hint" id="pwWarnHint" style="color:var(--bad)"></p>
     <div class="row" style="margin-top:12px">
       <button data-cmd="pwGet">Load current</button>
@@ -1142,7 +1207,7 @@ function checkForReboot(s){
     state = {}; fxNames = [];
     for (const p of pending.values()) setCtl(p.ctl, 'gone', 'Speaker restarted. Try again.');
     pending.clear(); txQueue.length = 0;
-    if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); send('pwGet','1'); }
+    if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); send('pwGet','1'); send('eqGet','1'); }
   }
   lastUptime = s.uptime;
 }
@@ -1163,10 +1228,12 @@ function resolveAck(a){
   if (!p) return;
   pending.delete(a.seq);
   logUpdate(a.seq, a.r, Math.round(performance.now() - p.ms));
-  const batterySetting = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(p.key);
+  const socPoint = /^pwS\d+$/.test(p.key);
+  const batterySetting = socPoint || ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute','pwPctSec','pwSag'].includes(p.key);
   if (batterySetting && ['ok','clamp','bad'].includes(a.r) && Number.isFinite(Number(a.v))) snapTo(p.key, a.v);
-  if (p.key === 'pwReset' && ['ok','bad'].includes(a.r)) send('pwGet','1');
-  if (a.r === 'ok') setCtl(p.ctl, 'ok', ({pwGet:'Current thresholds loaded.',pwSave:'Thresholds saved.',pwReset:'Defaults applied and saved.'})[p.key] || '');
+  if ((p.key === 'pwReset' || p.key === 'pwSocReset') && ['ok','bad'].includes(a.r)) send('pwGet','1');
+  if (p.key === 'reset' && ['ok','bad'].includes(a.r)) send('eqGet','1');   // defaults re-seeded
+  if (a.r === 'ok') setCtl(p.ctl, 'ok', ({pwGet:'Current thresholds loaded.',pwSave:'Thresholds saved.',pwReset:'Defaults applied and saved.',pwSocReset:'Default curve applied. Save thresholds to keep it.'})[p.key] || '');
   else if (a.r === 'clamp') { setCtl(p.ctl, 'clamp', 'Limited to ' + a.v + '.'); snapTo(p.key, a.v); }
   else if (a.r === 'gone')  setCtl(p.ctl, 'gone', 'That board is not responding.');
   else {
@@ -1176,15 +1243,29 @@ function resolveAck(a){
     const detail = (a.v && /led:|s3:/.test(a.v))
       ? a.v.replace('led:', 'lights ').replace(',s3:', ', DSP ')
       : 'Rejected.';
-    const batteryDetail = batterySetting ? 'Rejected: keep first > second > final, cutoff at or below final, and resume at least 0.15 V above cutoff.'
+    const batteryDetail = socPoint ? 'Rejected: enter a voltage between 10 and 14.6 V.'
+      : batterySetting ? 'Rejected: keep first > second > final, cutoff at or below final, and resume at least 0.15 V above cutoff.'
       : p.key === 'pwSave' ? 'Thresholds could not be saved. Live settings remain active.'
       : p.key === 'pwReset' ? 'Defaults applied, but could not be saved. Try Save thresholds again.' : detail;
     setCtl(p.ctl, 'bad', batteryDetail);
+    if (/^eq\d\d$/.test(p.key)) send('eqGet','1');   // show what the speaker really has
   }
 }
 // A control that stays where you dragged it after the firmware clamped the
 // value is lying. Snap it to whatever actually took effect.
 function snapTo(key, v){
+  if (key === 'pwPctSec' || key === 'pwSag'){ state[key] = Number(v); refreshSocEditor(); return; }
+  const socm = /^pwS(\d+)$/.exec(key);
+  if (socm){
+    if (Array.isArray(state.pwSoc) && Number.isFinite(Number(v))) state.pwSoc[+socm[1]] = Number(v);
+    refreshSocEditor(); return;
+  }
+  const eqm = /^eq([0-2])(\d)$/.exec(key);
+  if (eqm){
+    const a = state['eq'+eqm[1]];
+    if (Array.isArray(a)) a[+eqm[2]] = Number(v);
+    render(); return;
+  }
   const map = {ledbright:'bright', vol:'vol',
                vol12:'vol12', vol24:'vol24', hpf:'hpf', lim:'lim'};
   const el = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute'].includes(key) ? $(key) : map[key] && $(map[key]);
@@ -1195,12 +1276,12 @@ function snapTo(key, v){
 /* ---------- hero ---------- */
 const HEX = {red:'#e2574c',orange:'#f0a63d',gold:'#f0b429',green:'#3ddc84',
              cyan:'#3dd0dc',blue:'#4a8ef0',purple:'#a765e0',magenta:'#e05ca7'};
-const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', wave:'Depth Wave', strobe:'Strobe', sparkle:'Sparkle'};
+const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', vumeter:'Level Meter', strobe:'Strobe', sparkle:'Sparkle'};
 const label = n => NICE[n] || (n ? n.charAt(0).toUpperCase()+n.slice(1) : '\u2014');
 const SUBTITLE = {
   off:         () => 'Lights are off',
   colourflow:  () => 'Steady colour flow with white music glints',
-  wave:        () => 'A depth wave rolls back to front and back again',
+  vumeter:     () => 'Classic green, yellow and red music level bar',
   strobe:      () => 'Full-brightness club strobe with bass impact doubles',
   basspulse:   () => 'Punchy bass pulses that change colour on big kicks',
   comet:       () => 'A smooth trail follows the LED route; bass stretches and flares it',
@@ -1314,6 +1395,7 @@ function render(){
   syncSlider('sfxvol', state.sfxvol);
   syncEqTabToActive();
   refreshEqEditor();
+  refreshSocEditor();
 
   // Diagnostics. cpu is worst-case block time as a percentage of the budget
   // - the max, not the average, because one late block is an audible
@@ -1359,7 +1441,7 @@ function fmtUp(s){ s|=0; const h=s/3600|0, m=(s%3600)/60|0;
    Names come from the board, never hardcoded. Anything without designed art
    gets a stable colour derived from its own name, so a preset added in
    presets.ino appears here looking deliberate rather than broken. */
-const ART = {off:'a-off',colourflow:'a-colourflow',wave:'a-wave',
+const ART = {off:'a-off',colourflow:'a-colourflow',vumeter:'a-vumeter',
              strobe:'a-strobe',basspulse:'a-basspulse',comet:'a-comet',sparkle:'a-sparkle'};
 function fallbackArt(name){
   let h = 0; for (const c of name) h = (h*31 + c.charCodeAt(0)) % 360;
@@ -1474,6 +1556,105 @@ function checkThresholdOrder(){
            el.addEventListener('render', checkThresholdOrder); }
 });
 
+// ---- battery percentage curve (11 voltages: 100%, 90% ... 0%) -------------
+// Lives on the Bluetooth board. Points arrive as state.pwSoc (via pwGet) and are
+// written back one at a time as pwS<i>. The firmware holds each point between
+// its neighbours; this mirrors that so the screen never shows a rejected value.
+const SOC_N = 11, SOC_V_MIN = 10, SOC_V_MAX = 14.6, SOC_GAP = 0.01;
+const socInputs = [];
+function socPct(v, c){
+  if (!Number.isFinite(v) || v <= 0) return -1;
+  if (v >= c[0]) return 100;
+  if (v <= c[SOC_N-1]) return 0;
+  for (let i = 0; i < SOC_N-1; i++){
+    if (v <= c[i] && v >= c[i+1])
+      return Math.round((100 - 10*(i+1)) + (v - c[i+1]) / (c[i] - c[i+1]) * 10);
+  }
+  return 0;
+}
+function socEdit(i, v){
+  const a = state.pwSoc;
+  if (!Array.isArray(a) || !Number.isFinite(v)){ refreshSocEditor(); return; }
+  const lo = i < SOC_N-1 ? a[i+1] + SOC_GAP : SOC_V_MIN;
+  const hi = i > 0 ? a[i-1] - SOC_GAP : SOC_V_MAX;
+  v = Math.round(Math.min(hi, Math.max(lo, v)) * 100) / 100;
+  a[i] = v;
+  send('pwS'+i, v.toFixed(2), 'pwSoc', v);
+  refreshSocEditor();
+}
+{
+  const host = $('socGrid');
+  for (let i = 0; i < SOC_N; i++){
+    const cell = document.createElement('div'); cell.className = 'soc-cell';
+    const l = document.createElement('label'); l.textContent = (100 - 10*i) + '%'; l.htmlFor = 'pwS'+i;
+    const el = document.createElement('input');
+    el.type = 'number'; el.id = 'pwS'+i; el.step = '0.01'; el.min = SOC_V_MIN; el.max = SOC_V_MAX;
+    el.inputMode = 'decimal'; el.setAttribute('aria-label', (100 - 10*i) + ' percent voltage');
+    el.addEventListener('change', () => socEdit(i, parseFloat(el.value)));
+    const u = document.createElement('span'); u.textContent = 'V';
+    cell.append(l, el, u); host.append(cell); socInputs.push(el);
+  }
+}
+{
+  // Percentage averaging time (s) and sag correction (V); held to the firmware's limits.
+  $('pwPctSec').addEventListener('change', e => {
+    let v = Math.round(parseFloat(e.target.value));
+    if (!Number.isFinite(v) || !Number.isFinite(Number(state.pwPctSec))){ refreshSocEditor(); return; }
+    v = Math.min(600, Math.max(10, v)); state.pwPctSec = v;
+    send('pwPctSec', String(v), 'pwSoc', v); refreshSocEditor();
+  });
+  $('pwSag').addEventListener('change', e => {
+    let v = parseFloat(e.target.value);
+    if (!Number.isFinite(v) || !Number.isFinite(Number(state.pwSag))){ refreshSocEditor(); return; }
+    v = Math.round(Math.min(1.5, Math.max(0, v)) * 100) / 100; state.pwSag = v;
+    send('pwSag', v.toFixed(2), 'pwSoc', v); refreshSocEditor();
+  });
+}
+function refreshSocEditor(){
+  {
+    const tuneOk = Number.isFinite(Number(state.pwPctSec)) && Number.isFinite(Number(state.pwSag));
+    $('socTune').classList.toggle('loading', !tuneOk);
+    if (document.activeElement !== $('pwPctSec')) $('pwPctSec').value = tuneOk ? String(state.pwPctSec) : '';
+    if (document.activeElement !== $('pwSag')) $('pwSag').value = tuneOk ? Number(state.pwSag).toFixed(2) : '';
+    const od = Number(state.outDb), add = Number(state.sagAdd);
+    $('sagLive').textContent = !tuneOk ? '' :
+      (Number.isFinite(od) && od > -99 ? 'Output ' + od.toFixed(1) + ' dBFS' : 'No output') +
+      ' \u00b7 sag fix adding ' + (Number.isFinite(add) ? add.toFixed(2) : '0.00') + ' V';
+  }
+  const a = state.pwSoc;
+  const ok = Array.isArray(a) && a.length === SOC_N && a.every(Number.isFinite);
+  $('socGrid').classList.toggle('loading', !ok);
+  socInputs.forEach((el, i) => { if (document.activeElement !== el) el.value = ok ? a[i].toFixed(2) : ''; });
+  const svg = $('socChart');
+  if (!ok){ svg.innerHTML = ''; $('socNow').textContent = '--'; return; }
+  // x = percentage, y = volts: the flat middle and steep ends show at a glance.
+  const W = 320, H = 150, L = 38, R = 22, T = 10, B = 24;
+  const vNow = Number(state.vPct) > 0 ? Number(state.vPct) : Number(state.vBattAvg);   // what the percentage reads
+  const live = Number.isFinite(vNow) && vNow > 0;
+  const vmax = Math.max(a[0], live ? vNow : 0) + 0.1, vmin = Math.min(a[SOC_N-1], live ? vNow : 99) - 0.1;
+  const X = pct => L + (W - L - R) * pct / 100, Y = v => T + (H - T - B) * (vmax - v) / (vmax - vmin);
+  const pts = a.map((v, i) => X(100 - 10*i).toFixed(1) + ',' + Y(v).toFixed(1));
+  let g = '';
+  [0, 25, 50, 75, 100].forEach(p => {
+    g += '<line x1="'+X(p)+'" y1="'+T+'" x2="'+X(p)+'" y2="'+(H-B)+'" style="stroke:var(--hair)" stroke-width="1"/>' +
+         '<text x="'+X(p)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" style="fill:var(--faint)">'+p+'%</text>';
+  });
+  [vmax, vmin].forEach(v => {
+    g += '<text x="'+(L-5)+'" y="'+(Y(v)+3)+'" text-anchor="end" font-size="10" style="fill:var(--faint)">'+v.toFixed(1)+'</text>';
+  });
+  g += '<polyline points="'+pts.join(' ')+'" fill="none" style="stroke:var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>';
+  a.forEach((v, i) => { g += '<circle cx="'+X(100-10*i)+'" cy="'+Y(v)+'" r="2.8" style="fill:var(--accent)"/>'; });
+  let now = '--';
+  if (live){
+    const pct = socPct(vNow, a);
+    g += '<line x1="'+L+'" y1="'+Y(vNow)+'" x2="'+(W-R)+'" y2="'+Y(vNow)+'" style="stroke:var(--ink)" stroke-width="1" stroke-dasharray="3 3" opacity=".75"/>' +
+         '<circle cx="'+X(pct)+'" cy="'+Y(vNow)+'" r="4" style="fill:var(--ink)"/>';
+    now = vNow.toFixed(2) + ' V \u2192 ' + pct + '%' + (state.chg ? ' \u00b7 charging' : '');
+  }
+  svg.innerHTML = g;
+  $('socNow').textContent = now;
+}
+
 bindSlider('tLoudMax','tLoudMax','tLoudMax', v => (+v).toFixed(1) + ' dB');
 bindSlider('tLoudKnee','tLoudKnee','tLoudKnee', v => Math.round(+v * 100) + '%');
 bindSlider('tLimAtk','tLimAtk','tLimAtk', v => (+v).toFixed(2) + ' ms');
@@ -1514,29 +1695,13 @@ const TUNE_KEYS = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecB
 function applyTuning(s){
   TUNE_KEYS.forEach(k => { if (s[k] !== undefined) syncSlider(k, s[k]); });
 }
-{
-  const el=$('eqBass'), out=$('eqBassVal');
-  const paint=()=>{ out.textContent=(+el.value).toFixed(1)+' dB'; };
-  el.addEventListener('input',paint); el.addEventListener('render',paint);
-  el.addEventListener('change',()=>send(['b0b','b1b','b2b'][eqTab],
-    (+el.value-EQ_BASE_BASS[eqTab]).toFixed(1),'eqb',el.value,true));
-  paint();
-}
-{
-  const el=$('eqTreb'), out=$('eqTrebVal');
-  const paint=()=>{ out.textContent=(+el.value).toFixed(1)+' dB'; };
-  el.addEventListener('input',paint); el.addEventListener('render',paint);
-  el.addEventListener('change',()=>send(['b0t','b1t','b2t'][eqTab],
-    (+el.value-EQ_BASE_TREB[eqTab]).toFixed(1),'eqt',el.value,true));
-  paint();
-}
 bindSlider('hpf','hpf','hpf', v => v+' Hz');
 bindSlider('lim','lim','lim', v => (+v).toFixed(1)+' dB');
 
 document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => {
   const c = b.dataset.cmd;
   if (['play','next','prev'].includes(c)) { sendTransport(c); return; }
-  const ctl = ['save','reset','tSave','tReset','ltSave','ltGet','tGet','pwGet','pwSave','pwReset'].includes(c) ? c : 'transport';
+  const ctl = ['save','reset','tSave','tReset','ltSave','ltGet','tGet','pwGet','pwSave','pwReset','pwSocReset'].includes(c) ? c : 'transport';
   send(c, '1', ctl, '1');
 }));
 document.querySelectorAll('#bassSeg button').forEach(b => b.addEventListener('click', () => {
@@ -1546,8 +1711,12 @@ document.querySelectorAll('#bassSeg button').forEach(b => b.addEventListener('cl
 const EQ_HINTS = ['A light V \u2014 gentle lift at both ends.',
                   'A heavier V \u2014 the same shape, dug in further.',
                   'Bass 1 with more bass again. Treble unchanged.'];
-const EQ_BASE_BASS = [3.0, 7.0, 11.0];
-const EQ_BASE_TREB = [2.0, 4.0, 4.0];
+// 10-band graphic EQ. Gains per profile arrive as eq0/eq1/eq2 arrays (one
+// message each, requested with eqGet) and are written back as eq<profile><band>.
+const EQ_LABELS = ['100','140','190','260','360','560','900','1.5k','3k','7k'];
+const EQ_MIN = -20, EQ_MAX = 30;
+const eqSliders = [], eqNums = [];
+let eqDrag = -1, eqLastLive = 0;
 let eqTab = 0, lastEqProfile = null;
 function syncEqTabToActive(){
   if (state.stbass === undefined || state.stbass === lastEqProfile) return;
@@ -1556,12 +1725,77 @@ function syncEqTabToActive(){
   document.querySelectorAll('#eqTabs button').forEach(x => x.classList.toggle('on', +x.dataset.v===eqTab));
 }
 function refreshEqEditor(){
-  const bk='b'+eqTab+'b', tk='b'+eqTab+'t';
-  const bv = state[bk] !== undefined ? EQ_BASE_BASS[eqTab] + Number(state[bk]) : EQ_BASE_BASS[eqTab];
-  const tv = state[tk] !== undefined ? EQ_BASE_TREB[eqTab] + Number(state[tk]) : EQ_BASE_TREB[eqTab];
-  $('eqBass').value=bv; $('eqBass').dispatchEvent(new Event('render'));
-  $('eqTreb').value=tv; $('eqTreb').dispatchEvent(new Event('render'));
+  const arr = state['eq'+eqTab];
+  const ok = Array.isArray(arr) && arr.length === EQ_LABELS.length;
+  $('eqx').classList.toggle('loading', !ok);
+  $('eqFlat').disabled = !ok;   // gold.js owns .disabled (connection gating)
+  eqSliders.forEach((el, b) => {
+    el.disabled = !ok;
+    if (eqNums[b]) eqNums[b].disabled = !ok;
+    if (b === eqDrag) return;                // never fight the finger
+    el.value = ok ? arr[b] : 0;
+    el.dispatchEvent(new Event('render'));
+  });
 }
+// Optimistic: keep local state equal to what's on screen, so the once-a-second
+// render can't snap a slider back. Live drags are throttled and coalesced
+// without a status chip; the final value goes out as a tracked command.
+function eqEdit(b, v, final){
+  const arr = state['eq'+eqTab];
+  if (!Array.isArray(arr)) return;     // bands not loaded yet: never send blind
+  arr[b] = v;
+  const key = 'eq'+eqTab+b;
+  if (final){ send(key, v.toFixed(1), 'eq', v, true); return; }
+  const now = performance.now();
+  if (now - eqLastLive < 120) return;
+  eqLastLive = now;
+  send(key, v.toFixed(1), null, v, true);
+}
+{
+  const host = $('eqx');
+  EQ_LABELS.forEach((lab, b) => {
+    const col = document.createElement('div'); col.className = 'eqb';
+    const out = document.createElement('input');
+    out.type = 'number'; out.className = 'eqnum'; out.value = '0';
+    out.min = EQ_MIN; out.max = EQ_MAX; out.step = '0.1'; out.inputMode = 'decimal';
+    out.setAttribute('aria-label', lab + ' Hz gain in dB, type a value');
+    const box = document.createElement('div'); box.className = 'eqv';
+    const el = document.createElement('input');
+    el.type = 'range'; el.min = EQ_MIN; el.max = EQ_MAX; el.step = 0.1; el.value = 0; el.disabled = true;
+    el.setAttribute('aria-label', lab + (b===0 ? ' Hz low shelf' : b===EQ_LABELS.length-1 ? ' Hz high shelf' : ' Hz') + ' gain, dB');
+    const l = document.createElement('label'); l.textContent = lab;
+    const paint = () => {
+      const v = +el.value;
+      if (document.activeElement !== out) out.value = String(Math.round(v*10)/10);   // don't fight typing
+      col.classList.toggle('boost', v > 0.05);
+    };
+    // Type a value instead of dragging. Held to the same limits as the firmware.
+    out.addEventListener('change', () => {
+      let v = parseFloat(out.value);
+      if (!Number.isFinite(v) || out.disabled || !Array.isArray(state['eq'+eqTab])) { paint(); return; }
+      v = Math.round(Math.min(EQ_MAX, Math.max(EQ_MIN, v)) * 10) / 10;
+      el.value = v; paint(); eqEdit(b, v, true);
+    });
+    el.addEventListener('render', paint);
+    el.addEventListener('input', () => { paint(); eqEdit(b, +el.value, false); });
+    el.addEventListener('change', () => { eqEdit(b, +el.value, true); eqDrag = -1; });
+    el.addEventListener('pointerdown', () => { eqDrag = b; });
+    ['pointerup','pointercancel','blur'].forEach(ev => el.addEventListener(ev, () => {
+      if (eqDrag === b) setTimeout(() => { if (eqDrag === b) eqDrag = -1; }, 400); }));
+    box.append(el); col.append(out, box, l); host.append(col);
+    eqSliders.push(el); eqNums.push(out);
+  });
+}
+$('eqFlat').addEventListener('click', () => {
+  const arr = state['eq'+eqTab];
+  if (!Array.isArray(arr)) return;
+  for (let b = 0; b < EQ_LABELS.length; b++){
+    if (arr[b] === 0) continue;
+    arr[b] = 0;
+    send('eq'+eqTab+b, '0.0', 'eq', 0, true);
+  }
+  refreshEqEditor();
+});
 document.querySelectorAll('#eqTabs button').forEach(b => b.addEventListener('click', () => {
   eqTab = +b.dataset.v;
   $('eqHint').textContent = EQ_HINTS[eqTab];
@@ -1621,6 +1855,7 @@ $('connectBtn').addEventListener('click', async () => {
     // where this request is the thing that gets lost.
     setTimeout(() => { send('listGet','1'); }, 200);
     setTimeout(() => { send('ltGet','1'); send('tGet','1'); send('pwGet','1'); }, 500);
+    setTimeout(() => { send('eqGet','1'); }, 800);
     btn.textContent = 'Disconnect';
     btn.disabled = false;
     render();

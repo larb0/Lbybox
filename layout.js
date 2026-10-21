@@ -60,7 +60,7 @@
  const lightCategories=[
   category('Bass Pulse',[pulseRange,...take(['lBassGate','lBassRel','lBassFloor','lBassKick'])]),
   category('Colour Flow',take(['lFlowBr','lFlowTrig','lFlowGlint'])),
-  category('Waves',take(['lWaveMs','lWaveWid','lWaveMusic'])),
+  category('Level Meter', [Object.assign(document.createElement('p'),{className:'hint',textContent:'Green → yellow → red, left to right across the front. Follows music at any listening volume. No peak dot; interior strips stay off.'})]),
   category('Strobe',take(['lStrHzLo','lStrHzHi','lStrTrig','lStrPulse','lStrGap'])),
   category('Comet',take(['lCometMs','lCometTail','lCometBass'])),
   category('Sparkle',take(['lSparkle','lFade','lSparkTrig']))

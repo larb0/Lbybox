@@ -37,17 +37,29 @@ settingsTabs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()
 $('v-power').lastElementChild.append(playback.querySelector('[data-cmd=btpair]'));
 playback.querySelectorAll('[data-cmd]').forEach(b=>{const c=b.dataset.cmd;b.innerHTML=icon(c);b.setAttribute('aria-label',c==='play'?'Play or pause':c==='prev'?'Previous track':'Next track');});
 const dialShell=document.createElement('div');dialShell.className='dial-shell';
-dialShell.innerHTML='<div class="dial" id="volumeDial" role="slider" tabindex="0" aria-label="Speaker volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><svg viewBox="0 0 300 300"><path class="dial-track" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><path id="dialFill" class="dial-fill" pathLength="100" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><circle id="dialThumb" class="dial-thumb" r="9"/></svg><div class="dial-readout"><small>Volume</small><div class="dial-value"><b id="dialValue" style="font-weight:500">0</b><span>%</span></div></div></div>';
+dialShell.innerHTML='<div class="dial" id="volumeDial" role="slider" tabindex="0" aria-label="Speaker volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><svg viewBox="0 0 300 300"><path class="dial-track" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><path id="dialFill" class="dial-fill" pathLength="100" d="M 60.20 239.80 A 127 127 0 1 1 239.80 239.80"/><circle id="dialThumb" class="dial-thumb" r="9"/></svg><div class="dial-readout"><small>Volume</small><div class="dial-value"><b id="dialValue" style="font-weight:500">0</b><span></span></div><small id="volumeCeilingLabel">Maximum —</small></div></div>';
 $('ctl-vol').prepend(dialShell);$('vol').tabIndex=-1;$('vol').setAttribute('aria-hidden','true');
 const dial=$('volumeDial');let dialDragging=false;
-function drawDial(){const v=+$('vol').value,a=(135+v*2.7)*Math.PI/180;$('dialFill').style.strokeDasharray=v+' 100';$('dialThumb').setAttribute('cx',150+127*Math.cos(a));$('dialThumb').setAttribute('cy',150+127*Math.sin(a));$('dialValue').textContent=v;dial.setAttribute('aria-valuenow',v);dial.setAttribute('aria-valuetext',v+' percent');}
-function setDial(v,commit){if(dial.getAttribute('aria-disabled')==='true')return;$('vol').value=Math.max(0,Math.min(100,Math.round(v)));$('vol').dispatchEvent(new Event('input'));drawDial();if(commit)$('vol').dispatchEvent(new Event('change'));}
-function pointerVolume(e){const r=dial.getBoundingClientRect();let deg=Math.atan2(e.clientY-r.top-r.height/2,e.clientX-r.left-r.width/2)*180/Math.PI;deg=(deg-135+360)%360;if(deg>270)deg=deg>315?0:270;return deg/2.7;}
+function activeVolumeCeiling(){
+ const mode=state.linkBt&&!!state.onPsu;
+ const configured=mode?state.vol24:state.vol12;
+ // S3 telemetry also includes its unknown-battery-sensor cap.
+ let ceiling=Number.isFinite(state.volMax)?state.volMax:70;
+ if(Number.isFinite(configured))ceiling=Math.min(ceiling,configured);
+ return Math.max(0,Math.min(115,ceiling));
+}
+function drawDial(){const max=activeVolumeCeiling();$('vol').max=max;
+ $('vol').value=Math.max(0,Math.min(max,+$('vol').value));
+ const v=Math.min(max,+$('vol').value),fill=v/115*100,a=(135+fill*2.7)*Math.PI/180;
+ $('volumeCeilingLabel').textContent='Maximum '+max+' · '+(state.linkBt&&state.onPsu?'mains':'battery');
+ dial.setAttribute('aria-valuemax',max);$('dialFill').style.strokeDasharray=fill+' 100';$('dialThumb').setAttribute('cx',150+127*Math.cos(a));$('dialThumb').setAttribute('cy',150+127*Math.sin(a));$('dialValue').textContent=v;dial.setAttribute('aria-valuenow',v);dial.setAttribute('aria-valuetext',v+' of 115; active maximum '+max);}
+function setDial(v,commit){if(dial.getAttribute('aria-disabled')==='true')return;$('vol').value=Math.max(0,Math.min(activeVolumeCeiling(),Math.round(v)));$('vol').dispatchEvent(new Event('input'));drawDial();if(commit)$('vol').dispatchEvent(new Event('change'));}
+function pointerVolume(e){const r=dial.getBoundingClientRect();let deg=Math.atan2(e.clientY-r.top-r.height/2,e.clientX-r.left-r.width/2)*180/Math.PI;deg=(deg-135+360)%360;if(deg>270)deg=deg>315?0:270;return deg/270*115;}
 dial.addEventListener('pointerdown',e=>{if(e.button!==0||dial.getAttribute('aria-disabled')==='true')return;dialDragging=true;dial.focus();dial.setPointerCapture(e.pointerId);setDial(pointerVolume(e),false);});
 dial.addEventListener('pointermove',e=>{if(dialDragging)setDial(pointerVolume(e),false);});
 dial.addEventListener('pointerup',e=>{if(!dialDragging)return;setDial(pointerVolume(e),true);dialDragging=false;dial.releasePointerCapture(e.pointerId);});
 dial.addEventListener('pointercancel',()=>{dialDragging=false;render();});
-dial.addEventListener('keydown',e=>{let v=+$('vol').value;if(['ArrowUp','ArrowRight'].includes(e.key))v++;else if(['ArrowDown','ArrowLeft'].includes(e.key))v--;else if(e.key==='Home')v=0;else if(e.key==='End')v=100;else if(e.key==='PageUp')v+=10;else if(e.key==='PageDown')v-=10;else return;e.preventDefault();e.stopPropagation();setDial(v,true);});
+dial.addEventListener('keydown',e=>{let v=+$('vol').value;if(['ArrowUp','ArrowRight'].includes(e.key))v++;else if(['ArrowDown','ArrowLeft'].includes(e.key))v--;else if(e.key==='Home')v=0;else if(e.key==='End')v=activeVolumeCeiling();else if(e.key==='PageUp')v+=10;else if(e.key==='PageDown')v-=10;else return;e.preventDefault();e.stopPropagation();setDial(v,true);});
 $('vol').addEventListener('input',drawDial);$('vol').addEventListener('render',drawDial);
 
 function goldReady(board){return (!!device?.gatt?.connected)&&(board==='s3'?!!state.linkS3:board==='bt'?!!state.linkBt:true);}
@@ -57,19 +69,20 @@ render=function(){legacyRender();const conn=!!device?.gatt?.connected,ready=gold
  document.querySelectorAll('main button,main input,main select').forEach(el=>{const g=el.closest('[data-board]');el.disabled=!conn||(g&&!goldReady(g.dataset.board))||!!el.closest('.missing');});
  document.querySelectorAll('.settings-tabs button').forEach(b=>b.disabled=false);
  dial.setAttribute('aria-disabled',!ready);dial.tabIndex=ready?0:-1;
+ drawDial();
  const volPending=[...pending.values()].some(p=>p.key==='vol');
  if(!dialDragging&&!volPending&&Number.isFinite(state.vol)){$('vol').value=state.vol;drawDial();}
  else if(!conn){$('vol').value=0;drawDial();}
  if(Number.isFinite(state.stbass)&&![...pending.values()].some(p=>p.key==='stbass'))document.querySelectorAll('#bassSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.v===state.stbass));
  $('brightVal').textContent=Math.round(+$('bright').value/255*100)+'%';
- document.querySelectorAll('input[type=range]').forEach(el=>el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%'));
+ document.querySelectorAll('input[type=range]').forEach(el=>el.style.setProperty('--fill',((+el.value-+el.min)/Math.max(1,+el.max-+el.min)*100)+'%'));
  const playButton=playback.querySelector('.play');playButton.innerHTML=icon(state.playing?'pause':'play');playButton.setAttribute('aria-label',state.playing?'Pause':'Play');const transportPending=[...pending.values()].some(p=>['play','next','prev'].includes(p.key));playback.querySelectorAll('[data-cmd]').forEach(b=>b.disabled=!goldReady('bt')||state.bt===false||state.avrc===false||transportPending);
 };
-document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{el.style.setProperty('--fill',((+el.value-+el.min)/(+el.max-+el.min)*100)+'%');if(el.id==='bright')$('brightVal').textContent=Math.round(+el.value/255*100)+'%';}));
+document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{el.style.setProperty('--fill',((+el.value-+el.min)/Math.max(1,+el.max-+el.min)*100)+'%');if(el.id==='bright')$('brightVal').textContent=Math.round(+el.value/255*100)+'%';}));
 goldNavigate('panel');render();
 // Confirmed command values should be shown immediately, before the next heartbeat.
 const legacyResolveAck=resolveAck;
-resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(a.r)){const n=Number(a.v),k=p.key;if(Number.isFinite(n)){if(['vol','stbass','ledbright','ledcolor','ledpreset','sfxvol'].includes(k))state[k]=n;else if(/^b[0-2][bt]$/.test(k))state[k]=n;if(k==='ledpreset'){state.ledpname=state.ledlist?.[n];state.ledusescolor=!NO_COLOR.includes(state.ledpname);}}}legacyResolveAck(a);};
+resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(a.r)){const n=Number(a.v),k=p.key;if(Number.isFinite(n)){if(['vol12','vol24','vol','stbass','ledbright','ledcolor','ledpreset','sfxvol'].includes(k))state[k]=n;else if(/^b[0-2][bt]$/.test(k))state[k]=n;if(k==='ledpreset'){state.ledpname=state.ledlist?.[n];state.ledusescolor=!NO_COLOR.includes(state.ledpname);}}}legacyResolveAck(a);};
 render();
 
 // One command per click. Await the board reply instead of pretending the phone changed state.
