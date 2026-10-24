@@ -211,6 +211,21 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .soc-cell:focus-within{outline:2px solid var(--accent);outline-offset:1px}
 .soc-cell span{font-size:12px;color:var(--faint)}
 
+/* Battery volume cap curve: compact chart + five volt/cap pairs */
+.cap-toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink)}
+.cap-toggle input{width:18px;height:18px;accent-color:var(--accent)}
+#capBox.loading{opacity:.35;pointer-events:none}
+#capBox.off #capChart,#capBox.off .cap-grid{opacity:.45}
+.cap-live{font-size:12px;font-weight:600;color:var(--dim);margin:2px 0 4px}
+#capChart{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 8px}
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:6px}
+.cap-row{display:flex;align-items:center;gap:4px;background:var(--card2);border-radius:10px;padding:2px 8px}
+.cap-row input{width:0;flex:1;min-width:0;height:32px;background:transparent;border:0;color:var(--ink);font:inherit;
+  font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;-moz-appearance:textfield;appearance:textfield}
+.cap-row input::-webkit-outer-spin-button,.cap-row input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cap-row span{font-size:11px;color:var(--faint);white-space:nowrap}
+.cap-row:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+
 /* 10-band graphic EQ. Native range inputs rotated -90deg inside a fixed box:
    min at the bottom, max at the top, and the track/thumb styling above still
    applies unchanged (a vertical writing-mode range would flip height/width).
@@ -231,18 +246,18 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .eqv input[type=range]{position:absolute;left:0;top:var(--eqh);width:var(--eqh);height:30px;margin:0;
   transform-origin:0 0;transform:rotate(-90deg);touch-action:none;cursor:pointer}
 .eqv input[type=range]::-webkit-slider-runnable-track{
-  background:linear-gradient(to right,#38393b 0 39.2%,var(--accent) 39.2% 40.8%,#38393b 40.8%)}
+  background:linear-gradient(to right,#38393b 0 42.1%,var(--accent) 42.1% 43.6%,#38393b 43.6%)}
 .eqv input[type=range]::-moz-range-track{
-  background:linear-gradient(to right,#38393b 0 39.2%,var(--accent) 39.2% 40.8%,#38393b 40.8%)}
+  background:linear-gradient(to right,#38393b 0 42.1%,var(--accent) 42.1% 43.6%,#38393b 43.6%)}
 .eqv input[type=range]::-moz-range-progress{background:transparent}
 .eqv input[type=range]:disabled{opacity:.35}
 .eqx.loading{opacity:.35;pointer-events:none}
 .eq-actions{display:flex;align-items:center;gap:10px;margin:10px 0 2px}
-.eq-flat{padding:0 18px;height:36px;border-radius:100px;background:var(--card2);font-size:12px;
+.eq-base{padding:0 18px;height:36px;border-radius:100px;background:var(--card2);font-size:12px;
   font-weight:700;color:var(--dim);min-width:64px}
-.eq-flat:active{transform:scale(.96)}
-.eq-flat:disabled{opacity:.4}
-#eqFlatNote{font-size:11px;color:var(--faint)}
+.eq-base:active{transform:scale(.96)}
+.eq-base:disabled{opacity:.4}
+#eqBaseNote{font-size:11px;color:var(--faint)}
 @media (min-width:761px){ .eqx{--eqh:240px;gap:6px} .eqv{width:34px} .eqv input[type=range]{height:34px} }
 @media (max-width:380px){ .eqx{--eqh:170px;gap:0} .eqb label,.eqb .eqnum{font-size:10px} }
 
@@ -478,15 +493,13 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <button data-v="2">Bass 2</button>
       </div>
       <div class="state"></div>
-      <div class="ctl-msg" id="msg-stbass">A light V. Bass 1 digs deeper; Bass 2 adds more bass again at the same treble.</div>
+      <div class="ctl-msg" id="msg-stbass">Standard is the everyday sound. Bass 1 and Bass 2 add more bass on the same base curve.</div>
     </div>
   </div>
 </section>
 
 <section class="view" id="v-sound" data-title="Sound & DSP">
-  <!-- FUTURE KARAOKE UI: removed in v2.7 until mic hardware exists.
-       v2.6 had Mic 1/2 level+mute, Echo, Reverb and feedback suppression
-       controls here. Firmware restoration notes are in larbybox_s3/params.h. -->
+  <!-- Room for mic controls later: see docs/KARAOKE-ROOM.md. -->
 
   <div class="group" data-board="s3">
     <div class="group-hd"><h2>Tone</h2><em>one profile at a time</em>
@@ -496,12 +509,12 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <button data-v="1">Bass 1</button>
       <button data-v="2">Bass 2</button>
     </div>
-    <p class="hint" id="eqHint">A light V &mdash; gentle lift at both ends.</p>
+    <p class="hint" id="eqHint">Everyday sound: the tuned base curve with some extra bass.</p>
     <div class="card">
       <div class="ctl" id="ctl-eq">
-        <div class="eqx" id="eqx" role="group" aria-label="10-band equaliser, gain per band in dB"></div>
-        <div class="eq-actions"><button type="button" class="eq-flat" id="eqFlat">Flat</button><span id="eqFlatNote">Sets this profile's ten bands to 0 dB</span></div>
-        <p class="setting-help">Drag a slider, or tap the number above it and type a value. First band is a low shelf, last a high shelf, the rest are bells. &minus;20 to +30 dB each; neighbouring bass boosts stack. High-pass and limiter still apply.</p>
+        <div class="eqx" id="eqx" role="group" aria-label="11-band equaliser, gain per band in dB"></div>
+        <div class="eq-actions"><button type="button" class="eq-base" id="eqBase">Base</button><span id="eqBaseNote">Sets all 11 bands of this profile to the tuned base curve</span></div>
+        <p class="setting-help">Drag a slider, or tap the number above it and type a value. First band is a low shelf, last a high shelf, the rest are bells. &minus;30 to +40 dB each; neighbouring bass boosts stack. High-pass and limiter still apply.</p>
         <div class="state"></div><div class="ctl-msg" id="msg-eq"></div>
       </div>
     </div>
@@ -544,6 +557,19 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <div class="ctl-hd"><label for="vol12">On battery</label><span class="val" id="vol12Val">90</span></div>
         <input type="range" id="vol12" min="0" max="115" value="90">
         <div class="state"></div><div class="ctl-msg" id="msg-vol12"></div>
+      </div>
+      <div class="ctl" id="ctl-capOn">
+        <label class="cap-toggle"><input type="checkbox" id="capOn"> Battery cap follows pack voltage</label>
+        <p class="setting-help">Replaces the battery ceiling above: higher on a full pack, stepping down as it empties. Follows the real pack voltage, smoothed over about a minute.</p>
+        <div class="state"></div><div class="ctl-msg" id="msg-capOn"></div>
+      </div>
+      <div id="capBox" class="loading">
+        <div class="cap-live" id="capLive"></div>
+        <svg id="capChart" viewBox="0 0 320 112" role="img" aria-label="Battery volume cap against pack voltage"></svg>
+        <div class="ctl" id="ctl-cap">
+          <div class="cap-grid" id="capGrid" role="group" aria-label="Volume cap at each pack voltage"></div>
+          <div class="state"></div><div class="ctl-msg" id="msg-cap"></div>
+        </div>
       </div>
       <div class="ctl" id="ctl-vol24">
         <div class="ctl-hd"><label for="vol24">On wall power</label><span class="val" id="vol24Val">115</span></div>
@@ -797,7 +823,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       </div>
       <div class="ctl" id="ctl-lBassKick">
         <div class="ctl-hd"><label for="lBassKick">Bass Pulse colour change</label><span class="val" id="lBassKickVal">0.62</span></div>
-        <input type="range" id="lBassKick" min="0.3" max="0.95" step="0.01" value="0.62"><p class="setting-help">How big a kick has to be to switch Bass Pulse to a new colour. Lower changes colour more often; higher saves it for the biggest hits.</p><div class="state"></div><div class="ctl-msg" id="msg-lBassKick"></div>
+        <input type="range" id="lBassKick" min="0.3" max="0.95" step="0.01" value="0.62"><p class="setting-help">How big a kick has to be to switch Bass Pulse to a new colour or colour combination. Lower changes colour more often; higher saves it for the biggest hits.</p><div class="state"></div><div class="ctl-msg" id="msg-lBassKick"></div>
       </div>
       <div class="ctl" id="ctl-lSparkTrig">
         <div class="ctl-hd"><label for="lSparkTrig">Sparkle bass burst trigger</label><span class="val" id="lSparkTrigVal">0.58</span></div>
@@ -819,48 +845,6 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <div class="row" style="margin-top:12px">
       <button data-cmd="ltGet">Load current</button>
       <button data-cmd="ltSave">Save lights</button>
-    </div>
-  </div>
-
-  <div class="group" data-board="s3">
-    <div class="group-hd"><h2>Compressor</h2><span class="offline-note">DSP offline</span></div>
-    <div class="card">
-      <div class="ctl" id="ctl-tCompThL">
-        <div class="ctl-hd"><label for="tCompThL">Bass threshold</label><span class="val" id="tCompThLVal">-18.0 dB</span></div>
-        <input type="range" id="tCompThL" min="-40" max="0" step="0.5" value="-18" aria-describedby="help-tCompThL">
-        <p class="setting-help" id="help-tCompThL">Bass level where compression begins, in digital dB. More negative values start reducing bass earlier; values closer to zero allow stronger bass peaks.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tCompThL"></div>
-      </div>
-      <div class="ctl" id="ctl-tCompRaL">
-        <div class="ctl-hd"><label for="tCompRaL">Bass ratio</label><span class="val" id="tCompRaLVal">3.0</span></div>
-        <input type="range" id="tCompRaL" min="1" max="12" step="0.1" value="3" aria-describedby="help-tCompRaL">
-        <p class="setting-help" id="help-tCompRaL">Strength of bass compression above its threshold. 1 means no compression; 3 means a 3 dB increase above the threshold becomes about 1 dB.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tCompRaL"></div>
-      </div>
-      <div class="ctl" id="ctl-tCompThM">
-        <div class="ctl-hd"><label for="tCompThM">Mid threshold</label><span class="val" id="tCompThMVal">-15.0 dB</span></div>
-        <input type="range" id="tCompThM" min="-40" max="0" step="0.5" value="-15" aria-describedby="help-tCompThM">
-        <p class="setting-help" id="help-tCompThM">Midrange level where compression begins. More negative values act earlier on vocals and instruments; values closer to zero allow more variation.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tCompThM"></div>
-      </div>
-      <div class="ctl" id="ctl-tCompRaM">
-        <div class="ctl-hd"><label for="tCompRaM">Mid ratio</label><span class="val" id="tCompRaMVal">2.5</span></div>
-        <input type="range" id="tCompRaM" min="1" max="12" step="0.1" value="2.5" aria-describedby="help-tCompRaM">
-        <p class="setting-help" id="help-tCompRaM">Strength of midrange compression above its threshold. Higher makes loud midrange passages more controlled; 1 leaves them uncompressed.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tCompRaM"></div>
-      </div>
-      <div class="ctl" id="ctl-tCompThH">
-        <div class="ctl-hd"><label for="tCompThH">Treble threshold</label><span class="val" id="tCompThHVal">-12.0 dB</span></div>
-        <input type="range" id="tCompThH" min="-40" max="0" step="0.5" value="-12" aria-describedby="help-tCompThH">
-        <p class="setting-help" id="help-tCompThH">Treble level where compression begins. More negative values act earlier on cymbals and other bright sounds.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tCompThH"></div>
-      </div>
-      <div class="ctl" id="ctl-tCompRaH">
-        <div class="ctl-hd"><label for="tCompRaH">Treble ratio</label><span class="val" id="tCompRaHVal">2.0</span></div>
-        <input type="range" id="tCompRaH" min="1" max="12" step="0.1" value="2" aria-describedby="help-tCompRaH">
-        <p class="setting-help" id="help-tCompRaH">Strength of treble compression above its threshold. Higher reduces loud high-frequency peaks more strongly; 1 means no compression.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tCompRaH"></div>
-      </div>
     </div>
   </div>
 
@@ -910,17 +894,26 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <div class="card" id="socCard">
       <div class="ctl-hd"><label>Percentage curve</label><span class="val" id="socNow">--</span></div>
       <p class="setting-help">The resting voltage your pack reads at each percentage. The battery percentage is read off this curve, with straight lines between points, using the averaged voltage. Set the points from a few measured rest voltages for your pack.</p>
-      <div class="soc-grid loading" id="socTune" role="group" aria-label="Percentage averaging and sag correction">
+      <div class="soc-grid loading" id="socTune" role="group" aria-label="Percentage averaging">
         <div class="soc-cell"><label for="pwPctSec">Average</label><input type="number" id="pwPctSec" min="10" max="600" step="10" inputmode="numeric" aria-label="Percentage averaging time in seconds"><span>s</span></div>
-        <div class="soc-cell"><label for="pwSag">Sag fix</label><input type="number" id="pwSag" min="0" max="1.5" step="0.01" inputmode="decimal" aria-label="Sag correction in volts"><span>V</span></div>
+        <div class="soc-cell"><label for="pwLed">LED fix</label><input type="number" id="pwLed" min="0" max="1.5" step="0.01" inputmode="decimal" aria-label="Volts the LED load costs at 2 amps of LED current"><span>V</span></div>
       </div>
-      <p class="setting-help"><b>Average</b> is how many seconds of voltage the percentage is averaged over; the warnings above keep their own window. <b>Sag fix</b> adds volts back while the speaker is playing, scaled by the output level the DSP reports (the amount you enter applies at a loud average level; 0 turns it off). To tune it, play steadily loud and raise it until the percentage stops dropping compared with quiet.</p>
-      <div class="val" id="sagLive" style="display:block;margin:2px 0 8px;font-size:12px;font-weight:600;color:var(--dim)"></div>
+      <p class="setting-help"><b>Average</b> is how many seconds of voltage the percentage is averaged over; the warnings above keep their own window. <b>LED fix</b> adds volts back for the LED grid's own current draw, estimated by the LED board and smoothed over a couple of seconds, then averaged again over the window above. The amount is what the LEDs cost at about 2 A of LED current (a bright, mostly lit grid); dimmer lighting adds proportionally less. 0 ignores the LEDs.</p>
+      <div class="val" id="ledLive" style="display:block;margin:2px 0 8px;font-size:12px;font-weight:600;color:var(--dim)"></div>
       <svg id="socChart" viewBox="0 0 320 150" role="img" aria-label="Battery voltage against percentage"></svg>
       <div class="ctl" id="ctl-pwSoc">
         <div class="soc-grid loading" id="socGrid" role="group" aria-label="Voltage for each percentage"></div>
         <div class="state"></div><div class="ctl-msg" id="msg-pwSoc"></div>
       </div>
+      <div class="ctl-hd" style="margin-top:18px"><label>Sag fix curve</label><span class="val" id="sagNow"></span></div>
+      <p class="setting-help">Volts added back to the percentage voltage while the speaker is playing. Each box is the correction at that average output level, in dBFS (the level the DSP reports, shown live above, so you can see where your music sits; closer to 0 is louder). Higher levels never get a smaller correction, so changing one box moves its neighbours with it. All zero = off. To tune it, play steadily at a few levels and raise the matching point until the percentage stops dropping.</p>
+      <svg id="sagChart" viewBox="0 0 320 130" role="img" aria-label="Voltage added against output level"></svg>
+      <div class="ctl" id="ctl-pwSag">
+        <div class="soc-grid loading" id="sagGrid" role="group" aria-label="Volts added at each output level"></div>
+        <div class="state"></div><div class="ctl-msg" id="msg-pwSag"></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button type="button" data-cmd="pwSagReset">Switch sag fix off</button></div>
+      <div class="ctl" id="ctl-pwSagReset"><div class="state"></div><div class="ctl-msg" id="msg-pwSagReset"></div></div>
       <div class="row" style="margin-top:10px"><button type="button" data-cmd="pwSocReset">Reset curve</button></div>
       <div class="ctl" id="ctl-pwSocReset"><div class="state"></div><div class="ctl-msg" id="msg-pwSocReset"></div></div>
     </div>
@@ -960,26 +953,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   </div>
 
   <div class="group" data-board="s3">
-    <div class="group-hd"><h2>Sustained-level backoff &amp; limiter</h2><span class="offline-note">DSP offline</span></div>
+    <div class="group-hd"><h2>Limiter</h2><span class="offline-note">DSP offline</span></div>
     <div class="card">
-      <div class="ctl" id="ctl-tRmsHi">
-        <div class="ctl-hd"><label for="tRmsHi">Backoff threshold</label><span class="val" id="tRmsHiVal">0.45</span></div>
-        <input type="range" id="tRmsHi" min="0.1" max="0.9" step="0.01" value="0.45" aria-describedby="help-tRmsHi">
-        <p class="setting-help" id="help-tRmsHi">Sustained signal level above which the RMS stage gradually reduces overall gain. Lower starts backoff sooner. This is a signal estimate, not a temperature measurement.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tRmsHi"></div>
-      </div>
-      <div class="ctl" id="ctl-tRmsLo">
-        <div class="ctl-hd"><label for="tRmsLo">Recovery threshold</label><span class="val" id="tRmsLoVal">0.30</span></div>
-        <input type="range" id="tRmsLo" min="0.05" max="0.85" step="0.01" value="0.30" aria-describedby="help-tRmsLo">
-        <p class="setting-help" id="help-tRmsLo">Signal level below which reduced gain starts recovering. Lower waits for quieter audio before recovery. Keep it below the backoff threshold.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tRmsLo"></div>
-      </div>
-      <div class="ctl" id="ctl-tRmsMin">
-        <div class="ctl-hd"><label for="tRmsMin">Minimum retained gain</label><span class="val" id="tRmsMinVal">1.00</span></div>
-        <input type="range" id="tRmsMin" min="0.3" max="1" step="0.01" value="1" aria-describedby="help-tRmsMin">
-        <p class="setting-help" id="help-tRmsMin">Lowest gain the RMS stage can approach. 1.00 disables new gain reduction from startup; 0.75 retains 75% of signal amplitude at maximum backoff. Lower allows more reduction.</p>
-        <div class="state"></div><div class="ctl-msg" id="msg-tRmsMin"></div>
-      </div>
       <div class="ctl" id="ctl-tLimAtk">
         <div class="ctl-hd"><label for="tLimAtk">Limiter attack</label><span class="val" id="tLimAtkVal">0.5 ms</span></div>
         <input type="range" id="tLimAtk" min="0.05" max="20" step="0.05" value="0.5" aria-describedby="help-tLimAtk">
@@ -1041,7 +1016,7 @@ const $ = id => document.getElementById(id);
 const enc = new TextEncoder(), dec = new TextDecoder();
 
 let device=null, ctrlChar=null, statChar=null;
-let demo=false, seq=0, demoTick=null;
+let seq=0;
 const pending = new Map();
 let state = {};
 
@@ -1123,7 +1098,6 @@ function send(key, value, ctlId, requested, coalesce){
       logUpdate(mine, 'bad', null);
     }, timeout);
   }
-  if (demo) return demoHandle(mine, key, value);
   enqueue({cmd, seq:mine, ctl:ctlId, key, coalesce:!!coalesce});
 }
 
@@ -1207,7 +1181,7 @@ function checkForReboot(s){
     state = {}; fxNames = [];
     for (const p of pending.values()) setCtl(p.ctl, 'gone', 'Speaker restarted. Try again.');
     pending.clear(); txQueue.length = 0;
-    if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); send('pwGet','1'); send('eqGet','1'); }
+    if (ctrlChar){ send('listGet','1'); send('tGet','1'); send('ltGet','1'); send('pwGet','1'); send('eqGet','1'); send('capGet','1'); }
   }
   lastUptime = s.uptime;
 }
@@ -1229,11 +1203,13 @@ function resolveAck(a){
   pending.delete(a.seq);
   logUpdate(a.seq, a.r, Math.round(performance.now() - p.ms));
   const socPoint = /^pwS\d+$/.test(p.key);
-  const batterySetting = socPoint || ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute','pwPctSec','pwSag'].includes(p.key);
+  const sagPoint = /^pwG\d$/.test(p.key);
+  const batterySetting = socPoint || sagPoint || ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute','pwPctSec','pwLed'].includes(p.key);
   if (batterySetting && ['ok','clamp','bad'].includes(a.r) && Number.isFinite(Number(a.v))) snapTo(p.key, a.v);
-  if ((p.key === 'pwReset' || p.key === 'pwSocReset') && ['ok','bad'].includes(a.r)) send('pwGet','1');
-  if (p.key === 'reset' && ['ok','bad'].includes(a.r)) send('eqGet','1');   // defaults re-seeded
-  if (a.r === 'ok') setCtl(p.ctl, 'ok', ({pwGet:'Current thresholds loaded.',pwSave:'Thresholds saved.',pwReset:'Defaults applied and saved.',pwSocReset:'Default curve applied. Save thresholds to keep it.'})[p.key] || '');
+  if ((p.key === 'pwReset' || p.key === 'pwSocReset' || p.key === 'pwSagReset') && ['ok','bad'].includes(a.r)) send('pwGet','1');
+  if (/^pwG\d$/.test(p.key) && a.r === 'bad') send('pwGet','1');   // show what the speaker really has
+  if (p.key === 'reset' && ['ok','bad'].includes(a.r)){ send('eqGet','1'); send('capGet','1'); }   // defaults back
+  if (a.r === 'ok') setCtl(p.ctl, 'ok', ({pwGet:'Current thresholds loaded.',pwSave:'Thresholds saved.',pwReset:'Defaults applied and saved.',pwSocReset:'Default curve applied. Save thresholds to keep it.',pwSagReset:'Sag fix switched off. Save thresholds to keep it.'})[p.key] || '');
   else if (a.r === 'clamp') { setCtl(p.ctl, 'clamp', 'Limited to ' + a.v + '.'); snapTo(p.key, a.v); }
   else if (a.r === 'gone')  setCtl(p.ctl, 'gone', 'That board is not responding.');
   else {
@@ -1243,24 +1219,40 @@ function resolveAck(a){
     const detail = (a.v && /led:|s3:/.test(a.v))
       ? a.v.replace('led:', 'lights ').replace(',s3:', ', DSP ')
       : 'Rejected.';
-    const batteryDetail = socPoint ? 'Rejected: enter a voltage between 10 and 14.6 V.'
+    const batteryDetail = sagPoint ? 'Rejected: enter a voltage between 0 and 3 V.'
+      : socPoint ? 'Rejected: enter a voltage between 10 and 14.6 V.'
       : batterySetting ? 'Rejected: keep first > second > final, cutoff at or below final, and resume at least 0.15 V above cutoff.'
       : p.key === 'pwSave' ? 'Thresholds could not be saved. Live settings remain active.'
       : p.key === 'pwReset' ? 'Defaults applied, but could not be saved. Try Save thresholds again.' : detail;
     setCtl(p.ctl, 'bad', batteryDetail);
-    if (/^eq\d\d$/.test(p.key)) send('eqGet','1');   // show what the speaker really has
+    if (/^eq[0-2]\d{1,2}$/.test(p.key)) send('eqGet','1');   // show what the speaker really has
+    if (/^cap(On|[VC]\d)$/.test(p.key)) send('capGet','1');
   }
 }
 // A control that stays where you dragged it after the firmware clamped the
 // value is lying. Snap it to whatever actually took effect.
 function snapTo(key, v){
-  if (key === 'pwPctSec' || key === 'pwSag'){ state[key] = Number(v); refreshSocEditor(); return; }
+  const capm = /^cap([VC])(\d)$/.exec(key);
+  if (capm || key === 'capOn'){
+    const n = Number(v);
+    if (Number.isFinite(n)){
+      if (key === 'capOn') state.capOn = n;
+      else if (capOk()) (capm[1] === 'V' ? capSetV(state.capV, +capm[2], n) : capSetC(state.capC, +capm[2], n));
+    }
+    refreshCapEditor(); return;
+  }
+  if (key === 'pwPctSec' || key === 'pwLed'){ state[key] = Number(v); refreshSocEditor(); return; }
+  const sgm = /^pwG(\d)$/.exec(key);
+  if (sgm){
+    if (Array.isArray(state.pwSagG) && Number.isFinite(Number(v))) sagSet(state.pwSagG, +sgm[1], Number(v));
+    refreshSocEditor(); return;
+  }
   const socm = /^pwS(\d+)$/.exec(key);
   if (socm){
     if (Array.isArray(state.pwSoc) && Number.isFinite(Number(v))) state.pwSoc[+socm[1]] = Number(v);
     refreshSocEditor(); return;
   }
-  const eqm = /^eq([0-2])(\d)$/.exec(key);
+  const eqm = /^eq([0-2])(\d{1,2})$/.exec(key);
   if (eqm){
     const a = state['eq'+eqm[1]];
     if (Array.isArray(a)) a[+eqm[2]] = Number(v);
@@ -1276,20 +1268,20 @@ function snapTo(key, v){
 /* ---------- hero ---------- */
 const HEX = {red:'#e2574c',orange:'#f0a63d',gold:'#f0b429',green:'#3ddc84',
              cyan:'#3dd0dc',blue:'#4a8ef0',purple:'#a765e0',magenta:'#e05ca7'};
-const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', vumeter:'Level Meter', strobe:'Strobe', sparkle:'Sparkle'};
+const NICE = {basspulse:'Bass Pulse', colourflow:'Colour Flow', vumeter:'Spectrum', strobe:'Strobe', sparkle:'Sparkle'};
 const label = n => NICE[n] || (n ? n.charAt(0).toUpperCase()+n.slice(1) : '\u2014');
 const SUBTITLE = {
   off:         () => 'Lights are off',
   colourflow:  () => 'Steady colour flow with white music glints',
-  vumeter:     () => 'Classic green, yellow and red music level bar',
+  vumeter:     () => 'Bass to treble across the front; the back flashes the colour of big peaks',
   strobe:      () => 'Full-brightness club strobe with bass impact doubles',
-  basspulse:   () => 'Punchy bass pulses that change colour on big kicks',
+  basspulse:   () => 'Punchy bass pulses; big kicks change to a random colour or colour combination',
   comet:       () => 'A smooth trail follows the LED route; bass stretches and flares it',
   sparkle:     () => 'Mostly-dark isolated sparkles with music-reactive bursts'
 };
 
 function updateHero(){
-  const conn = demo || !!device;
+  const conn = !!device;
   const fx = state.ledpname;
   if (!conn || !fx){
     $('heroCanvas').dataset.fx = 'off';
@@ -1311,9 +1303,9 @@ function updateHero(){
 
 /* ---------- rendering ---------- */
 function render(){
-  const btUp = !!state.linkBt, s3Up = !!state.linkS3, conn = demo || !!device;
+  const btUp = !!state.linkBt, s3Up = !!state.linkS3, conn = !!device;
 
-  chip('chipLink', conn, conn ? (demo?'demo':'connected') : 'offline');
+  chip('chipLink', conn, conn ? 'connected' : 'offline');
   chip('chipBt', conn && btUp, 'bluetooth');
   chip('chipS3', conn && s3Up, 'dsp');
   chip('chipLed', conn, 'lights');
@@ -1396,6 +1388,7 @@ function render(){
   syncEqTabToActive();
   refreshEqEditor();
   refreshSocEditor();
+  refreshCapEditor();
 
   // Diagnostics. cpu is worst-case block time as a percentage of the budget
   // - the max, not the average, because one late block is an audible
@@ -1520,15 +1513,6 @@ bindSlider('tSpecRel','tSpecRel','tSpecRel', ms);
 bindSlider('tSpecBassHz','tSpecBassHz','tSpecBassHz', v => Math.round(+v) + ' Hz');
 bindSlider('tPulseLo','tPulseLo','tPulseLo', v => Math.round(+v) + ' Hz');
 bindSlider('tPulseHi','tPulseHi','tPulseHi', v => Math.round(+v) + ' Hz');
-bindSlider('tCompThL','tCompThL','tCompThL', db);
-bindSlider('tCompThM','tCompThM','tCompThM', db);
-bindSlider('tCompThH','tCompThH','tCompThH', db);
-bindSlider('tCompRaL','tCompRaL','tCompRaL', f2);
-bindSlider('tCompRaM','tCompRaM','tCompRaM', f2);
-bindSlider('tCompRaH','tCompRaH','tCompRaH', f2);
-bindSlider('tRmsHi','tRmsHi','tRmsHi', f2);
-bindSlider('tRmsLo','tRmsLo','tRmsLo', f2);
-bindSlider('tRmsMin','tRmsMin','tRmsMin', f2);
 const volts = v => (+v).toFixed(2) + ' V';
 const avgWindow = v => (+v >= 60 ? ((+v/60).toFixed((+v%60)?1:0)+' min') : (Math.round(+v)+' s'));
 bindSlider('pwAvgSec','pwAvgSec','pwAvgSec', avgWindow);
@@ -1603,23 +1587,185 @@ function socEdit(i, v){
     v = Math.min(600, Math.max(10, v)); state.pwPctSec = v;
     send('pwPctSec', String(v), 'pwSoc', v); refreshSocEditor();
   });
-  $('pwSag').addEventListener('change', e => {
+  $('pwLed').addEventListener('change', e => {
     let v = parseFloat(e.target.value);
-    if (!Number.isFinite(v) || !Number.isFinite(Number(state.pwSag))){ refreshSocEditor(); return; }
-    v = Math.round(Math.min(1.5, Math.max(0, v)) * 100) / 100; state.pwSag = v;
-    send('pwSag', v.toFixed(2), 'pwSoc', v); refreshSocEditor();
+    if (!Number.isFinite(v) || !Number.isFinite(Number(state.pwLed))){ refreshSocEditor(); return; }
+    v = Math.round(Math.min(1.5, Math.max(0, v)) * 100) / 100; state.pwLed = v;
+    send('pwLed', v.toFixed(2), 'pwSoc', v); refreshSocEditor();
   });
+}
+// Sag fix curve: volts added at 8 fixed average output levels (dBFS). Mirrors the
+// firmware rule that the curve never decreases with level: setting a point pushes
+// its neighbours along.
+const SAG_N = 8, SAG_DB = [-36,-30,-26,-22,-18,-14,-10,-6], SAG_VMAX = 3.0;
+const sagInputs = [];
+function sagSet(g, i, v){
+  v = Math.round(Math.min(SAG_VMAX, Math.max(0, v)) * 100) / 100;
+  g[i] = v;
+  for (let j = 0; j < i; j++) if (g[j] > v) g[j] = v;
+  for (let j = i+1; j < SAG_N; j++) if (g[j] < v) g[j] = v;
+  return v;
+}
+function sagVolts(g, db){
+  if (!Number.isFinite(db) || db <= -99) return 0;
+  if (db >= SAG_DB[SAG_N-1]) return g[SAG_N-1];
+  if (db <= SAG_DB[0]) return g[0] * Math.pow(10, (db - SAG_DB[0]) / 10);
+  for (let i = 0; i < SAG_N-1; i++)
+    if (db <= SAG_DB[i+1]) return g[i] + (g[i+1] - g[i]) * (db - SAG_DB[i]) / (SAG_DB[i+1] - SAG_DB[i]);
+  return g[SAG_N-1];
+}
+{
+  const host = $('sagGrid');
+  SAG_DB.forEach((db, i) => {
+    const cell = document.createElement('div'); cell.className = 'soc-cell';
+    const l = document.createElement('label'); l.textContent = db + ' dB'; l.htmlFor = 'pwG'+i; l.style.minWidth = '48px';
+    const el = document.createElement('input');
+    el.type = 'number'; el.id = 'pwG'+i; el.step = '0.01'; el.min = 0; el.max = SAG_VMAX; el.inputMode = 'decimal';
+    el.setAttribute('aria-label', 'Volts added at ' + db + ' dBFS output');
+    el.addEventListener('change', () => {
+      const g = state.pwSagG, v = parseFloat(el.value);
+      if (!Array.isArray(g) || !Number.isFinite(v)){ refreshSocEditor(); return; }
+      const set = sagSet(g, i, v);
+      send('pwG'+i, set.toFixed(2), 'pwSag', set); refreshSocEditor();
+    });
+    const u = document.createElement('span'); u.textContent = 'V';
+    cell.append(l, el, u); host.append(cell); sagInputs.push(el);
+  });
+}
+function refreshSagEditor(){
+  const g = state.pwSagG;
+  const ok = Array.isArray(g) && g.length === SAG_N && g.every(Number.isFinite);
+  $('sagGrid').classList.toggle('loading', !ok);
+  sagInputs.forEach((el, i) => { if (document.activeElement !== el) el.value = ok ? g[i].toFixed(2) : ''; });
+  const svg = $('sagChart'), od = Number(state.outDb);
+  if (!ok){ svg.innerHTML = ''; $('sagNow').textContent = ''; return; }
+  const W = 320, H = 130, L = 38, R = 22, T = 10, B = 24;
+  const xmin = -40, xmax = -4, vtop = Math.max(0.3, Math.max(...g) * 1.2);
+  const X = db => L + (W - L - R) * (Math.min(xmax, Math.max(xmin, db)) - xmin) / (xmax - xmin), Y = v => T + (H - T - B) * (1 - v / vtop);
+  let out = '';
+  [-36, -30, -24, -18, -12, -6].forEach(d => {
+    out += '<line x1="'+X(d)+'" y1="'+T+'" x2="'+X(d)+'" y2="'+(H-B)+'" style="stroke:var(--hair)" stroke-width="1"/>' +
+           '<text x="'+X(d)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" style="fill:var(--faint)">'+d+'</text>';
+  });
+  out += '<text x="'+(L-5)+'" y="'+(Y(vtop)+3)+'" text-anchor="end" font-size="10" style="fill:var(--faint)">'+vtop.toFixed(1)+' V</text>' +
+         '<text x="'+(L-5)+'" y="'+(Y(0)+3)+'" text-anchor="end" font-size="10" style="fill:var(--faint)">0</text>';
+  const pts = g.map((v, i) => X(SAG_DB[i]).toFixed(1) + ',' + Y(v).toFixed(1));
+  out += '<polyline points="'+pts.join(' ')+'" fill="none" style="stroke:var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>';
+  g.forEach((v, i) => { out += '<circle cx="'+X(SAG_DB[i])+'" cy="'+Y(v)+'" r="2.8" style="fill:var(--accent)"/>'; });
+  let now = '';
+  if (state.onPsu){
+    now = 'On the 24 V PSU: not used';
+  } else if (Number.isFinite(od) && od > -99){
+    const add = sagVolts(g, od);
+    out += '<line x1="'+X(od)+'" y1="'+T+'" x2="'+X(od)+'" y2="'+(H-B)+'" style="stroke:var(--ink)" stroke-width="1" stroke-dasharray="3 3" opacity=".75"/>' +
+           '<circle cx="'+X(od)+'" cy="'+Y(add)+'" r="4" style="fill:var(--ink)"/>';
+    now = od.toFixed(1) + ' dB \u2192 +' + add.toFixed(2) + ' V';
+  } else now = 'No output';
+  svg.innerHTML = out; $('sagNow').textContent = now;
+}
+// ---- battery volume cap curve (S3, volcap.h) -------------------------------
+// Five pack voltages (rising) and the volume cap at each (never falling as the
+// voltage rises). Mirrors the firmware: a voltage is held between its
+// neighbours, a cap pushes its neighbours along.
+const VCAP_N = 5, VCAP_GAP = 0.05, VCAP_VMIN = 10, VCAP_VMAX = 14.6, VCAP_CMAX = 115;
+const capV = [], capC = [];
+function capOk(){
+  return Array.isArray(state.capV) && Array.isArray(state.capC) &&
+    state.capV.length === VCAP_N && state.capC.length === VCAP_N &&
+    state.capV.every(Number.isFinite) && state.capC.every(Number.isFinite) && state.capOn !== undefined;
+}
+function capAt(v, c, x){
+  if (!(x > 0) || x <= v[0]) return c[0];
+  if (x >= v[VCAP_N-1]) return c[VCAP_N-1];
+  for (let i = 0; i < VCAP_N-1; i++) if (x <= v[i+1]) return Math.round(c[i] + (c[i+1]-c[i]) * (x - v[i]) / (v[i+1] - v[i]));
+  return c[VCAP_N-1];
+}
+function capSetV(v, i, x){
+  const lo = i > 0 ? v[i-1] + VCAP_GAP : VCAP_VMIN, hi = i < VCAP_N-1 ? v[i+1] - VCAP_GAP : VCAP_VMAX;
+  v[i] = Math.round(Math.min(hi, Math.max(lo, x)) * 100) / 100; return v[i];
+}
+function capSetC(c, i, x){
+  x = Math.round(Math.min(VCAP_CMAX, Math.max(0, x))); c[i] = x;
+  for (let j = 0; j < i; j++) if (c[j] > x) c[j] = x;
+  for (let j = i+1; j < VCAP_N; j++) if (c[j] < x) c[j] = x;
+  return x;
+}
+{
+  const host = $('capGrid');
+  for (let i = 0; i < VCAP_N; i++){
+    const row = document.createElement('div'); row.className = 'cap-row';
+    const v = document.createElement('input'); v.type = 'number'; v.step = '0.05'; v.min = VCAP_VMIN; v.max = VCAP_VMAX; v.inputMode = 'decimal';
+    v.setAttribute('aria-label', 'Pack voltage, point ' + (i+1));
+    const c = document.createElement('input'); c.type = 'number'; c.step = '1'; c.min = 0; c.max = VCAP_CMAX; c.inputMode = 'numeric';
+    c.setAttribute('aria-label', 'Volume cap, point ' + (i+1));
+    const a = document.createElement('span'); a.textContent = 'V \u2192';
+    const b = document.createElement('span'); b.textContent = 'cap';
+    v.addEventListener('change', () => {
+      const x = parseFloat(v.value);
+      if (!capOk() || !Number.isFinite(x)){ refreshCapEditor(); return; }
+      const set = capSetV(state.capV, i, x); send('capV'+i, set.toFixed(2), 'cap', set); refreshCapEditor();
+    });
+    c.addEventListener('change', () => {
+      const x = parseFloat(c.value);
+      if (!capOk() || !Number.isFinite(x)){ refreshCapEditor(); return; }
+      const set = capSetC(state.capC, i, x); send('capC'+i, String(set), 'cap', set); refreshCapEditor();
+    });
+    row.append(v, a, c, b); host.append(row); capV.push(v); capC.push(c);
+  }
+  $('capOn').addEventListener('change', e => {
+    if (!capOk()){ refreshCapEditor(); return; }
+    state.capOn = e.target.checked ? 1 : 0; send('capOn', String(state.capOn), 'capOn', state.capOn); refreshCapEditor();
+  });
+}
+function refreshCapEditor(){
+  const ok = capOk();
+  $('capBox').classList.toggle('loading', !ok);
+  $('capBox').classList.toggle('off', ok && !Number(state.capOn));
+  $('capOn').disabled = !ok;
+  if (ok) $('capOn').checked = !!Number(state.capOn);
+  capV.forEach((el, i) => { if (document.activeElement !== el) el.value = ok ? Number(state.capV[i]).toFixed(2) : ''; });
+  capC.forEach((el, i) => { if (document.activeElement !== el) el.value = ok ? String(state.capC[i]) : ''; });
+  const svg = $('capChart');
+  if (!ok){ svg.innerHTML = ''; $('capLive').textContent = ''; return; }
+  const v = state.capV.map(Number), c = state.capC.map(Number);
+  const vs = Number(state.capVs), now = Number(state.capNow), live = !state.onPsu && Number(state.capOn) && now >= 0 && vs > 0;
+  const W = 320, H = 112, L = 30, R = 14, T = 8, B = 20;
+  const x0 = Math.min(v[0], live ? vs : 99) - 0.2, x1 = Math.max(v[VCAP_N-1], live ? vs : 0) + 0.2;
+  const y0 = Math.max(0, Math.min(...c) - 10), y1 = Math.min(VCAP_CMAX, Math.max(...c) + 5);
+  const X = x => L + (W - L - R) * (x - x0) / (x1 - x0), Y = y => T + (H - T - B) * (y1 - y) / Math.max(1, y1 - y0);
+  let g = '';
+  [x0 + 0.2, (x0 + x1) / 2, x1 - 0.2].forEach(x => {
+    g += '<line x1="'+X(x)+'" y1="'+T+'" x2="'+X(x)+'" y2="'+(H-B)+'" style="stroke:var(--hair)" stroke-width="1"/>' +
+         '<text x="'+X(x)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" style="fill:var(--faint)">'+x.toFixed(1)+' V</text>';
+  });
+  [y0, y1].forEach(y => { g += '<text x="'+(L-4)+'" y="'+(Y(y)+3)+'" text-anchor="end" font-size="10" style="fill:var(--faint)">'+Math.round(y)+'</text>'; });
+  const pts = [[x0, c[0]], ...v.map((x, i) => [x, c[i]]), [x1, c[VCAP_N-1]]];
+  g += '<polyline points="'+pts.map(p => X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')+'" fill="none" style="stroke:var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>';
+  v.forEach((x, i) => { g += '<circle cx="'+X(x)+'" cy="'+Y(c[i])+'" r="2.8" style="fill:var(--accent)"/>'; });
+  let text;
+  if (state.onPsu) text = 'On the 24 V PSU: the wall-power ceiling applies.';
+  else if (!Number(state.capOn)) text = 'Off: the battery ceiling above applies.';
+  else if (!live) text = 'Waiting for a battery reading.';
+  else {
+    g += '<line x1="'+X(vs)+'" y1="'+T+'" x2="'+X(vs)+'" y2="'+(H-B)+'" style="stroke:var(--ink)" stroke-width="1" stroke-dasharray="3 3" opacity=".75"/>' +
+         '<circle cx="'+X(vs)+'" cy="'+Y(now)+'" r="4" style="fill:var(--ink)"/>';
+    const target = capAt(v, c, vs), moving = target < now || target > now + 1;
+    text = 'Pack ' + vs.toFixed(2) + ' V (smoothed) \u2192 cap ' + now + (moving ? ' (moving to ' + target + ')' : '');
+  }
+  svg.innerHTML = g; $('capLive').textContent = text;
 }
 function refreshSocEditor(){
   {
-    const tuneOk = Number.isFinite(Number(state.pwPctSec)) && Number.isFinite(Number(state.pwSag));
+    const tuneOk = Number.isFinite(Number(state.pwPctSec));
     $('socTune').classList.toggle('loading', !tuneOk);
     if (document.activeElement !== $('pwPctSec')) $('pwPctSec').value = tuneOk ? String(state.pwPctSec) : '';
-    if (document.activeElement !== $('pwSag')) $('pwSag').value = tuneOk ? Number(state.pwSag).toFixed(2) : '';
-    const od = Number(state.outDb), add = Number(state.sagAdd);
-    $('sagLive').textContent = !tuneOk ? '' :
-      (Number.isFinite(od) && od > -99 ? 'Output ' + od.toFixed(1) + ' dBFS' : 'No output') +
-      ' \u00b7 sag fix adding ' + (Number.isFinite(add) ? add.toFixed(2) : '0.00') + ' V';
+    const ledOk = Number.isFinite(Number(state.pwLed));
+    $('pwLed').disabled = !ledOk;
+    if (document.activeElement !== $('pwLed')) $('pwLed').value = ledOk ? Number(state.pwLed).toFixed(2) : '';
+    const lma = Number(state.ledMa), ladd = Number(state.ledAdd);
+    $('ledLive').textContent = !ledOk ? '' : state.onPsu ? 'On the 24 V PSU: LED correction not used' :
+      'LEDs ' + (Number.isFinite(lma) ? (lma / 1000).toFixed(2) : '0.00') + ' A (est.) \u00b7 adding +' + (Number.isFinite(ladd) ? ladd.toFixed(2) : '0.00') + ' V';
+    refreshSagEditor();
   }
   const a = state.pwSoc;
   const ok = Array.isArray(a) && a.length === SOC_N && a.every(Number.isFinite);
@@ -1689,8 +1835,7 @@ bindSlider('lSparkTrig','lSparkTrig','lSparkTrig', f2);
 // values that only change while someone is actively tuning don't belong in
 // a once-a-second broadcast.
 const TUNE_KEYS = ['pwAvgSec','pwV25','pwV10','pwV0','pwMute','pwUnmute','tSpecBass','tSpecMid','tSpecTreb','tSpecFloor','tSpecRel','tSpecBassHz','tPulseLo','tPulseHi',
-  'tCompThL','tCompThM','tCompThH','tCompRaL','tCompRaM','tCompRaH',
-  'tRmsHi','tRmsLo','tRmsMin','tLoudMax','tLoudKnee','tLimAtk','tLimRel',
+  'tLoudMax','tLoudKnee','tLimAtk','tLimRel',
   'lEnvAtk','lEnvRel','lSparkle','lFade','lIdleMs','lIdleBr','lFlowBr','lFlowTrig','lFlowGlint','lWaveMs','lWaveWid','lWaveMusic','lStrHzLo','lStrHzHi','lStrTrig','lStrPulse','lStrGap','lCometMs','lCometTail','lCometBass','lBassGate','lBassRel','lBassFloor','lBassKick','lSparkTrig'];
 function applyTuning(s){
   TUNE_KEYS.forEach(k => { if (s[k] !== undefined) syncSlider(k, s[k]); });
@@ -1701,20 +1846,25 @@ bindSlider('lim','lim','lim', v => (+v).toFixed(1)+' dB');
 document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => {
   const c = b.dataset.cmd;
   if (['play','next','prev'].includes(c)) { sendTransport(c); return; }
-  const ctl = ['save','reset','tSave','tReset','ltSave','ltGet','tGet','pwGet','pwSave','pwReset','pwSocReset'].includes(c) ? c : 'transport';
+  const ctl = ['save','reset','tSave','tReset','ltSave','ltGet','tGet','pwGet','pwSave','pwReset','pwSocReset','pwSagReset'].includes(c) ? c : 'transport';
   send(c, '1', ctl, '1');
 }));
 document.querySelectorAll('#bassSeg button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('#bassSeg button').forEach(x => x.classList.toggle('on', x===b));
   send('stbass', b.dataset.v, 'stbass', b.dataset.v);
 }));
-const EQ_HINTS = ['A light V \u2014 gentle lift at both ends.',
-                  'A heavier V \u2014 the same shape, dug in further.',
-                  'Bass 1 with more bass again. Treble unchanged.'];
-// 10-band graphic EQ. Gains per profile arrive as eq0/eq1/eq2 arrays (one
-// message each, requested with eqGet) and are written back as eq<profile><band>.
-const EQ_LABELS = ['100','140','190','260','360','560','900','1.5k','3k','7k'];
-const EQ_MIN = -20, EQ_MAX = 30;
+const EQ_HINTS = ['Everyday sound: the tuned base curve with some extra bass.',
+                  'More bass on top of the base curve.',
+                  'The most bass. Check for pumping at full volume.'];
+// 11-band graphic EQ. Gains per profile arrive as eq0/eq1/eq2 arrays (one
+// message each, requested with eqGet) and are written back as eq<profile><band>
+// (band 10 is "eq<p>10"). Range matches EQ_GAIN_MIN/MAX on the S3.
+const EQ_LABELS = ['100','140','190','260','360','560','900','1.5k','3k','8k','12.5k'];
+const EQ_MIN = -30, EQ_MAX = 40;
+// The base curve from the October 2026 pink-noise tuning (Standard, before
+// any bass was added). The old 7 kHz shelf (-4) is split into the 8 kHz bell
+// and 12.5 kHz shelf the same way the S3 converts it.
+const EQ_BASE = [0, -10, -5, 1, 0, 0, -4, -1, 3, -2.4, -4.8];
 const eqSliders = [], eqNums = [];
 let eqDrag = -1, eqLastLive = 0;
 let eqTab = 0, lastEqProfile = null;
@@ -1728,7 +1878,7 @@ function refreshEqEditor(){
   const arr = state['eq'+eqTab];
   const ok = Array.isArray(arr) && arr.length === EQ_LABELS.length;
   $('eqx').classList.toggle('loading', !ok);
-  $('eqFlat').disabled = !ok;   // gold.js owns .disabled (connection gating)
+  $('eqBase').disabled = !ok;   // gold.js owns .disabled (connection gating)
   eqSliders.forEach((el, b) => {
     el.disabled = !ok;
     if (eqNums[b]) eqNums[b].disabled = !ok;
@@ -1786,13 +1936,13 @@ function eqEdit(b, v, final){
     eqSliders.push(el); eqNums.push(out);
   });
 }
-$('eqFlat').addEventListener('click', () => {
+$('eqBase').addEventListener('click', () => {
   const arr = state['eq'+eqTab];
   if (!Array.isArray(arr)) return;
   for (let b = 0; b < EQ_LABELS.length; b++){
-    if (arr[b] === 0) continue;
-    arr[b] = 0;
-    send('eq'+eqTab+b, '0.0', 'eq', 0, true);
+    if (arr[b] === EQ_BASE[b]) continue;
+    arr[b] = EQ_BASE[b];
+    send('eq'+eqTab+b, EQ_BASE[b].toFixed(1), 'eq', EQ_BASE[b], true);
   }
   refreshEqEditor();
 });
@@ -1812,7 +1962,7 @@ document.querySelectorAll('.island button').forEach(t => t.addEventListener('cli
    Desktop gets a real keyboard; not using it would be a waste. Space for
    play/pause and arrows for volume are what every media app does. */
 document.addEventListener('keydown', e => {
-  if (e.target.closest('input,button,select,textarea,[role=slider],dialog') || !(demo || device?.gatt?.connected)) return;   // don't hijack slider arrows
+  if (e.target.closest('input,button,select,textarea,[role=slider],dialog') || !device?.gatt?.connected) return;   // don't hijack slider arrows
   if (e.code === 'Space'){ e.preventDefault(); sendTransport('play'); }
   else if (e.code === 'ArrowUp' || e.code === 'ArrowDown'){
     e.preventDefault();
@@ -1855,7 +2005,7 @@ $('connectBtn').addEventListener('click', async () => {
     // where this request is the thing that gets lost.
     setTimeout(() => { send('listGet','1'); }, 200);
     setTimeout(() => { send('ltGet','1'); send('tGet','1'); send('pwGet','1'); }, 500);
-    setTimeout(() => { send('eqGet','1'); }, 800);
+    setTimeout(() => { send('eqGet','1'); send('capGet','1'); }, 800);
     btn.textContent = 'Disconnect';
     btn.disabled = false;
     render();

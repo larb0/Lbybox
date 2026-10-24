@@ -32,8 +32,9 @@
  const statusStore=document.createElement('div');statusStore.hidden=true;
  statusStore.append(oldSave,tuneStatus,ledStatus,$('savedPill'));main.append(statusStore);
  saving.remove();
- const soundCategories=[...sound.querySelectorAll(':scope > .group')].map(fold);
- for(const title of ['Compressor','Loudness contour','Sustained-level backoff & limiter']){
+ // Tone (the EQ) stays an open group, not a dropdown; curves.js puts it at the very top.
+ const soundCategories=[...sound.querySelectorAll(':scope > .group')].filter(g=>g.querySelector('h2')?.textContent!=='Tone').map(fold);
+ for(const title of ['Loudness contour','Limiter']){
   const group=findGroup(title);sound.append(group);soundCategories.push(fold(group));
  }
  const battery=findGroup('Battery warnings');$('v-power').append(battery);fold(battery);
@@ -60,7 +61,7 @@
  const lightCategories=[
   category('Bass Pulse',[pulseRange,...take(['lBassGate','lBassRel','lBassFloor','lBassKick'])]),
   category('Colour Flow',take(['lFlowBr','lFlowTrig','lFlowGlint'])),
-  category('Level Meter', [Object.assign(document.createElement('p'),{className:'hint',textContent:'Green → yellow → red, left to right across the front. Follows music at any listening volume. No peak dot; interior strips stay off.'})]),
+  category('Spectrum', [Object.assign(document.createElement('p'),{className:'hint',textContent:'Seven frequency bands across the front, bass on the left to treble on the right, each green → yellow → red by its own level. When a band jumps well above its recent level, the back flashes that band\'s colour: red for bass through to blue and white for treble.'})]),
   category('Strobe',take(['lStrHzLo','lStrHzHi','lStrTrig','lStrPulse','lStrGap'])),
   category('Comet',take(['lCometMs','lCometTail','lCometBass'])),
   category('Sparkle',take(['lSparkle','lFade','lSparkTrig']))

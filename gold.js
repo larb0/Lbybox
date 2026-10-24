@@ -82,7 +82,7 @@ document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('
 goldNavigate('panel');render();
 // Confirmed command values should be shown immediately, before the next heartbeat.
 const legacyResolveAck=resolveAck;
-resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(a.r)){const n=Number(a.v),k=p.key;if(Number.isFinite(n)){if(['vol12','vol24','vol','stbass','ledbright','ledcolor','ledpreset','sfxvol'].includes(k))state[k]=n;else if(/^b[0-2][bt]$/.test(k))state[k]=n;if(k==='ledpreset'){state.ledpname=state.ledlist?.[n];state.ledusescolor=!NO_COLOR.includes(state.ledpname);}}}legacyResolveAck(a);};
+resolveAck=function(a){const p=pending.get(a.seq);if(p&&['ok','clamp'].includes(a.r)){const n=Number(a.v),k=p.key;if(Number.isFinite(n)){if(['vol12','vol24','vol','stbass','ledbright','ledpreset','sfxvol'].includes(k))state[k]=n;else if(/^b[0-2][bt]$/.test(k))state[k]=n;if(k==='ledpreset')state.ledpname=state.ledlist?.[n];}}legacyResolveAck(a);};
 render();
 
 // One command per click. Await the board reply instead of pretending the phone changed state.

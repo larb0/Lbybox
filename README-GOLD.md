@@ -1,6 +1,6 @@
 # LarbyBox — Gold / Dark, revision 3
 
-Upload all app files together to your existing HTTPS web host. There is no build step. Close and reopen the installed app after updating to load the new cached version. Demo works without a speaker.
+Upload all app files together to your existing HTTPS web host. There is no build step. Close and reopen the installed app after updating to load the new cached version.
 
 ## Requested changes
 
